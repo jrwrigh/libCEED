@@ -118,11 +118,11 @@ struct User_ {
   PetscInt melem[3];
   PetscInt outputfreq;
   DM dm;
-  Ceed ceed;
-  Units units;
+  Ceed ceed;                                                            //???????????????????
+  Units units;                                                          //??what does it mean?
   CeedVector qceed, gceed;
   CeedOperator op;
-  VecScatter ltog;              // Scatter for all entries
+  VecScatter ltog;              // Scatter for all entries.  L:Object used to manage communication of data between vectors in parallel. Manages both scatters and gathers
   VecScatter ltog0;             // Skip Dirichlet values for Q
   VecScatter gtogD;             // global-to-global; only Dirichlet values for Q
   Vec Qloc, Gloc, M, BC;
@@ -132,7 +132,7 @@ struct User_ {
 
 struct Units_ {
   // fundamental units
-  PetscScalar meter;
+  PetscScalar meter;                    //Why PetscScalar???????????
   PetscScalar kilogram;
   PetscScalar second;
   PetscScalar Kelvin;
@@ -149,8 +149,8 @@ struct Units_ {
 // This is the RHS of the ODE, given as u_t = G(t,u)
 // This function takes in a state vector Q and writes into G
 static PetscErrorCode RHS_NS(TS ts, PetscReal t, Vec Q, Vec G, void *userData) {
-  PetscErrorCode ierr;
-  User user = *(User*)userData;
+  PetscErrorCode ierr;                     //What is ierr??????????
+  User user = *(User*)userData;           //How does this work???????????
   PetscScalar *q, *g;
 
   // Global-to-local
