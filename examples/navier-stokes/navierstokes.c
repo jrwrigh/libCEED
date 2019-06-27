@@ -151,7 +151,7 @@ struct Units_ {
 static PetscErrorCode RHS_NS(TS ts, PetscReal t, Vec Q, Vec G, void *userData) {
   PetscErrorCode ierr;                     //What is ierr??????????
   User user = *(User*)userData;           //How does this work???????????
-  PetscScalar *q, *g;
+  PetscScalar *q, *g;                     //Where does userData come from?
 
   // Global-to-local
   PetscFunctionBeginUser;
@@ -201,9 +201,9 @@ static PetscErrorCode RHS_NS(TS ts, PetscReal t, Vec Q, Vec G, void *userData) {
 // User provided TS Monitor
 static PetscErrorCode TSMonitor_NS(TS ts, PetscInt stepno, PetscReal time,
                                    Vec Q, void *ctx) {
-  User user = ctx;
+  User user = ctx; //............................................................??How does this work????????????
   const PetscScalar *q;
-  PetscScalar ***u;
+  PetscScalar ***u; //..........................................................?? *** why?????????????????
   Vec U;
   DMDALocalInfo info;
   char filepath[PETSC_MAX_PATH_LEN];
@@ -276,7 +276,7 @@ static PetscErrorCode TSMonitor_NS(TS ts, PetscInt stepno, PetscReal time,
 int main(int argc, char **argv) {
   PetscInt ierr;
   MPI_Comm comm;
-  DM dm;
+  DM dm; //...............................................?? What does this repetition do?????????????
   TS ts;
   TSAdapt adapt;
   User user;
