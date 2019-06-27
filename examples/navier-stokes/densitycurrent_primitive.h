@@ -43,7 +43,7 @@
 //
 // Conversion to Conserved Variables:
 //   rho = P0 Pi**(cv/Rd) / (Rd theta)
-//   E   = rho (cv theta Pi + (u u)/2 + g z)
+//   E  = rho cv T + rho (u u) / 2 + rho g z
 //
 //  Boundary Conditions:
 //    Mass Density:
@@ -76,11 +76,11 @@ static int ICsDC(void *ctx, CeedInt Q,
 #endif
 
   // Inputs
-  const CeedScalar *X = in[0];
+  const CeedScalar *X = in[0];                                //Line 726-728 @.c shows why!!!!
   // Outputs
-  CeedScalar *q0 = out[0], *coords = out[1];
+  CeedScalar *q0 = out[0], *coords = out[1];             //coords is defined separetely from x for plotting!
   // Context
-  const CeedScalar *context = (const CeedScalar*)ctx;
+  const CeedScalar *context = (const CeedScalar*)ctx;           //SetUp in line 790 @.c
   const CeedScalar theta0     = context[0];
   const CeedScalar thetaC     = context[1];
   const CeedScalar P0         = context[2];
@@ -129,7 +129,7 @@ static int ICsDC(void *ctx, CeedInt Q,
          fabs(z - 0.0) < tol || fabs(z - lz) < tol ) {
       q0[i+1*Q] = 0.0;
       q0[i+2*Q] = 0.0;
-      q0[i+3*Q] = 0.0;
+      q0[i+3*Q] = 0.0;    //...................................!! In this case since IC and BC are zero, this command is extra!
     }
 
     // Coordinates
@@ -160,8 +160,8 @@ static int ICsDC(void *ctx, CeedInt Q,
 //   dE/dt   + div( (E + P) u )                       = div( Fe )
 //
 // Viscous Stress:
-//   Fu = mu (grad( u ) + grad( u )^T + lambda div ( u ) I3)
-// Thermal Stress:
+//   Fu = mu (grad( u ) + grad( u )^T + lambda div ( u ) I3)     !!!!! Fu is symmetric => only the diameter and half of 
+// Thermal Stress:                                                    the rest is calculated. 3+(6/2)=6
 //   Fe = u Fu + k grad( T )
 //
 // Equation of State:
@@ -249,8 +249,8 @@ static int DC(void *ctx, CeedInt Q,
                                   qdata[i+15*Q]
                                 };
     // -- gradT
-    const CeedScalar gradT[3] = { (dE[0]/rho - E*drho[0]/(rho*rho) -
-                                   (u[0]*du[0+3*0] + u[1]*du[1+3*0] +
+    const CeedScalar gradT[3] = { (dE[0]/rho - E*drho[0]/(rho*rho) -                
+                                   (u[0]*du[0+3*0] + u[1]*du[1+3*0] +                
                                     u[2]*du[2+3*0])) / cv,
                                   (dE[1]/rho - E*drho[1]/(rho*rho) -
                                    (u[0]*du[0+3*1] + u[1]*du[1+3*1] +
@@ -261,7 +261,7 @@ static int DC(void *ctx, CeedInt Q,
                                 };
     // -- Fuvisc
     //      Symmetric 3x3 matrix
-    const CeedScalar Fu[6] =  { mu * (du[0+3*0] * (2 + lambda) +
+    const CeedScalar Fu[6] =  { mu * (du[0+3*0] * (2 + lambda) +                           
                                       lambda * (du[1+3*1] + du[2+3*2])),
                                 mu * (du[0+3*1] + du[1+3*0]),
                                 mu * (du[0+3*2] + du[2+3*0]),
