@@ -44,7 +44,7 @@
 //
 // Initial Conditions:
 //   Potential Temperature:
-//     theta = thetabar + deltatheta
+//     T = thetabar + deltatheta
 //       thetabar   = theta0 exp( N**2 z / g )
 //       deltatheta = r <= rc : theta0(1 + cos(pi r/rc)) / 2
 //                     r > rc : 0
@@ -55,12 +55,8 @@
 //       Pibar      = g**2 (exp( - N**2 z / g ) - 1) / (cp theta0 N**2)
 //       deltaPi    = 0 (hydrostatic balance)
 //   Velocity/Momentum Density:
-//     Ui = ui = 0
-//
-// Conversion to Conserved Variables:
-//   rho = P0 Pi**(cv/Rd) / (Rd theta)
-//   E   = rho (cv theta Pi + (u u)/2 + g z)
-//
+//     ui = 0
+
 //  Boundary Conditions:
 //    Mass Density:
 //      0.0 flux
@@ -126,18 +122,19 @@ static int ICsDC(void *ctx, CeedInt Q,
                               pow((y - center[1]), 2) +
                               pow((z - center[2]), 2));
     const CeedScalar deltatheta = r <= rc ? thetaC*(1. + cos(M_PI*r/rc))/2. : 0.;
-    const CeedScalar theta = theta0*exp(N*N*z/g) + deltatheta;
+    const CeedScalar T = theta0*exp(N*N*z/g) + deltatheta;
     // -- Exner pressure, hydrostatic balance
     const CeedScalar Pi = 1. + g*g*(exp(-N*N*z/g) - 1.) / (cp*theta0*N*N);
+    
     // -- Density
     const CeedScalar rho = P0 * pow(Pi, cv/Rd) / (Rd*theta);
 
     // Initial Conditions
-    q0[i+0*Q] = rho;
+    q0[i+0*Q] = Pi;
     q0[i+1*Q] = 0.0;
     q0[i+2*Q] = 0.0;
     q0[i+3*Q] = 0.0;
-    q0[i+4*Q] = rho * (cv*theta*Pi + g*z);
+    q0[i+4*Q] = theta0;
 
     // Homogeneous Dirichlet Boundary Conditions for Momentum
     if ( fabs(x - 0.0) < tol || fabs(x - lx) < tol ||
@@ -217,28 +214,28 @@ static int DC(void *ctx, CeedInt Q,
   for (CeedInt i=0; i<Q; i++) {
     // Setup
     // -- Interp in
-    const CeedScalar rho     =   q[i+0*Q];
-    const CeedScalar u[3]    = { q[i+1*Q] / rho,
-                                 q[i+2*Q] / rho,
-                                 q[i+3*Q] / rho
+    const CeedScalar Pi     =    q[i+0*Q];
+    const CeedScalar u[3]    = { q[i+1*Q],
+                                 q[i+2*Q],
+                                 q[i+3*Q]
                                };
-    const CeedScalar E       =   q[i+4*Q];
+    const CeedScalar theta       =   q[i+4*Q];
     // -- Grad in
-    const CeedScalar drho[3] = {  dq[i+(0+5*0)*Q],
-                                  dq[i+(0+5*1)*Q],
-                                  dq[i+(0+5*2)*Q]
+    const CeedScalar dPi[3] = {  dq[i+(0+5*0)*Q],      //      dp/dx
+                                 dq[i+(0+5*1)*Q],      //      dp/dy
+                                 dq[i+(0+5*2)*Q]       //      dp/dz
                                };
-    const CeedScalar du[9]   = { (dq[i+(1+5*0)*Q] - drho[0]*u[0]) / rho,
-                                 (dq[i+(1+5*1)*Q] - drho[1]*u[0]) / rho,
-                                 (dq[i+(1+5*2)*Q] - drho[2]*u[0]) / rho,
-                                 (dq[i+(2+5*0)*Q] - drho[0]*u[1]) / rho,
-                                 (dq[i+(2+5*1)*Q] - drho[1]*u[1]) / rho,
-                                 (dq[i+(2+5*2)*Q] - drho[2]*u[1]) / rho,
-                                 (dq[i+(3+5*0)*Q] - drho[0]*u[2]) / rho,
-                                 (dq[i+(3+5*1)*Q] - drho[1]*u[2]) / rho,
-                                 (dq[i+(3+5*2)*Q] - drho[2]*u[2]) / rho
+    const CeedScalar du[9]   = { dq[i+(1+5*0)*Q],      //      dux/dx
+                                 dq[i+(1+5*1)*Q],      //      dux/dy
+                                 dq[i+(1+5*2)*Q],      //      dux/dz
+                                 dq[i+(2+5*0)*Q],      //      duy/dx
+                                 dq[i+(2+5*1)*Q],      //      duy/dy
+                                 dq[i+(2+5*2)*Q],      //      duy/dz
+                                 dq[i+(3+5*0)*Q],      //      duz/dx
+                                 dq[i+(3+5*1)*Q],      //      duz/dy
+                                 dq[i+(3+5*2)*Q]       //      duz/dz
                                };
-    const CeedScalar dE[3]   = {  dq[i+(4+5*0)*Q],
+    const CeedScalar dT[3]   = {  dq[i+(4+5*0)*Q],
                                   dq[i+(4+5*1)*Q],
                                   dq[i+(4+5*2)*Q]
                                };
@@ -265,15 +262,15 @@ static int DC(void *ctx, CeedInt Q,
                                   qdata[i+15*Q]
                                 };
     // -- gradT
-    const CeedScalar gradT[3] = { (dE[0]/rho - E*drho[0]/(rho*rho) -
-                                   (u[0]*du[0+3*0] + u[1]*du[1+3*0] +
-                                    u[2]*du[2+3*0])) / cv,
-                                  (dE[1]/rho - E*drho[1]/(rho*rho) -
-                                   (u[0]*du[0+3*1] + u[1]*du[1+3*1] +
-                                    u[2]*du[2+3*1])) / cv,
-                                  (dE[2]/rho - E*drho[2]/(rho*rho) -
-                                   (u[0]*du[0+3*2] + u[1]*du[1+3*2] +
-                                    u[2]*du[2+3*2]) - g) / cv
+   // const CeedScalar gradT[3] = { (dE[0]/rho - E*drho[0]/(rho*rho) -
+ //                              (u[0]*du[0+3*0] + u[1]*du[1+3*0] +
+ //                             u[2]*du[2+3*0])) / cv,
+ //                         (dE[1]/rho - E*drho[1]/(rho*rho) -
+ //                        (u[0]*du[0+3*1] + u[1]*du[1+3*1] +
+ //                       u[2]*du[2+3*1])) / cv,
+ //                   (dE[2]/rho - E*drho[2]/(rho*rho) -
+ //                   (u[0]*du[0+3*2] + u[1]*du[1+3*2] +
+ //                  u[2]*du[2+3*2]) - g) / cv
                                 };
     // -- Fuvisc
     //      Symmetric 3x3 matrix
@@ -290,15 +287,15 @@ static int DC(void *ctx, CeedInt Q,
 
     // -- Fevisc
     const CeedScalar Fe[3] = { u[0]*Fu[0] + u[1]*Fu[1] + u[2]*Fu[2] +
-                               k * gradT[0],
+                               k * dT[0],
                                u[0]*Fu[1] + u[1]*Fu[3] + u[2]*Fu[4] +
-                               k * gradT[1],
+                               k * dT[1],
                                u[0]*Fu[2] + u[1]*Fu[4] + u[2]*Fu[5] +
-                               k * gradT[2]
+                               k * dT[2]
                              };
     // -- P
-    const CeedScalar P = (E - (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])*rho/2 -
-                          rho*g*x[i+Q*2]) * (gamma - 1);
+    //const CeedScalar P = (E - (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])*rho/2 -
+    //                      rho*g*x[i+Q*2]) * (gamma - 1);
 
     // The Physics
 
