@@ -78,7 +78,7 @@ static int ICsDC(void *ctx, CeedInt Q,
   // Inputs
   const CeedScalar *X = in[0];                                //Line 726-728 @.c shows why!!!!
   // Outputs
-  CeedScalar *q0 = out[0], *coords = out[1];             //coords is defined separetely from x for plotting!
+  CeedScalar *q0 = out[0], *coords = out[1];                  //coords is defined separetely from x for plotting!
   // Context
   const CeedScalar *context = (const CeedScalar*)ctx;           //SetUp in line 790 @.c
   const CeedScalar theta0     = context[0];
