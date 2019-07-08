@@ -231,7 +231,7 @@ static int DC(void *ctx, CeedInt Q,
                                };
 
     // -- Interp-to-Interp qdata
-    const CeedScalar wJ       =   qdata[i+ 0*Q];
+    //const CeedScalar wJ       =   qdata[i+ 0*Q];     
 
     // -- Interp-to-Grad qdata
     //      Symmetric 3x3 matrix
@@ -278,23 +278,22 @@ static int DC(void *ctx, CeedInt Q,
                              };
 
     // -- rho
-    const CeedScalar rho = P0 * pow(Pi, cv/Rd) / (Rd*theta);                              //??????????Is this OK? 
+    const CeedScalar rho = P0 * pow(Pi, cv/Rd) / (Rd*T);                              //??????????Is this OK?
     // -- P
     const CeedScalar E   = rho *(cv*T + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/2 
-                          + g*z);
+                          + g*z);                                                          // I changed x to z
 
     // The Physics
 
-    // -- Density
-    // ---- u rho
+    // -- Density   ---- u rho
     dv[i+(0+5*0)*Q]  = rho*u[0]*wBJ[0] + rho*u[1]*wBJ[1] + rho*u[2]*wBJ[2];
     dv[i+(0+5*1)*Q]  = rho*u[0]*wBJ[3] + rho*u[1]*wBJ[4] + rho*u[2]*wBJ[5];
     dv[i+(0+5*2)*Q]  = rho*u[0]*wBJ[6] + rho*u[1]*wBJ[7] + rho*u[2]*wBJ[8];
-    // ---- No Change
-    v[i+0*Q] = 0;
 
-    // -- Momentum
-    // ---- rho (u x u) + P I3
+    // ---- No Change
+    v[i+0*Q] = 0;                                                                         //?????????????????????
+
+    // -- Momentum  ---- rho (u x u) + P I3
     dv[i+(1+5*0)*Q]  = (rho*u[0]*u[0]+P)*wBJ[0] + rho*u[0]*u[1]*wBJ[1] +
                        rho*u[0]*u[2]*wBJ[2];
     dv[i+(1+5*1)*Q]  = (rho*u[0]*u[0]+P)*wBJ[3] + rho*u[0]*u[1]*wBJ[4] +
@@ -313,6 +312,7 @@ static int DC(void *ctx, CeedInt Q,
                         (rho*u[2]*u[2]+P)*wBJ[5];
     dv[i+(3+5*2)*Q]  =  rho*u[2]*u[0]*wBJ[6] +    rho*u[2]*u[1]*wBJ[7] +
                         (rho*u[2]*u[2]+P)*wBJ[8];
+
     // ---- Fuvisc
     dv[i+(1+5*0)*Q] -= Fu[0]*wBBJ[0] + Fu[1]*wBBJ[1] + Fu[2]*wBBJ[2];
     dv[i+(1+5*1)*Q] -= Fu[0]*wBBJ[1] + Fu[1]*wBBJ[3] + Fu[2]*wBBJ[4];
@@ -323,10 +323,11 @@ static int DC(void *ctx, CeedInt Q,
     dv[i+(3+5*0)*Q] -= Fu[2]*wBBJ[0] + Fu[4]*wBBJ[1] + Fu[5]*wBBJ[2];
     dv[i+(3+5*1)*Q] -= Fu[2]*wBBJ[1] + Fu[4]*wBBJ[3] + Fu[5]*wBBJ[4];
     dv[i+(3+5*2)*Q] -= Fu[2]*wBBJ[2] + Fu[4]*wBBJ[4] + Fu[5]*wBBJ[5];
+
     // ---- -rho g khat
-    v[i+1*Q] = 0;
-    v[i+2*Q] = 0;
-    v[i+3*Q] = - rho*g*wJ;
+    // v[i+1*Q] = 0;
+    // v[i+2*Q] = 0;
+    // v[i+3*Q] = - rho*g*wJ;
 
     // -- Total Energy
     // ---- (E + P) u

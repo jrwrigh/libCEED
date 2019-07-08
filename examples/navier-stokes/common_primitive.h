@@ -90,7 +90,7 @@ static int Setup(void *ctx, CeedInt Q,
     // Qdata
     // -- Interp-to-Interp qdata
     qdata[i+ 0*Q] = w[i] * detJ;
-    // -- Interp-to-Grad qdata
+    // -- Interp-to-Grad qdata                                   [1, 2, 3; 4, 5, 6; 7, 8, 9]
     qdata[i+ 1*Q] = w[i] * A11;
     qdata[i+ 2*Q] = w[i] * A12;
     qdata[i+ 3*Q] = w[i] * A13;
@@ -100,7 +100,9 @@ static int Setup(void *ctx, CeedInt Q,
     qdata[i+ 7*Q] = w[i] * A31;
     qdata[i+ 8*Q] = w[i] * A32;
     qdata[i+ 9*Q] = w[i] * A33;
-    // -- Grad-to-Grad qdata
+    // -- Grad-to-Grad qdata                                              A*A(T) is symmetric, that's why only 6 of them are calculated. [1, 2, 3; 2, 4, 5; 3, 5, 6]
+
+
     qdata[i+10*Q] = qw * (A11*A11 + A12*A12 + A13*A13);
     qdata[i+11*Q] = qw * (A11*A21 + A12*A22 + A13*A23);
     qdata[i+12*Q] = qw * (A11*A31 + A12*A32 + A13*A33);
