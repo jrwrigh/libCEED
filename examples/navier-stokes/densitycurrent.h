@@ -276,6 +276,7 @@ static int DC(void *ctx, CeedInt Q,
                                    (u[0]*du[0+3*2] + u[1]*du[1+3*2] +
                                     u[2]*du[2+3*2]) - g) / cv
                                 };
+    
     // -- Fuvisc
     //      Symmetric 3x3 matrix
     const CeedScalar Fu[6] =  { mu * (du[0+3*0] * (2 + lambda) +
