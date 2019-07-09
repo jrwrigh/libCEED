@@ -183,7 +183,7 @@ static int ICsDC(void *ctx, CeedInt Q,
 static int DC(void *ctx, CeedInt Q,
               const CeedScalar *const *in, CeedScalar *const *out) {
   // Inputs
-  const CeedScalar *q = in[0], *dq = in[1], *qdata = in[2], *x = in[3];
+  const CeedScalar *q = in[0], *dq = in[1], *qdata = in[2], *x = in[3];                  //.............here in fact x is X!
   // Outputs
   CeedScalar *v = out[0], *dv = out[1];
   // Context
@@ -281,7 +281,7 @@ static int DC(void *ctx, CeedInt Q,
     const CeedScalar rho = P0 * pow(Pi, cv/Rd) / (Rd*T);                              //??????????Is this OK?
     // -- P
     const CeedScalar E   = rho *(cv*T + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/2 
-                          + g*z);                                                          // I changed x to z
+                          + g* x[i+Q*2]);                                                        
 
     // The Physics
 
@@ -291,7 +291,7 @@ static int DC(void *ctx, CeedInt Q,
     dv[i+(0+5*2)*Q]  = rho*u[0]*wBJ[6] + rho*u[1]*wBJ[7] + rho*u[2]*wBJ[8];
 
     // ---- No Change
-    v[i+0*Q] = 0;                                                                         //?????????????????????
+    v[i+0*Q] = 0;                                                                         //Is it necessary????????????
 
     // -- Momentum  ---- rho (u x u) + P I3
     dv[i+(1+5*0)*Q]  = (rho*u[0]*u[0]+P)*wBJ[0] + rho*u[0]*u[1]*wBJ[1] +
@@ -324,10 +324,10 @@ static int DC(void *ctx, CeedInt Q,
     dv[i+(3+5*1)*Q] -= Fu[2]*wBBJ[1] + Fu[4]*wBBJ[3] + Fu[5]*wBBJ[4];
     dv[i+(3+5*2)*Q] -= Fu[2]*wBBJ[2] + Fu[4]*wBBJ[4] + Fu[5]*wBBJ[5];
 
-    // ---- -rho g khat
-    // v[i+1*Q] = 0;
-    // v[i+2*Q] = 0;
-    // v[i+3*Q] = - rho*g*wJ;
+    // ---- No Change
+    v[i+1*Q] = 0;
+    v[i+2*Q] = 0;
+    v[i+3*Q] = 0;   //::::::::::::::::::::::::::::::::::::::::::::::::::::::::>> I changed it from - rho*g*wJ to 0!
 
     // -- Total Energy
     // ---- (E + P) u
