@@ -30,9 +30,12 @@ const char help[] = "Solve Navier-Stokes using PETSc and libCEED\n";
 #include <ceed.h>
 #include <stdbool.h>
 #include <petscsys.h>
+#include "common_primitive.h"
 #include "common.h"
 #include "advection.h"
+#include "advection_primitive.h"
 #include "densitycurrent.h"
+#include "densitycurrent_primitive.h"
 
 // Utility function, compute three factors of an integer
 static void Split3(PetscInt size, PetscInt m[3], bool reverse) {
@@ -115,11 +118,11 @@ struct User_ {
   PetscInt melem[3];
   PetscInt outputfreq;
   DM dm;
-  Ceed ceed;
-  Units units;
+  Ceed ceed;                                                            //???????????????????
+  Units units;                                                          //??what does it mean?
   CeedVector qceed, gceed;
   CeedOperator op;
-  VecScatter ltog;              // Scatter for all entries
+  VecScatter ltog;              // Scatter for all entries.  L:Object used to manage communication of data between vectors in parallel. Manages both scatters and gathers
   VecScatter ltog0;             // Skip Dirichlet values for Q
   VecScatter gtogD;             // global-to-global; only Dirichlet values for Q
   Vec Qloc, Gloc, M, BC;
@@ -129,7 +132,7 @@ struct User_ {
 
 struct Units_ {
   // fundamental units
-  PetscScalar meter;
+  PetscScalar meter;                    //Why PetscScalar???????????
   PetscScalar kilogram;
   PetscScalar second;
   PetscScalar Kelvin;
@@ -146,9 +149,9 @@ struct Units_ {
 // This is the RHS of the ODE, given as u_t = G(t,u)
 // This function takes in a state vector Q and writes into G
 static PetscErrorCode RHS_NS(TS ts, PetscReal t, Vec Q, Vec G, void *userData) {
-  PetscErrorCode ierr;
-  User user = *(User*)userData;
-  PetscScalar *q, *g;
+  PetscErrorCode ierr;                     //What is ierr??????????
+  User user = *(User*)userData;           //How does this work???????????
+  PetscScalar *q, *g;                     //Where does userData come from?
 
   // Global-to-local
   PetscFunctionBeginUser;
@@ -198,9 +201,9 @@ static PetscErrorCode RHS_NS(TS ts, PetscReal t, Vec Q, Vec G, void *userData) {
 // User provided TS Monitor
 static PetscErrorCode TSMonitor_NS(TS ts, PetscInt stepno, PetscReal time,
                                    Vec Q, void *ctx) {
-  User user = ctx;
+  User user = ctx; //............................................................??How does this work????????????
   const PetscScalar *q;
-  PetscScalar ***u;
+  PetscScalar ***u; //..........................................................?? *** why?????????????????
   Vec U;
   DMDALocalInfo info;
   char filepath[PETSC_MAX_PATH_LEN];
@@ -273,14 +276,14 @@ static PetscErrorCode TSMonitor_NS(TS ts, PetscInt stepno, PetscReal time,
 int main(int argc, char **argv) {
   PetscInt ierr;
   MPI_Comm comm;
-  DM dm;
+  DM dm; //...............................................?? What does this repetition do?????????????
   TS ts;
   TSAdapt adapt;
   User user;
   Units units;
   char ceedresource[4096] = "/cpu/self";
   PetscFunctionList icsflist = NULL, qflist = NULL;
-  char problemtype[PETSC_MAX_PATH_LEN] = "advection";
+  char problemtype[PETSC_MAX_PATH_LEN] = "advection_advection";
   PetscInt localNelem, lsize, steps,
            melem[3], mdof[3], p[3], irank[3], ldof[3];
   PetscMPIInt size, rank;
@@ -338,9 +341,13 @@ int main(int argc, char **argv) {
 
   // Set up problem type command line option
   PetscFunctionListAdd(&icsflist, "advection", &ICsAdvection);
+  PetscFunctionListAdd(&icsflist, "advection_primitive", &ICsAdvection);
   PetscFunctionListAdd(&icsflist, "density_current", &ICsDC);
+  PetscFunctionListAdd(&icsflist, "density_current_primitive", &ICsDC);
   PetscFunctionListAdd(&qflist, "advection", &Advection);
+  PetscFunctionListAdd(&qflist, "advection_primitive", &Advection);
   PetscFunctionListAdd(&qflist, "density_current", &DC);
+  PetscFunctionListAdd(&qflist, "density_current_primitive", &DC);
 
   // Parse command line options
   comm = PETSC_COMM_WORLD;
