@@ -1,3 +1,4 @@
+
 // Copyright (c) 2017, Lawrence Livermore National Security, LLC. Produced at
 // the Lawrence Livermore National Laboratory. LLNL-CODE-734707. All Rights
 // reserved. See files LICENSE and NOTICE for details.
@@ -272,6 +273,7 @@ static int DC(void *ctx, CeedInt Q,
                                  ( dE[2]/rho - E*drho[2]/(rho*rho) -
                                  ( u[0]*du[0][2] + u[1]*du[1][2] + u[2]*du[2][2]) - g) / cv
                                 };
+    
     // -- Fuvisc
     //      Symmetric 3x3 matrix
     const CeedScalar Fu[6]    =  { mu * (du[0][0] * (2 + lambda) +
