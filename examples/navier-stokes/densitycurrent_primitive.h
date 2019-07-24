@@ -182,6 +182,7 @@ static int DCprim(void *ctx, CeedInt Q,
   const CeedScalar k          = context[2];
   const CeedScalar cv         = context[3];
   const CeedScalar g          = context[5];
+  const CeedScalar Rd         = context[6];
 
   CeedPragmaOMP(simd)
   // Quadrature Point Loop
@@ -281,25 +282,25 @@ static int DCprim(void *ctx, CeedInt Q,
     // --------Convective Flux
               //A0inv * Ai * (Yi * wBJ)                  
 
-    dv[i+(0+5*0)*Q]  = u[0] * dP_dX[0] + (Rd**2*T*rho*(cv/Rd + 1)/cv) * du_dX[0][0]
-    dv[i+(0+5*1)*Q]  = u[1] * dP_dX[1] + (Rd**2*T*rho*(cv/Rd + 1)/cv) * du_dX[1][1]
-    dv[i+(0+5*2)*Q]  = u[2] * dP_dX[2] + (Rd**2*T*rho*(cv/Rd + 1)/cv) * du_dX[2][2]
+    dv[i+(0+5*0)*Q]  = u[0] * dP_dX[0] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[0][0];
+    dv[i+(0+5*1)*Q]  = u[1] * dP_dX[1] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[1][1];
+    dv[i+(0+5*2)*Q]  = u[2] * dP_dX[2] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[2][2];
 
-    dv[i+(1+5*0)*Q]  = u[0] * du_dX[0][0] + dP_dX[0]/rho
-    dv[i+(1+5*1)*Q]  = u[1] * du_dX[0][1]
-    dv[i+(1+5*2)*Q]  = u[2] * du_dX[0][2]
+    dv[i+(1+5*0)*Q]  = u[0] * du_dX[0][0] + dP_dX[0]/rho;
+    dv[i+(1+5*1)*Q]  = u[1] * du_dX[0][1];
+    dv[i+(1+5*2)*Q]  = u[2] * du_dX[0][2];
 
-    dv[i+(2+5*0)*Q]  = u[0] * du_dX[1][0]
-    dv[i+(2+5*1)*Q]  = u[1] * du_dX[1][1] + dP_dX[1]/rho
-    dv[i+(2+5*2)*Q]  = u[2] * du_dX[1][2]
+    dv[i+(2+5*0)*Q]  = u[0] * du_dX[1][0];
+    dv[i+(2+5*1)*Q]  = u[1] * du_dX[1][1] + dP_dX[1]/rho;
+    dv[i+(2+5*2)*Q]  = u[2] * du_dX[1][2];
 
-    dv[i+(3+5*0)*Q]  = u[0] * du_dX[2][0]
-    dv[i+(3+5*1)*Q]  = u[1] * du_dX[2][1]  
-    dv[i+(3+5*2)*Q]  = u[2] * du_dX[2][2] + dP_dX[2]/rho
+    dv[i+(3+5*0)*Q]  = u[0] * du_dX[2][0];
+    dv[i+(3+5*1)*Q]  = u[1] * du_dX[2][1]; 
+    dv[i+(3+5*2)*Q]  = u[2] * du_dX[2][2] + dP_dX[2]/rho;
 
-    dv[i+(4+5*0)*Q]  = u[0] * dT_dX[0] + (Rd*T/cv) * du_dX[0][0]
-    dv[i+(4+5*1)*Q]  = u[1] * dT_dX[1] + (Rd*T/cv) * du_dX[1][1]
-    dv[i+(4+5*2)*Q]  = u[2] * dT_dX[2] + (Rd*T/cv) * du_dX[2][2]
+    dv[i+(4+5*0)*Q]  = u[0] * dT_dX[0] + (Rd*T/cv) * du_dX[0][0];
+    dv[i+(4+5*1)*Q]  = u[1] * dT_dX[1] + (Rd*T/cv) * du_dX[1][1];
+    dv[i+(4+5*2)*Q]  = u[2] * dT_dX[2] + (Rd*T/cv) * du_dX[2][2];
                       
 
     // Body Force
