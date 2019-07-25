@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
   Units units;
   char ceedresource[4096] = "/cpu/self";
   PetscFunctionList icsflist = NULL, qflist = NULL;
-  char problemtype[PETSC_MAX_PATH_LEN] = "advection_advection";
+  char problemtype[PETSC_MAX_PATH_LEN] = "advection";
   PetscInt localNelem, lsize, steps,
            melem[3], mdof[3], p[3], irank[3], ldof[3];
   PetscMPIInt size, rank;
@@ -486,6 +486,7 @@ int main(int argc, char **argv) {
   CeedInt gsize;
   ierr = VecGetSize(Q, &gsize); CHKERRQ(ierr);
   gsize /= 5;
+  ierr = PetscPrintf(comm, "problemtype: %s\n", problemtype); CHKERRQ(ierr);
   ierr = PetscPrintf(comm, "Global dofs: %D\n", gsize); CHKERRQ(ierr);
   ierr = PetscPrintf(comm, "Process decomposition: %D %D %D\n",
                      p[0], p[1], p[2]); CHKERRQ(ierr);
@@ -713,7 +714,7 @@ int main(int argc, char **argv) {
   void (*icsfp)(void);
   PetscFunctionListFind(icsflist, problemtype, &icsfp);
   if (!icsfp)
-      return CeedError(ceed, 1, "Function not found in the list");
+      return CeedError(ceed, 1, "Function not found in the list: %s", problemtype);
   char str[PETSC_MAX_PATH_LEN] = __FILE__":ICs";
   PetscStrlcat(str, problemtype, PETSC_MAX_PATH_LEN);
   CeedQFunctionCreateInterior(ceed, 1,
