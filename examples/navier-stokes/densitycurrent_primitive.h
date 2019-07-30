@@ -38,16 +38,10 @@
 //       Pibar      = g**2 (exp( - N**2 z / g ) - 1) / (cp theta0 N**2)
 //       deltaPi    = 0 (hydrostatic balance)
 //   
-//   Velocity:
-//     ui = 0
 //
 //  Boundary Conditions:
-//    Mass Density:
-//      0.0 flux
-//    Momentum Density:
-//      0.0
-//    Energy Density:
-//      0.0 flux
+//       Velocity:
+//              ui = 0
 //
 // Constants:
 //   theta0          ,  Potential temperature constant
@@ -62,7 +56,6 @@
 //   lx              ,  Characteristic length scale of domain in x
 //   ly              ,  Characteristic length scale of domain in y
 //   lz              ,  Characteristic length scale of domain in z
-//
 // *****************************************************************************
 static int ICsDCprim(void *ctx, CeedInt Q,
                  const CeedScalar *const *in, CeedScalar *const *out) {
@@ -149,7 +142,7 @@ static int ICsDCprim(void *ctx, CeedInt Q,
 // This is Euler Equation in primitive form with state
 //   variables of pressure, velocity, and temperature.
 //
-// Euler Equations:
+// Euler Equation:
 //   drho/dt + div( U )                               = 0
 //   dU/dt   + div( rho (u x u) + P I3 ) + rho g khat = 0
 //   dE/dt   + div( (E + P) u )                       = 0
@@ -160,14 +153,10 @@ static int ICsDCprim(void *ctx, CeedInt Q,
 //     State Variables: q = ( P, u1, u2, u3, T )
 //
 // Constants:
-//   lambda = - 2 / 3,  From Stokes hypothesis
-//   mu              ,  Dynamic viscosity
-//   k               ,  Thermal conductivity
 //   cv              ,  Specific heat, constant volume
 //   cp              ,  Specific heat, constant pressure
 //   g               ,  Gravity
-//  
-//
+//   Rd     = cp - cv,  Specific heat difference
 // *****************************************************************************
 static int DCprim(void *ctx, CeedInt Q,
               const CeedScalar *const *in, CeedScalar *const *out) {
@@ -177,9 +166,6 @@ static int DCprim(void *ctx, CeedInt Q,
   CeedScalar *v = out[0], *dv = out[1];
   // Context
   const CeedScalar *context = (const CeedScalar*)ctx;
-  const CeedScalar lambda     = context[0];
-  const CeedScalar mu         = context[1];
-  const CeedScalar k          = context[2];
   const CeedScalar cv         = context[3];
   const CeedScalar g          = context[5];
   const CeedScalar Rd         = context[6];
@@ -188,38 +174,26 @@ static int DCprim(void *ctx, CeedInt Q,
   // Quadrature Point Loop
   for (CeedInt i=0; i<Q; i++) {
 
-
     //--------------------------------SETUP---------------------------------//
-
     // --------- Interp in
-
-    
     const CeedScalar P       =   q[i+0*Q];
-    
     
     const CeedScalar u[3]    = { q[i+1*Q],
                                  q[i+2*Q],
                                  q[i+3*Q]
                                };
     
-
     const CeedScalar T       = q[i+4*Q];  
-
 
     // -- rho
     const CeedScalar rho     =   P/(Rd*T);
 
-
     // --------- Grad in
-
-   
-
     const CeedScalar dP[3]   =  { dq[i+(0+5*0)*Q],
                                   dq[i+(0+5*1)*Q],
                                   dq[i+(0+5*2)*Q]
                              };
     
-
     const CeedScalar du[3][3]= { {dq[i+(1+5*0)*Q], 
                                   dq[i+(1+5*1)*Q], 
                                   dq[i+(1+5*2)*Q]},  
@@ -239,12 +213,10 @@ static int DCprim(void *ctx, CeedInt Q,
 
 
     // --- Interp-to-Interp qdata
-
     const CeedScalar wJ       =   qdata[i+ 0*Q];     
 
 
     // --- Interp-to-Grad qdata
-
     const CeedScalar wBJ[9]   = { qdata[i+ 1*Q],
                                   qdata[i+ 2*Q],
                                   qdata[i+ 3*Q],
@@ -256,9 +228,7 @@ static int DCprim(void *ctx, CeedInt Q,
                                   qdata[i+ 9*Q]
                                 };
 
-
     //------------ dY/dX
-
     const CeedScalar dP_dX[3]  = { dP[0] * wBJ[0] + dP[1] * wBJ[1] + dP[2] * wBJ[2],
                                    dP[0] * wBJ[3] + dP[1] * wBJ[4] + dP[2] * wBJ[5],
                                    dP[0] * wBJ[6] + dP[1] * wBJ[7] + dP[2] * wBJ[8]
@@ -282,44 +252,55 @@ static int DCprim(void *ctx, CeedInt Q,
                                    dT[0] * wBJ[6] + dT[1] * wBJ[7] + dT[2] * wBJ[8]
                                  };                    
                                                  
-
     //------------------------------>  THE PHYSICS  <------------------------------//
-
 
     // --------Convective Flux
               //A0inv * Ai * (Y,i * wBJ)                  
 
-    dv[i+(0+5*0)*Q]  = u[0] * dP_dX[0] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[0][0];
-    dv[i+(0+5*1)*Q]  = u[1] * dP_dX[1] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[1][1];
-    dv[i+(0+5*2)*Q]  = u[2] * dP_dX[2] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[2][2];
+    dv[i+(0+5*0)*Q]  = 0;
+    dv[i+(0+5*1)*Q]  = 0;
+    dv[i+(0+5*2)*Q]  = 0;
 
-    dv[i+(1+5*0)*Q]  = u[0] * du_dX[0][0] + dP_dX[0]/rho;
-    dv[i+(1+5*1)*Q]  = u[1] * du_dX[0][1];
-    dv[i+(1+5*2)*Q]  = u[2] * du_dX[0][2];
+    dv[i+(1+5*0)*Q]  = 0;
+    dv[i+(1+5*1)*Q]  = 0;
+    dv[i+(1+5*2)*Q]  = 0;
 
-    dv[i+(2+5*0)*Q]  = u[0] * du_dX[1][0];
-    dv[i+(2+5*1)*Q]  = u[1] * du_dX[1][1] + dP_dX[1]/rho;
-    dv[i+(2+5*2)*Q]  = u[2] * du_dX[1][2];
+    dv[i+(2+5*0)*Q]  = 0;
+    dv[i+(2+5*1)*Q]  = 0;
+    dv[i+(2+5*2)*Q]  = 0;
 
-    dv[i+(3+5*0)*Q]  = u[0] * du_dX[2][0];
-    dv[i+(3+5*1)*Q]  = u[1] * du_dX[2][1]; 
-    dv[i+(3+5*2)*Q]  = u[2] * du_dX[2][2] + dP_dX[2]/rho;
+    dv[i+(3+5*0)*Q]  = 0;
+    dv[i+(3+5*1)*Q]  = 0; 
+    dv[i+(3+5*2)*Q]  = 0;
 
-    dv[i+(4+5*0)*Q]  = u[0] * dT_dX[0] + (Rd*T/cv) * du_dX[0][0];
-    dv[i+(4+5*1)*Q]  = u[1] * dT_dX[1] + (Rd*T/cv) * du_dX[1][1];
-    dv[i+(4+5*2)*Q]  = u[2] * dT_dX[2] + (Rd*T/cv) * du_dX[2][2];
+    dv[i+(4+5*0)*Q]  = 0;
+    dv[i+(4+5*1)*Q]  = 0;
+    dv[i+(4+5*2)*Q]  = 0;
                       
 
-    // Body Force
-             // A0inv * F
+    //---------Non-divergence terms
+             // A0inv * (Ai * Y,i - F)
 
-    v[i+0*Q] = 0; 
-    v[i+1*Q] = 0;
-    v[i+2*Q] = 0;
-    v[i+3*Q] = - g * wJ;       
-    v[i+4*Q] = 0;      
+    v[i+0*Q] = u[0] * dP_dX[0] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[0][0] +
+               u[1] * dP_dX[1] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[1][1] +
+               u[2] * dP_dX[2] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[2][2]; 
+               
+    v[i+1*Q] = u[0] * du_dX[0][0] + dP_dX[0]/rho +
+               u[1] * du_dX[0][1] +
+               u[2] * du_dX[0][2];
 
+    v[i+2*Q] = u[0] * du_dX[1][0] +
+               u[1] * du_dX[1][1] + dP_dX[1]/rho +
+               u[2] * du_dX[1][2];
 
+    v[i+3*Q] = u[0] * du_dX[2][0] +
+               u[1] * du_dX[2][1] +
+               u[2] * du_dX[2][2] + dP_dX[2]/rho -
+               g * wJ; 
+
+    v[i+4*Q] = u[0] * dT_dX[0] + (Rd*T/cv) * du_dX[0][0] +
+               u[1] * dT_dX[1] + (Rd*T/cv) * du_dX[1][1] +
+               u[2] * dT_dX[2] + (Rd*T/cv) * du_dX[2][2];      
 
 
   } // End Quadrature Point Loop
