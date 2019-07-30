@@ -193,14 +193,18 @@ static int DCprim(void *ctx, CeedInt Q,
 
     // --------- Interp in
 
+    
     const CeedScalar P       =   q[i+0*Q];
-
+    
+    
     const CeedScalar u[3]    = { q[i+1*Q],
                                  q[i+2*Q],
                                  q[i+3*Q]
                                };
+    
 
-    const CeedScalar T       =   q[i+4*Q];
+    const CeedScalar T       = q[i+4*Q];  
+
 
     // -- rho
     const CeedScalar rho     =   P/(Rd*T);
@@ -208,10 +212,13 @@ static int DCprim(void *ctx, CeedInt Q,
 
     // --------- Grad in
 
+   
+
     const CeedScalar dP[3]   =  { dq[i+(0+5*0)*Q],
                                   dq[i+(0+5*1)*Q],
                                   dq[i+(0+5*2)*Q]
                              };
+    
 
     const CeedScalar du[3][3]= { {dq[i+(1+5*0)*Q], 
                                   dq[i+(1+5*1)*Q], 
@@ -223,7 +230,7 @@ static int DCprim(void *ctx, CeedInt Q,
                                   dq[i+(3+5*1)*Q], 
                                   dq[i+(3+5*2)*Q]}  
                                };
-
+ 
     const CeedScalar dT[3]   = {  dq[i+(4+5*0)*Q],
                                   dq[i+(4+5*1)*Q],
                                   dq[i+(4+5*2)*Q]
@@ -280,7 +287,7 @@ static int DCprim(void *ctx, CeedInt Q,
 
 
     // --------Convective Flux
-              //A0inv * Ai * (Yi * wBJ)                  
+              //A0inv * Ai * (Y,i * wBJ)                  
 
     dv[i+(0+5*0)*Q]  = u[0] * dP_dX[0] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[0][0];
     dv[i+(0+5*1)*Q]  = u[1] * dP_dX[1] + (Rd*Rd*T*rho*(cv/Rd + 1)/cv) * du_dX[1][1];
@@ -304,12 +311,13 @@ static int DCprim(void *ctx, CeedInt Q,
                       
 
     // Body Force
+             // A0inv * F
 
     v[i+0*Q] = 0; 
     v[i+1*Q] = 0;
     v[i+2*Q] = 0;
-    v[i+3*Q] = - rho*g      * wJ;       
-    v[i+4*Q] = - rho*g*u[2] * wJ;      
+    v[i+3*Q] = - g * wJ;       
+    v[i+4*Q] = 0;      
 
 
 
