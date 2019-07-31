@@ -14,27 +14,11 @@
 // software, applications, hardware, advanced system engineering and early
 // testbed platforms, in support of the nation's exascale computing imperative.
 
-#include "ceed-blocked.h"
-
-static int CeedInit_Blocked(const char *resource, Ceed ceed) {
-  int ierr;
-  if (strcmp(resource, "/cpu/self")
-      && strcmp(resource, "/cpu/self/ref/blocked"))
-    return CeedError(ceed, 1, "Blocked backend cannot use resource: %s", resource);
-
-  // Create refrence CEED that implementation will be dispatched
-  //   through unless overridden
-  Ceed ceedref;
-  CeedInit("/cpu/self/ref/serial", &ceedref);
-  ierr = CeedSetDelegate(ceed, ceedref); CeedChk(ierr);
-
-  ierr = CeedSetBackendFunction(ceed, "Ceed", ceed, "OperatorCreate",
-                                CeedOperatorCreate_Blocked); CeedChk(ierr);
-
-  return 0;
+inline __device__ void setup(void *ctx, const CeedInt Q, const CeedScalar *w, CeedScalar *qdata) {
+  *qdata = *w;
 }
 
-__attribute__((constructor))
-static void Register(void) {
-  CeedRegister("/cpu/self/ref/blocked", CeedInit_Blocked, 55);
+inline __device__ void mass(void *ctx, const CeedInt Q, const CeedScalar *qdata, const CeedScalar *u, CeedScalar *v) {
+	CeedScalar *scale = (CeedScalar *)ctx;
+  *v = scale[4] * *qdata * *u;
 }
