@@ -30,12 +30,11 @@ const char help[] = "Solve Navier-Stokes using PETSc and libCEED\n";
 #include <ceed.h>
 #include <stdbool.h>
 #include <petscsys.h>
-#include "common_primitive.h"
 #include "common.h"
 #include "advection.h"
-#include "advection_primitive.h"
 #include "densitycurrent.h"
-#include "densitycurrent_primitive.h"
+#include "euler_cons.h"
+#include "euler_prim.h"
 
 // Utility function, compute three factors of an integer
 static void Split3(PetscInt size, PetscInt m[3], bool reverse) {
@@ -341,13 +340,13 @@ int main(int argc, char **argv) {
 
   // Set up problem type command line option
   PetscFunctionListAdd(&icsflist, "advection", &ICsAdvection);
-  PetscFunctionListAdd(&icsflist, "advection_primitive", &ICsAdvection);
+  PetscFunctionListAdd(&icsflist, "euler_cons", &ICsEulerCons);
   PetscFunctionListAdd(&icsflist, "density_current", &ICsDC);
-  PetscFunctionListAdd(&icsflist, "density_current_primitive", &ICsDCprim);
+  PetscFunctionListAdd(&icsflist, "euler_prim", &ICsDCprim);
   PetscFunctionListAdd(&qflist, "advection", &Advection);
-  PetscFunctionListAdd(&qflist, "advection_primitive", &Advection);
+  PetscFunctionListAdd(&qflist, "euler_cons", &EulerCons);
   PetscFunctionListAdd(&qflist, "density_current", &DC);
-  PetscFunctionListAdd(&qflist, "density_current_primitive", &DCprim);
+  PetscFunctionListAdd(&qflist, "euler_prim", &DCprim);
 
   // Parse command line options
   comm = PETSC_COMM_WORLD;
