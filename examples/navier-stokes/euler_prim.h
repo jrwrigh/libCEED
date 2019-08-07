@@ -5,8 +5,8 @@
 //   Semi-Implicit Formulations of the Navier-Stokes Equations: Application to
 //   Nonhydrostatic Atmospheric Modeling, Giraldo, Restelli, and Lauter (2010).
 
-#ifndef densitycurrent_primitive_h
-#define densitycurrent_primitive_h
+#ifndef euler_prim_h
+#define euler_prim_h
 
 #ifndef CeedPragmaOMP
 #  ifdef _OPENMP
