@@ -169,31 +169,27 @@ static int ICsEulerStab(void *ctx, CeedInt Q,
 // State Variables: q = ( rho, U1, U2, U3, E )
 //   rho - Mass Density
 //   Ui  - Momentum Density   ,  Ui = rho ui
-//   E   - Total Energy Density,  E  = rho cv T + rho (u u) / 2
+//   E   - Total Energy Density,  E  = rho cv T + rho (u u) / 2 + rho g z
 //
 // Navier-Stokes Equations:
 //   drho/dt + div( U )                                = 0
-//   dU/dt   + div( rho (u x u) + P I3 ) - rho g khat  = div( Fu )
-//   dE/dt   + div( (E + P) u )          - rho g u[2]  = div( Fe )
+//   dU/dt   + div( rho (u x u) + P I3 ) + rho g khat  = 0
+//   dE/dt   + div( (E + P) u )         + rho g u[z]   = 0
 //
-// Viscous Stress:
-//   Fu = mu (grad( u ) + grad( u )^T + lambda div ( u ) I3)
-// Thermal Stress:
-//   Fe = u Fu + k grad( T )
 //
 // Equation of State:
 //   P = (gamma - 1) (E - rho (u u) / 2)
 //********************************************
 // Stabilization:
-
-// Tau = [TauC, TauM, TauM, TauM, TauE]
-//     f1 = rho * squrt(2/dt + ui uj gij) 
-//          gij = dXidX * dXidX
-// TauC = f1/8gii =  f1*h^2/8*4*(1+1+1)       
-// TauM = 1/f1
-// TauE = TauM/cv
 //
+//   Tau = [TauC, TauM, TauM, TauM, TauE]
+//      f1 = rho  sqrt(2 / (C1  dt) + ui uj gij)    C1 = 1.
+//           gij = dXi/dX * dXi/dX 
+// TauC = Cc f1 / (8 gii)                           Cc = 1.  
+// TauM = 1 / f1
+// TauE = TauM / (Ce cv)                            Ce =1.
 //
+//  SUPG = Galerkin + grad(v) . ( Ai^T * Tau * (Aj q,j) )
 //
 // Constants:
 //   lambda = - 2 / 3,  From Stokes hypothesis
@@ -202,7 +198,7 @@ static int ICsEulerStab(void *ctx, CeedInt Q,
 //   cv              ,  Specific heat, constant volume
 //   cp              ,  Specific heat, constant pressure
 //   g               ,  Gravity
-//   gamma  = cp / cv,  Specific heat ratio
+//   gamma  = cp / cv,  Specific heat ratio: (1 + cp/cv)
 //
 // *****************************************************************************
 static int EulerStab(void *ctx, CeedInt Q,
@@ -231,6 +227,7 @@ static int EulerStab(void *ctx, CeedInt Q,
                                    q[i+3*Q] / rho
                                  };
     const CeedScalar E        =    q[i+4*Q];
+
     // -- Grad in
     const CeedScalar drho[3]  =  { dq[i+(0+5*0)*Q],
                                    dq[i+(0+5*1)*Q],
@@ -250,19 +247,20 @@ static int EulerStab(void *ctx, CeedInt Q,
                                    dq[i+(4+5*1)*Q],
                                    dq[i+(4+5*2)*Q]
                                  };
+
     // -- Interp-to-Interp qdata
     const CeedScalar wJ       =    qdata[i+ 0*Q];
     // -- Interp-to-Grad qdata
     //      Symmetric 3x3 matrix
-    const CeedScalar wBJ[9]   =  { qdata[i+ 1*Q],
-                                   qdata[i+ 2*Q],
-                                   qdata[i+ 3*Q],
-                                   qdata[i+ 4*Q],
-                                   qdata[i+ 5*Q],
-                                   qdata[i+ 6*Q],
-                                   qdata[i+ 7*Q],
-                                   qdata[i+ 8*Q],
-                                   qdata[i+ 9*Q]
+    const CeedScalar wBJ[9]   =  { qdata[i+1*Q],
+                                   qdata[i+2*Q],
+                                   qdata[i+3*Q],
+                                   qdata[i+4*Q],
+                                   qdata[i+5*Q],
+                                   qdata[i+6*Q],
+                                   qdata[i+7*Q],
+                                   qdata[i+8*Q],
+                                   qdata[i+9*Q]
                                  };
     // -- Grad-to-Grad qdata
     const CeedScalar wBBJ[6]  =  { qdata[i+10*Q],
@@ -271,7 +269,8 @@ static int EulerStab(void *ctx, CeedInt Q,
                                    qdata[i+13*Q],
                                    qdata[i+14*Q],
                                    qdata[i+15*Q]
-                                 };                                                      
+                                 };  
+
     //--------- dU/dX
     const CeedScalar drhodX[3]  = { drho[0] * wBJ[0] + drho[1] * wBJ[1] + drho[2] * wBJ[2],
                                     drho[0] * wBJ[3] + drho[1] * wBJ[4] + drho[2] * wBJ[5],
@@ -295,15 +294,18 @@ static int EulerStab(void *ctx, CeedInt Q,
     // ke = kinetic energy
     const CeedScalar ke = (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/2;
     // P = pressure
-    const CeedScalar P  =  ( E - ke * rho) * (gamma - 1);
+    const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1);
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     const CeedScalar dt = 0.0001;        //1.e-5;
     const CeedScalar uiujgij = ( wBBJ[0]*u[0]*u[0] + wBBJ[3]*u[1]*u[1] + wBBJ[5]*u[2]*u[2] + 
                                  2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2])/wJ;
-    const CeedScalar f1   = rho * sqrt( (2/dt) + uiujgij );
-    const CeedScalar TauC = f1/(8*(wBBJ[0] + wBBJ[3] + wBBJ[5]));      
+    const CeedScalar C1 =1.;
+    const CeedScalar Cc =1.;
+    const CeedScalar Ce =1.; 
+    const CeedScalar f1   = rho * sqrt( 2/(C1 * dt) + uiujgij );
+    const CeedScalar TauC = (Cc * f1 * wJ) / (8*(wBBJ[0] + wBBJ[3] + wBBJ[5]));      
     const CeedScalar TauM = 1/f1;
-    const CeedScalar TauE = TauM/cv;
+    const CeedScalar TauE = TauM/(Ce * cv);
     
     //-- Stabilizing terms
     // --- Stab[5][3] = Ai^T * Tau * Aj * U,j

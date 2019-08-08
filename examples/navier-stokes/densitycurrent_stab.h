@@ -174,7 +174,7 @@ static int ICsDCStab(void *ctx, CeedInt Q,
 // Navier-Stokes Equations:
 //   drho/dt + div( U )                               = 0
 //   dU/dt   + div( rho (u x u) + P I3 ) + rho g khat = div( Fu )
-//   dE/dt   + div( (E + P) u )                       = div( Fe )
+//   dE/dt   + div( (E + P) u )          + rho g u[z] = div( Fe )
 //
 // Viscous Stress:
 //   Fu = mu (grad( u ) + grad( u )^T + lambda div ( u ) I3)
@@ -186,6 +186,17 @@ static int ICsDCStab(void *ctx, CeedInt Q,
 //
 // Temperature:
 //   T = (E / rho - (u u) / 2 ) / cv
+//********************************************
+// Stabilization:
+//
+//   Tau = [TauC, TauM, TauM, TauM, TauE]
+//      f1 = rho  sqrt(2 / (C1  dt) + ui uj gij)    C1 = 1.
+//           gij = dXi/dX * dXi/dX 
+// TauC = Cc f1 / (8 gii)                           Cc = 1.  
+// TauM = 1 / f1
+// TauE = TauM / (Ce cv)                            Ce =1.
+//
+//  SUPG = Galerkin + grad(v) . ( Ai^T * Tau * (Aj q,j) )
 //
 // Constants:
 //   lambda = - 2 / 3,  From Stokes hypothesis
@@ -337,12 +348,15 @@ static int DCStab(void *ctx, CeedInt Q,
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     const CeedScalar dt = 0.0001;    //1.e-5;
     const CeedScalar uiujgij = ( wBBJ[0]*u[0]*u[0] + wBBJ[3]*u[1]*u[1] + wBBJ[5]*u[2]*u[2] + 
-                               2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2])/wJ;
-    const CeedScalar f1   = rho * sqrt( (2/dt) + uiujgij );                   
-    const CeedScalar TauC =  f1/(8*(wBBJ[0] + wBBJ[3] + wBBJ[5]));      
+                                 2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2])/wJ;
+    const CeedScalar C1 =1.;
+    const CeedScalar Cc =1.;
+    const CeedScalar Ce =1.; 
+    const CeedScalar f1   = rho * sqrt( 2/(C1 * dt) + uiujgij );
+    const CeedScalar TauC = (Cc * f1 * wJ) / (8*(wBBJ[0] + wBBJ[3] + wBBJ[5]));      
     const CeedScalar TauM = 1/f1;
-    const CeedScalar TauE = TauM/cv;
-
+    const CeedScalar TauE = TauM/(Ce * cv);
+    
     //- Stabilizing terms
     //----- Convection Ai^T * Tau * Aj*U,j
     const CeedScalar S_conv[5][3] ={{TauM*(u[0]*u[0] - (Rd*ke)/cv)*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] -
