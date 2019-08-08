@@ -173,8 +173,8 @@ static int ICsDCStab(void *ctx, CeedInt Q,
 //
 // Navier-Stokes Equations:
 //   drho/dt + div( U )                               = 0
-//   dU/dt   + div( rho (u x u) + P I3 ) + rho g khat = div( Fu )
-//   dE/dt   + div( (E + P) u )          + rho g u[z] = div( Fe )
+//   dU/dt   + div( rho (u x u) + P I3 ) - rho g khat = div( Fu )
+//   dE/dt   + div( (E + P) u )          - rho g u[z] = div( Fe )
 //
 // Viscous Stress:
 //   Fu = mu (grad( u ) + grad( u )^T + lambda div ( u ) I3)
@@ -342,21 +342,21 @@ static int DCStab(void *ctx, CeedInt Q,
                                  };   
 
     // ke = kinetic energy
-    const CeedScalar ke = (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/2;
+    const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
     // P = pressure
-    const CeedScalar P  =  ( E - ke * rho) * (gamma - 1);
+    const CeedScalar P  =  ( E - ke * rho) * (gamma - 1.);
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     const CeedScalar dt = 0.0001;    //1.e-5;
     const CeedScalar uiujgij = ( wBBJ[0]*u[0]*u[0] + wBBJ[3]*u[1]*u[1] + wBBJ[5]*u[2]*u[2] + 
-                                 2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2])/wJ;
-    const CeedScalar C1 =1.;
-    const CeedScalar Cc =1.;
-    const CeedScalar Ce =1.; 
-    const CeedScalar f1   = rho * sqrt( 2/(C1 * dt) + uiujgij );
-    const CeedScalar TauC = (Cc * f1 * wJ) / (8*(wBBJ[0] + wBBJ[3] + wBBJ[5]));      
-    const CeedScalar TauM = 1/f1;
-    const CeedScalar TauE = TauM/(Ce * cv);
-    
+                                2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2] )/wJ;
+    const CeedScalar C1   = 1.;
+    const CeedScalar Cc   = 1.;
+    const CeedScalar Ce   = 1.; 
+    const CeedScalar f1   = rho * sqrt( 2. / (C1 * dt) + uiujgij );
+    const CeedScalar TauC = (Cc * f1) / ( 8 * (wBBJ[0] + wBBJ[3] + wBBJ[5]) / wJ );      
+    const CeedScalar TauM = 1./f1;
+    const CeedScalar TauE = TauM / (Ce * cv);
+
     //- Stabilizing terms
     //----- Convection Ai^T * Tau * Aj*U,j
     const CeedScalar S_conv[5][3] ={{TauM*(u[0]*u[0] - (Rd*ke)/cv)*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] -
@@ -595,9 +595,9 @@ static int DCStab(void *ctx, CeedInt Q,
     dv[i+(4+5*1)*Q] -= Fe[0]*wBBJ[1] + Fe[1]*wBBJ[3] + Fe[2]*wBBJ[4];
     dv[i+(4+5*2)*Q] -= Fe[0]*wBBJ[2] + Fe[1]*wBBJ[4] + Fe[2]*wBBJ[5];
     //----------Body Force (F)
-    v[i+0*Q] = 0;
-    v[i+1*Q] = 0;
-    v[i+2*Q] = 0;
+    v[i+0*Q] = 0.;
+    v[i+1*Q] = 0.;
+    v[i+2*Q] = 0.;
     v[i+3*Q] = rho*g      * wJ;
     v[i+4*Q] = rho*g*u[2] * wJ;
     // ---- Convective Stabilizing Terms

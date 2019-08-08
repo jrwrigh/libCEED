@@ -173,8 +173,8 @@ static int ICsEulerStab(void *ctx, CeedInt Q,
 //
 // Navier-Stokes Equations:
 //   drho/dt + div( U )                                = 0
-//   dU/dt   + div( rho (u x u) + P I3 ) + rho g khat  = 0
-//   dE/dt   + div( (E + P) u )         + rho g u[z]   = 0
+//   dU/dt   + div( rho (u x u) + P I3 ) - rho g khat  = 0  
+//   dE/dt   + div( (E + P) u )          - rho g u[z]  = 0
 //
 //
 // Equation of State:
@@ -292,20 +292,20 @@ static int EulerStab(void *ctx, CeedInt Q,
                                  }; 
 
     // ke = kinetic energy
-    const CeedScalar ke = (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/2;
+    const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
     // P = pressure
-    const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1);
+    const CeedScalar P  =  ( E - ke * rho) * (gamma - 1.);
     // Tau = [TauC, TauM, TauM, TauM, TauE]
-    const CeedScalar dt = 0.0001;        //1.e-5;
+    const CeedScalar dt = 0.0001;    //1.e-5;
     const CeedScalar uiujgij = ( wBBJ[0]*u[0]*u[0] + wBBJ[3]*u[1]*u[1] + wBBJ[5]*u[2]*u[2] + 
-                                 2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2])/wJ;
-    const CeedScalar C1 =1.;
-    const CeedScalar Cc =1.;
-    const CeedScalar Ce =1.; 
-    const CeedScalar f1   = rho * sqrt( 2/(C1 * dt) + uiujgij );
-    const CeedScalar TauC = (Cc * f1 * wJ) / (8*(wBBJ[0] + wBBJ[3] + wBBJ[5]));      
-    const CeedScalar TauM = 1/f1;
-    const CeedScalar TauE = TauM/(Ce * cv);
+                                2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2] )/wJ;
+    const CeedScalar C1   = 1.;
+    const CeedScalar Cc   = 1.;
+    const CeedScalar Ce   = 1.; 
+    const CeedScalar f1   = rho * sqrt( 2. / (C1 * dt) + uiujgij );
+    const CeedScalar TauC = (Cc * f1) / ( 8 * (wBBJ[0] + wBBJ[3] + wBBJ[5]) / wJ );      
+    const CeedScalar TauM = 1./f1;
+    const CeedScalar TauE = TauM / (Ce * cv);
     
     //-- Stabilizing terms
     // --- Stab[5][3] = Ai^T * Tau * Aj * U,j
@@ -509,7 +509,7 @@ static int EulerStab(void *ctx, CeedInt Q,
                                      { TauE*g*rho*u[0]*u[2]*(Rd/cv + 1),
                                        TauE*g*rho*u[1]*u[2]*(Rd/cv + 1),
                                        TauE*g*rho*(Rd/cv + 1)*u[2]*u[2]  + (Rd*TauM*g*rho)/cv } 
-                                   };
+                                   };                    
     // The Physics
     // -- Density--- u rho
     dv[i+(0+5*0)*Q]  = rho*u[0]*wBJ[0] + rho*u[1]*wBJ[1] + rho*u[2]*wBJ[2];
@@ -530,9 +530,9 @@ static int EulerStab(void *ctx, CeedInt Q,
     dv[i+(4+5*1)*Q]  = (E + P)*(u[0]*wBJ[3] + u[1]*wBJ[4] + u[2]*wBJ[5]);
     dv[i+(4+5*2)*Q]  = (E + P)*(u[0]*wBJ[6] + u[1]*wBJ[7] + u[2]*wBJ[8]);
     //----------Body Force (F)
-    v[i+0*Q] = 0;
-    v[i+1*Q] = 0;
-    v[i+2*Q] = 0;
+    v[i+0*Q] = 0.;
+    v[i+1*Q] = 0.;
+    v[i+2*Q] = 0.;
     v[i+3*Q] = rho*g      * wJ;
     v[i+4*Q] = rho*g*u[2] * wJ;
     // ---- Convective Stabilizing Terms
@@ -574,7 +574,8 @@ static int EulerStab(void *ctx, CeedInt Q,
 
     dv[i+(4+5*0)*Q] += S_Fb[4][0] * wBJ[0] + S_Fb[4][1] * wBJ[1] + S_Fb[4][2] * wBJ[2];
     dv[i+(4+5*1)*Q] += S_Fb[4][0] * wBJ[3] + S_Fb[4][1] * wBJ[4] + S_Fb[4][2] * wBJ[5];
-    dv[i+(4+5*2)*Q] += S_Fb[4][0] * wBJ[6] + S_Fb[4][1] * wBJ[7] + S_Fb[4][2] * wBJ[8];    
+    dv[i+(4+5*2)*Q] += S_Fb[4][0] * wBJ[6] + S_Fb[4][1] * wBJ[7] + S_Fb[4][2] * wBJ[8]; 
+    
 
   } // End Quadrature Point Loop
 
