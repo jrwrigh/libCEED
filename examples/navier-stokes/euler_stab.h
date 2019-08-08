@@ -60,7 +60,7 @@
 //
 // Conversion to Conserved Variables:
 //   rho = P0 Pi**(cv/Rd) / (Rd theta)
-//   E   = rho (cv theta Pi + (u u)/2 + g z)
+//   E   = rho ( cv theta Pi + (u u)/2 )
 //
 //  Boundary Conditions:
 //    Mass Density:
@@ -138,7 +138,7 @@ static int ICsEulerStab(void *ctx, CeedInt Q,
     q0[i+1*Q] = 0.0;
     q0[i+2*Q] = 0.0;
     q0[i+3*Q] = 0.0;
-    q0[i+4*Q] = rho * (cv*theta*Pi + g*z);
+    q0[i+4*Q] = rho * cv * theta * Pi;
 
     // Homogeneous Dirichlet Boundary Conditions for Momentum
     if ( fabs(x - 0.0) < tol || fabs(x - lx) < tol ||
@@ -169,7 +169,7 @@ static int ICsEulerStab(void *ctx, CeedInt Q,
 // State Variables: q = ( rho, U1, U2, U3, E )
 //   rho - Mass Density
 //   Ui  - Momentum Density   ,  Ui = rho ui
-//   E   - Total Energy Density,  E  = rho cv T + rho (u u) / 2 + rho g z
+//   E   - Total Energy Density,  E  = rho cv T + rho (u u) / 2
 //
 // Navier-Stokes Equations:
 //   drho/dt + div( U )                                = 0
@@ -187,7 +187,7 @@ static int ICsEulerStab(void *ctx, CeedInt Q,
 //           gij = dXi/dX * dXi/dX 
 // TauC = Cc f1 / (8 gii)                           Cc = 1.  
 // TauM = 1 / f1
-// TauE = TauM / (Ce cv)                            Ce =1.
+// TauE = TauM / (Ce cv)                            Ce = 1.
 //
 //  SUPG = Galerkin + grad(v) . ( Ai^T * Tau * (Aj q,j) )
 //
@@ -294,11 +294,11 @@ static int EulerStab(void *ctx, CeedInt Q,
     // ke = kinetic energy
     const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
     // P = pressure
-    const CeedScalar P  =  ( E - ke * rho) * (gamma - 1.);
+    const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1.);
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     const CeedScalar dt = 0.0001;    //1.e-5;
     const CeedScalar uiujgij = ( wBBJ[0]*u[0]*u[0] + wBBJ[3]*u[1]*u[1] + wBBJ[5]*u[2]*u[2] + 
-                                2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2] )/wJ;
+                                2*wBBJ[1]*u[0]*u[1] + 2*wBBJ[2]*u[0]*u[2] + 2*wBBJ[4]*u[1]*u[2] ) / wJ;
     const CeedScalar C1   = 1.;
     const CeedScalar Cc   = 1.;
     const CeedScalar Ce   = 1.; 
@@ -308,8 +308,8 @@ static int EulerStab(void *ctx, CeedInt Q,
     const CeedScalar TauE = TauM / (Ce * cv);
     
     //-- Stabilizing terms
-    // --- Stab[5][3] = Ai^T * Tau * Aj * U,j
-    const CeedScalar S_conv[5][3] ={{TauM*(u[0]*u[0] - (Rd*ke)/cv)*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] -
+    // --- Stab_Conv[5][3] = Ai^T * Tau * Aj * q,j
+    const CeedScalar Stab_Conv[5][3] ={{TauM*(u[0]*u[0] - (Rd*ke)/cv)*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] -
                                      dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] +
                                      drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) + 
                                      TauM*u[0]*u[1]*(drho[1]*(u[1]*u[1] - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] -
@@ -494,7 +494,7 @@ static int EulerStab(void *ctx, CeedInt Q,
                                      (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv)}
                                   };                            
     //-----Body Force Ai^T * Tau * Fb
-    const CeedScalar S_Fb[5][3] =  { { -TauM*g*rho*u[0]*u[2] - TauE*g*rho*u[0]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv),
+    const CeedScalar Stab_Fb[5][3] =  { { -TauM*g*rho*u[0]*u[2] - TauE*g*rho*u[0]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv),
                                        -TauM*g*rho*u[1]*u[2] - TauE*g*rho*u[1]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv),
                                        -TauM*g*rho*(u[2]*u[2]  - (Rd*ke)/cv) - TauE*g*rho*u[2]*u[2] *(E*(Rd/cv + 1) - (2*Rd*ke)/cv) }, 
                                      { TauM*g*rho*u[2] + TauE*g*rho*u[2]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv),
@@ -536,45 +536,45 @@ static int EulerStab(void *ctx, CeedInt Q,
     v[i+3*Q] = rho*g      * wJ;
     v[i+4*Q] = rho*g*u[2] * wJ;
     // ---- Convective Stabilizing Terms
-    dv[i+(1+5*0)*Q] -= S_conv[0][0] * wBJ[0] + S_conv[0][1] * wBJ[1] + S_conv[0][2] * wBJ[2];
-    dv[i+(1+5*1)*Q] -= S_conv[0][0] * wBJ[3] + S_conv[0][1] * wBJ[4] + S_conv[0][2] * wBJ[5];
-    dv[i+(1+5*2)*Q] -= S_conv[0][0] * wBJ[6] + S_conv[0][1] * wBJ[7] + S_conv[0][2] * wBJ[8];
+    dv[i+(1+5*0)*Q] -= Stab_Conv[0][0] * wBJ[0] + Stab_Conv[0][1] * wBJ[1] + Stab_Conv[0][2] * wBJ[2];
+    dv[i+(1+5*1)*Q] -= Stab_Conv[0][0] * wBJ[3] + Stab_Conv[0][1] * wBJ[4] + Stab_Conv[0][2] * wBJ[5];
+    dv[i+(1+5*2)*Q] -= Stab_Conv[0][0] * wBJ[6] + Stab_Conv[0][1] * wBJ[7] + Stab_Conv[0][2] * wBJ[8];
 
-    dv[i+(1+5*0)*Q] -= S_conv[1][0] * wBJ[0] + S_conv[1][1] * wBJ[1] + S_conv[1][2] * wBJ[2];
-    dv[i+(1+5*1)*Q] -= S_conv[1][0] * wBJ[3] + S_conv[1][1] * wBJ[4] + S_conv[1][2] * wBJ[5];
-    dv[i+(1+5*2)*Q] -= S_conv[1][0] * wBJ[6] + S_conv[1][1] * wBJ[7] + S_conv[1][2] * wBJ[8];
+    dv[i+(1+5*0)*Q] -= Stab_Conv[1][0] * wBJ[0] + Stab_Conv[1][1] * wBJ[1] + Stab_Conv[1][2] * wBJ[2];
+    dv[i+(1+5*1)*Q] -= Stab_Conv[1][0] * wBJ[3] + Stab_Conv[1][1] * wBJ[4] + Stab_Conv[1][2] * wBJ[5];
+    dv[i+(1+5*2)*Q] -= Stab_Conv[1][0] * wBJ[6] + Stab_Conv[1][1] * wBJ[7] + Stab_Conv[1][2] * wBJ[8];
 
-    dv[i+(2+5*0)*Q] -= S_conv[2][0] * wBJ[0] + S_conv[2][1] * wBJ[1] + S_conv[2][2] * wBJ[2];
-    dv[i+(2+5*1)*Q] -= S_conv[2][0] * wBJ[3] + S_conv[2][1] * wBJ[4] + S_conv[2][2] * wBJ[5];
-    dv[i+(2+5*2)*Q] -= S_conv[2][0] * wBJ[6] + S_conv[2][1] * wBJ[7] + S_conv[2][2] * wBJ[8];
+    dv[i+(2+5*0)*Q] -= Stab_Conv[2][0] * wBJ[0] + Stab_Conv[2][1] * wBJ[1] + Stab_Conv[2][2] * wBJ[2];
+    dv[i+(2+5*1)*Q] -= Stab_Conv[2][0] * wBJ[3] + Stab_Conv[2][1] * wBJ[4] + Stab_Conv[2][2] * wBJ[5];
+    dv[i+(2+5*2)*Q] -= Stab_Conv[2][0] * wBJ[6] + Stab_Conv[2][1] * wBJ[7] + Stab_Conv[2][2] * wBJ[8];
 
-    dv[i+(3+5*0)*Q] -= S_conv[3][0] * wBJ[0] + S_conv[3][1] * wBJ[1] + S_conv[3][2] * wBJ[2];
-    dv[i+(3+5*1)*Q] -= S_conv[3][0] * wBJ[3] + S_conv[3][1] * wBJ[4] + S_conv[3][2] * wBJ[5];
-    dv[i+(3+5*2)*Q] -= S_conv[3][0] * wBJ[6] + S_conv[3][1] * wBJ[7] + S_conv[3][2] * wBJ[8];
+    dv[i+(3+5*0)*Q] -= Stab_Conv[3][0] * wBJ[0] + Stab_Conv[3][1] * wBJ[1] + Stab_Conv[3][2] * wBJ[2];
+    dv[i+(3+5*1)*Q] -= Stab_Conv[3][0] * wBJ[3] + Stab_Conv[3][1] * wBJ[4] + Stab_Conv[3][2] * wBJ[5];
+    dv[i+(3+5*2)*Q] -= Stab_Conv[3][0] * wBJ[6] + Stab_Conv[3][1] * wBJ[7] + Stab_Conv[3][2] * wBJ[8];
 
-    dv[i+(4+5*0)*Q] -= S_conv[4][0] * wBJ[0] + S_conv[4][1] * wBJ[1] + S_conv[4][2] * wBJ[2];
-    dv[i+(4+5*1)*Q] -= S_conv[4][0] * wBJ[3] + S_conv[4][1] * wBJ[4] + S_conv[4][2] * wBJ[5];
-    dv[i+(4+5*2)*Q] -= S_conv[4][0] * wBJ[6] + S_conv[4][1] * wBJ[7] + S_conv[4][2] * wBJ[8];
+    dv[i+(4+5*0)*Q] -= Stab_Conv[4][0] * wBJ[0] + Stab_Conv[4][1] * wBJ[1] + Stab_Conv[4][2] * wBJ[2];
+    dv[i+(4+5*1)*Q] -= Stab_Conv[4][0] * wBJ[3] + Stab_Conv[4][1] * wBJ[4] + Stab_Conv[4][2] * wBJ[5];
+    dv[i+(4+5*2)*Q] -= Stab_Conv[4][0] * wBJ[6] + Stab_Conv[4][1] * wBJ[7] + Stab_Conv[4][2] * wBJ[8];
     // ---- Body Force Stabilizing Terms
-    dv[i+(1+5*0)*Q] += S_Fb[0][0] * wBJ[0] + S_Fb[0][1] * wBJ[1] + S_Fb[0][2] * wBJ[2];
-    dv[i+(1+5*1)*Q] += S_Fb[0][0] * wBJ[3] + S_Fb[0][1] * wBJ[4] + S_Fb[0][2] * wBJ[5];
-    dv[i+(1+5*2)*Q] += S_Fb[0][0] * wBJ[6] + S_Fb[0][1] * wBJ[7] + S_Fb[0][2] * wBJ[8];
+    dv[i+(1+5*0)*Q] += Stab_Fb[0][0] * wBJ[0] + Stab_Fb[0][1] * wBJ[1] + Stab_Fb[0][2] * wBJ[2];
+    dv[i+(1+5*1)*Q] += Stab_Fb[0][0] * wBJ[3] + Stab_Fb[0][1] * wBJ[4] + Stab_Fb[0][2] * wBJ[5];
+    dv[i+(1+5*2)*Q] += Stab_Fb[0][0] * wBJ[6] + Stab_Fb[0][1] * wBJ[7] + Stab_Fb[0][2] * wBJ[8];
 
-    dv[i+(1+5*0)*Q] += S_Fb[1][0] * wBJ[0] + S_Fb[1][1] * wBJ[1] + S_Fb[1][2] * wBJ[2];
-    dv[i+(1+5*1)*Q] += S_Fb[1][0] * wBJ[3] + S_Fb[1][1] * wBJ[4] + S_Fb[1][2] * wBJ[5];
-    dv[i+(1+5*2)*Q] += S_Fb[1][0] * wBJ[6] + S_Fb[1][1] * wBJ[7] + S_Fb[1][2] * wBJ[8];
+    dv[i+(1+5*0)*Q] += Stab_Fb[1][0] * wBJ[0] + Stab_Fb[1][1] * wBJ[1] + Stab_Fb[1][2] * wBJ[2];
+    dv[i+(1+5*1)*Q] += Stab_Fb[1][0] * wBJ[3] + Stab_Fb[1][1] * wBJ[4] + Stab_Fb[1][2] * wBJ[5];
+    dv[i+(1+5*2)*Q] += Stab_Fb[1][0] * wBJ[6] + Stab_Fb[1][1] * wBJ[7] + Stab_Fb[1][2] * wBJ[8];
 
-    dv[i+(2+5*0)*Q] += S_Fb[2][0] * wBJ[0] + S_Fb[2][1] * wBJ[1] + S_Fb[2][2] * wBJ[2];
-    dv[i+(2+5*1)*Q] += S_Fb[2][0] * wBJ[3] + S_Fb[2][1] * wBJ[4] + S_Fb[2][2] * wBJ[5];
-    dv[i+(2+5*2)*Q] += S_Fb[2][0] * wBJ[6] + S_Fb[2][1] * wBJ[7] + S_Fb[2][2] * wBJ[8];
+    dv[i+(2+5*0)*Q] += Stab_Fb[2][0] * wBJ[0] + Stab_Fb[2][1] * wBJ[1] + Stab_Fb[2][2] * wBJ[2];
+    dv[i+(2+5*1)*Q] += Stab_Fb[2][0] * wBJ[3] + Stab_Fb[2][1] * wBJ[4] + Stab_Fb[2][2] * wBJ[5];
+    dv[i+(2+5*2)*Q] += Stab_Fb[2][0] * wBJ[6] + Stab_Fb[2][1] * wBJ[7] + Stab_Fb[2][2] * wBJ[8];
 
-    dv[i+(3+5*0)*Q] += S_Fb[3][0] * wBJ[0] + S_Fb[3][1] * wBJ[1] + S_Fb[3][2] * wBJ[2];
-    dv[i+(3+5*1)*Q] += S_Fb[3][0] * wBJ[3] + S_Fb[3][1] * wBJ[4] + S_Fb[3][2] * wBJ[5];
-    dv[i+(3+5*2)*Q] += S_Fb[3][0] * wBJ[6] + S_Fb[3][1] * wBJ[7] + S_Fb[3][2] * wBJ[8];
+    dv[i+(3+5*0)*Q] += Stab_Fb[3][0] * wBJ[0] + Stab_Fb[3][1] * wBJ[1] + Stab_Fb[3][2] * wBJ[2];
+    dv[i+(3+5*1)*Q] += Stab_Fb[3][0] * wBJ[3] + Stab_Fb[3][1] * wBJ[4] + Stab_Fb[3][2] * wBJ[5];
+    dv[i+(3+5*2)*Q] += Stab_Fb[3][0] * wBJ[6] + Stab_Fb[3][1] * wBJ[7] + Stab_Fb[3][2] * wBJ[8];
 
-    dv[i+(4+5*0)*Q] += S_Fb[4][0] * wBJ[0] + S_Fb[4][1] * wBJ[1] + S_Fb[4][2] * wBJ[2];
-    dv[i+(4+5*1)*Q] += S_Fb[4][0] * wBJ[3] + S_Fb[4][1] * wBJ[4] + S_Fb[4][2] * wBJ[5];
-    dv[i+(4+5*2)*Q] += S_Fb[4][0] * wBJ[6] + S_Fb[4][1] * wBJ[7] + S_Fb[4][2] * wBJ[8]; 
+    dv[i+(4+5*0)*Q] += Stab_Fb[4][0] * wBJ[0] + Stab_Fb[4][1] * wBJ[1] + Stab_Fb[4][2] * wBJ[2];
+    dv[i+(4+5*1)*Q] += Stab_Fb[4][0] * wBJ[3] + Stab_Fb[4][1] * wBJ[4] + Stab_Fb[4][2] * wBJ[5];
+    dv[i+(4+5*2)*Q] += Stab_Fb[4][0] * wBJ[6] + Stab_Fb[4][1] * wBJ[7] + Stab_Fb[4][2] * wBJ[8]; 
     
 
   } // End Quadrature Point Loop
