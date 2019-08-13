@@ -283,7 +283,11 @@ int main(int argc, char **argv) {
   Units units;
   char ceedresource[4096] = "/cpu/self";
   PetscFunctionList icsflist = NULL, qflist = NULL;
+<<<<<<< HEAD
   char problemtype[PETSC_MAX_PATH_LEN] = "advection_advection";
+=======
+  char problemtype[PETSC_MAX_PATH_LEN] = "density_current";
+>>>>>>> 072ef5af0575be9b1eceaff84cd4ed4210de7692
   PetscInt localNelem, lsize, steps,
            melem[3], mdof[3], p[3], irank[3], ldof[3];
   PetscMPIInt size, rank;
