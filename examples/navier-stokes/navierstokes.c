@@ -33,6 +33,7 @@ const char help[] = "Solve Navier-Stokes using PETSc and libCEED\n";
 #include "common.h"
 #include "advection.h"
 #include "densitycurrent.h"
+#include "densitycurrent_phasta.h"
 #include "euler_prim.h"
 #include "euler_cons.h"
 #include "euler_stab.h"
@@ -344,12 +345,14 @@ int main(int argc, char **argv) {
   // Set up problem type command line option
   PetscFunctionListAdd(&icsflist, "advection", &ICsAdvection);
   PetscFunctionListAdd(&icsflist, "density_current", &ICsDC);
+  PetscFunctionListAdd(&icsflist, "density_current_phasta", &ICsDCphasta);
   PetscFunctionListAdd(&icsflist, "euler_prim", &ICsDCprim);
   PetscFunctionListAdd(&icsflist, "euler_cons", &ICsEulerCons);
   PetscFunctionListAdd(&icsflist, "euler_stab", &ICsEulerStab);
   PetscFunctionListAdd(&icsflist, "density_current_stab", &ICsDCStab);
   PetscFunctionListAdd(&qflist, "advection", &Advection);
   PetscFunctionListAdd(&qflist, "density_current", &DC);
+  PetscFunctionListAdd(&qflist, "density_current_phasta", &DCphasta);
   PetscFunctionListAdd(&qflist, "euler_prim", &DCprim);
   PetscFunctionListAdd(&qflist, "euler_cons", &EulerCons);
   PetscFunctionListAdd(&qflist, "euler_stab", &EulerStab);

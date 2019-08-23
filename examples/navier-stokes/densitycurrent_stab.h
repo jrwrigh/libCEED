@@ -173,8 +173,8 @@ static int ICsDCStab(void *ctx, CeedInt Q,
 //
 // Navier-Stokes Equations:
 //   drho/dt + div( U )                               = 0
-//   dU/dt   + div( rho (u x u) + P I3 ) - rho g khat = div( Fu )
-//   dE/dt   + div( (E + P) u )          - rho g u[z] = div( Fe )
+//   dU/dt   + div( rho (u x u) + P I3 ) + rho g khat = div( Fu )
+//   dE/dt   + div( (E + P) u )          + rho g u[z] = div( Fe )
 //
 // Viscous Stress:
 //   Fu = mu (grad( u ) + grad( u )^T + lambda div ( u ) I3)
@@ -255,11 +255,6 @@ static int DCStab(void *ctx, CeedInt Q,
                                    dq[i+(3+5*2)*Q]}
                                  };
 
-    const CeedScalar dE[3]    =  { dq[i+(4+5*0)*Q],
-                                   dq[i+(4+5*1)*Q],
-                                   dq[i+(4+5*2)*Q]
-                                 };
-
     const CeedScalar du[3][3] = {{(dU[0][0] - drho[0]*u[0]) / rho,
                                   (dU[0][1] - drho[1]*u[0]) / rho,
                                   (dU[0][2] - drho[2]*u[0]) / rho},
@@ -269,7 +264,13 @@ static int DCStab(void *ctx, CeedInt Q,
                                  {(dU[2][0] - drho[0]*u[2]) / rho,
                                   (dU[2][1] - drho[1]*u[2]) / rho,
                                   (dU[2][2] - drho[2]*u[2]) / rho}
-                                };                            
+                                }; 
+                                
+    const CeedScalar dE[3] = {dq[i+(4+5*0)*Q], 
+                              dq[i+(4+5*1)*Q], 
+                              dq[i+(4+5*2)*Q]
+                             };  
+
     // -- Interp-to-Interp qdata
     const CeedScalar wJ       =    qdata[i+ 0*Q];
     // -- Interp-to-Grad qdata --- Symmetric 3x3 matrix
@@ -319,6 +320,7 @@ static int DCStab(void *ctx, CeedInt Q,
                                    u[0]*Fu[2] + u[1]*Fu[4] + u[2]*Fu[5] +
                                    k * gradT[2]
                                  };
+                               
     //------------ dU/dX
     const CeedScalar drhodX[3]  = { drho[0] * wBJ[0] + drho[1] * wBJ[1] + drho[2] * wBJ[2],
                                     drho[0] * wBJ[3] + drho[1] * wBJ[4] + drho[2] * wBJ[5],
@@ -345,6 +347,7 @@ static int DCStab(void *ctx, CeedInt Q,
     const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
     // P = pressure
     const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1.);
+    
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     const CeedScalar dt = 0.0001;    //1.e-5;
     const CeedScalar uiujgij = ( wBBJ[0]*u[0]*u[0] + wBBJ[3]*u[1]*u[1] + wBBJ[5]*u[2]*u[2] + 
@@ -543,24 +546,7 @@ static int DCStab(void *ctx, CeedInt Q,
                                      (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
                                      (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv)}
                                   };
-
-    //-----Body Force Ai^T * Tau * Fb
-    const CeedScalar Stab_Fb[5][3] =  { { -TauM*g*rho*u[0]*u[2] - TauE*g*rho*u[0]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv),
-                                       -TauM*g*rho*u[1]*u[2] - TauE*g*rho*u[1]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv),
-                                       -TauM*g*rho*(u[2]*u[2]  - (Rd*ke)/cv) - TauE*g*rho*u[2]*u[2] *(E*(Rd/cv + 1) - (2*Rd*ke)/cv) }, 
-                                     { TauM*g*rho*u[2] + TauE*g*rho*u[2]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv),
-                                       -(Rd*TauE*g*rho*u[0]*u[1]*u[2])/cv, 
-                                       -(Rd*TauM*g*rho*u[0])/cv - (Rd*TauE*g*rho*u[0]*u[2]*u[2] )/cv },
-                                     { -(Rd*TauE*g*rho*u[0]*u[1]*u[2])/cv,
-                                       TauM*g*rho*u[2] + TauE*g*rho*u[2]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv),
-                                       -(Rd*TauM*g*rho*u[1])/cv - (Rd*TauE*g*rho*u[1]*u[2]*u[2] )/cv }, 
-                                     { TauM*g*rho*u[0] - (Rd*TauE*g*rho*u[0]*u[2]*u[2])/cv,
-                                       TauM*g*rho*u[1] - (Rd*TauE*g*rho*u[1]*u[2]*u[2])/cv,
-                                       TauE*g*rho*u[2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - TauM*g*rho*u[2]*(Rd/cv - 2) }, 
-                                     { TauE*g*rho*u[0]*u[2]*(Rd/cv + 1),
-                                       TauE*g*rho*u[1]*u[2]*(Rd/cv + 1),
-                                       TauE*g*rho*(Rd/cv + 1)*u[2]*u[2]  + (Rd*TauM*g*rho)/cv } 
-                                   };                                
+                                                         
     // The Physics
     // -- Density---- u rho
     dv[i+(0+5*0)*Q]  = rho*u[0]*wBJ[0] + rho*u[1]*wBJ[1] + rho*u[2]*wBJ[2];
@@ -598,8 +584,9 @@ static int DCStab(void *ctx, CeedInt Q,
     v[i+0*Q] = 0.;
     v[i+1*Q] = 0.;
     v[i+2*Q] = 0.;
-    v[i+3*Q] = rho*g      * wJ;
-    v[i+4*Q] = rho*g*u[2] * wJ;
+    v[i+3*Q] = - rho*g      * wJ;
+    v[i+4*Q] = - rho*g*u[2] * wJ;
+    
     // ---- Convective Stabilizing Terms
     dv[i+(1+5*0)*Q] -= Stab_Conv[0][0] * wBJ[0] + Stab_Conv[0][1] * wBJ[1] + Stab_Conv[0][2] * wBJ[2];
     dv[i+(1+5*1)*Q] -= Stab_Conv[0][0] * wBJ[3] + Stab_Conv[0][1] * wBJ[4] + Stab_Conv[0][2] * wBJ[5];
@@ -620,28 +607,7 @@ static int DCStab(void *ctx, CeedInt Q,
     dv[i+(4+5*0)*Q] -= Stab_Conv[4][0] * wBJ[0] + Stab_Conv[4][1] * wBJ[1] + Stab_Conv[4][2] * wBJ[2];
     dv[i+(4+5*1)*Q] -= Stab_Conv[4][0] * wBJ[3] + Stab_Conv[4][1] * wBJ[4] + Stab_Conv[4][2] * wBJ[5];
     dv[i+(4+5*2)*Q] -= Stab_Conv[4][0] * wBJ[6] + Stab_Conv[4][1] * wBJ[7] + Stab_Conv[4][2] * wBJ[8];
-    // ---- Body Force Stabilizing Terms ----
-    dv[i+(1+5*0)*Q] += Stab_Fb[0][0] * wBJ[0] + Stab_Fb[0][1] * wBJ[1] + Stab_Fb[0][2] * wBJ[2];
-    dv[i+(1+5*1)*Q] += Stab_Fb[0][0] * wBJ[3] + Stab_Fb[0][1] * wBJ[4] + Stab_Fb[0][2] * wBJ[5];
-    dv[i+(1+5*2)*Q] += Stab_Fb[0][0] * wBJ[6] + Stab_Fb[0][1] * wBJ[7] + Stab_Fb[0][2] * wBJ[8];
 
-    dv[i+(1+5*0)*Q] += Stab_Fb[1][0] * wBJ[0] + Stab_Fb[1][1] * wBJ[1] + Stab_Fb[1][2] * wBJ[2];
-    dv[i+(1+5*1)*Q] += Stab_Fb[1][0] * wBJ[3] + Stab_Fb[1][1] * wBJ[4] + Stab_Fb[1][2] * wBJ[5];
-    dv[i+(1+5*2)*Q] += Stab_Fb[1][0] * wBJ[6] + Stab_Fb[1][1] * wBJ[7] + Stab_Fb[1][2] * wBJ[8];
-
-    dv[i+(2+5*0)*Q] += Stab_Fb[2][0] * wBJ[0] + Stab_Fb[2][1] * wBJ[1] + Stab_Fb[2][2] * wBJ[2];
-    dv[i+(2+5*1)*Q] += Stab_Fb[2][0] * wBJ[3] + Stab_Fb[2][1] * wBJ[4] + Stab_Fb[2][2] * wBJ[5];
-    dv[i+(2+5*2)*Q] += Stab_Fb[2][0] * wBJ[6] + Stab_Fb[2][1] * wBJ[7] + Stab_Fb[2][2] * wBJ[8];
-
-    dv[i+(3+5*0)*Q] += Stab_Fb[3][0] * wBJ[0] + Stab_Fb[3][1] * wBJ[1] + Stab_Fb[3][2] * wBJ[2];
-    dv[i+(3+5*1)*Q] += Stab_Fb[3][0] * wBJ[3] + Stab_Fb[3][1] * wBJ[4] + Stab_Fb[3][2] * wBJ[5];
-    dv[i+(3+5*2)*Q] += Stab_Fb[3][0] * wBJ[6] + Stab_Fb[3][1] * wBJ[7] + Stab_Fb[3][2] * wBJ[8];
-
-    dv[i+(4+5*0)*Q] += Stab_Fb[4][0] * wBJ[0] + Stab_Fb[4][1] * wBJ[1] + Stab_Fb[4][2] * wBJ[2];
-    dv[i+(4+5*1)*Q] += Stab_Fb[4][0] * wBJ[3] + Stab_Fb[4][1] * wBJ[4] + Stab_Fb[4][2] * wBJ[5];
-    dv[i+(4+5*2)*Q] += Stab_Fb[4][0] * wBJ[6] + Stab_Fb[4][1] * wBJ[7] + Stab_Fb[4][2] * wBJ[8];
-
-   
 
   } // End Quadrature Point Loop
 
