@@ -850,6 +850,9 @@ int main(int argc, char **argv) {
   CeedVectorSetValue(onesvec, 1.0);
   CeedOperatorApply(op_mass, onesvec, mceed, CEED_REQUEST_IMMEDIATE);
 
+  // Destroy onesvec
+  CeedVectorDestroy(&onesvec);
+
   // Fix multiplicity for output of ICs
   CeedVectorGetArray(q0ceed, CEED_MEM_HOST, &q0);
   CeedVectorGetArray(xceed, CEED_MEM_HOST, &x);
@@ -971,9 +974,7 @@ int main(int argc, char **argv) {
   CeedVectorDestroy(&qdata);
   CeedVectorDestroy(&user->qceed);
   CeedVectorDestroy(&user->gceed);
-  CeedVectorDestroy(&xceed);
   CeedVectorDestroy(&xcorners);
-  CeedVectorDestroy(&onesvec);
   CeedBasisDestroy(&basisq);
   CeedBasisDestroy(&basisx);
   CeedBasisDestroy(&basisxc);
