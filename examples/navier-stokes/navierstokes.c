@@ -165,7 +165,7 @@ struct User_ {
   DM dm;
   Ceed ceed;
   Units units;
-  CeedVector qceed, fceed; //gceed, jceed;
+  CeedVector qceed, qdotceed, fceed; //gceed, jceed;
   CeedOperator op_implicit; //op_explicit,, op_jacobian;
   VecScatter ltog;              // Scatter for all entries
   VecScatter ltog0;             // Skip Dirichlet values for Q
@@ -271,7 +271,8 @@ static PetscErrorCode IFunction_NS(TS ts, PetscReal t, Vec Q, Vec Qdot, Vec F, v
   ierr = VecGetArrayRead(user->Qloc, (const PetscScalar**)&q); CHKERRQ(ierr);
   ierr = VecGetArray(user->Qdotloc, &qdot); CHKERRQ(ierr);
   ierr = VecGetArray(user->Floc, &f); CHKERRQ(ierr);
-  CeedVectorSetArray(user->qceed, CEED_MEM_HOST, CEED_USE_POINTER, q);     //why not qdot?????????
+  CeedVectorSetArray(user->qceed, CEED_MEM_HOST, CEED_USE_POINTER, q);
+  CeedVectorSetArray(user->qdotceed, CEED_MEM_HOST, CEED_USE_POINTER, qdot);
   CeedVectorSetArray(user->fceed, CEED_MEM_HOST, CEED_USE_POINTER, f);
 
   // Apply CEED operator
@@ -648,9 +649,9 @@ int main(int argc, char **argv) {
   resz = fabs(resz) * meter;
 
   // Find a nicely composite number of elements given the resolution
-  melem[0] = (PetscInt)(PetscRoundReal(lx / resx / p[0]));
-  melem[1] = (PetscInt)(PetscRoundReal(ly / resy / p[1]));
-  melem[2] = (PetscInt)(PetscRoundReal(lz / resz / p[2]));
+  melem[0] = (PetscInt)(PetscCeilReal(lx / resx / p[0]));
+  melem[1] = (PetscInt)(PetscCeilReal(ly / resy / p[1]));
+  melem[2] = (PetscInt)(PetscCeilReal(lz / resz / p[2]));
   for (int d=0; d<3; d++) {
     if (melem[d] == 0)
       melem[d]++;
@@ -937,6 +938,7 @@ int main(int argc, char **argv) {
   // Create the Q-function that defines the action of the implicit operator
   CeedQFunctionCreateInterior(ceed, 1, problemOptions[problemChoice].implicit,
                               problemOptions[problemChoice].implicitfname, &qf_implicit);
+  CeedQFunctionAddInput(qf_implicit, "qdot", 5, CEED_EVAL_INTERP);
   CeedQFunctionAddInput(qf_implicit, "q", 5, CEED_EVAL_INTERP);
   CeedQFunctionAddInput(qf_implicit, "dq", 5*3, CEED_EVAL_GRAD);
   CeedQFunctionAddInput(qf_implicit, "qdata", 10, CEED_EVAL_NONE);
@@ -997,7 +999,11 @@ int main(int argc, char **argv) {
                        basisq, CEED_VECTOR_ACTIVE);
 */
   // Create the physics operator (implicit)
+  CeedVectorCreate(ceed, 5*lsize, &user->qdotceed);
+
   CeedOperatorCreate(ceed, qf_implicit, NULL, NULL, &op_implicit);
+  CeedOperatorSetField(op_implicit, "qdot", restrictq, CEED_TRANSPOSE,
+                       basisq, user->qdotceed);
   CeedOperatorSetField(op_implicit, "q", restrictq, CEED_TRANSPOSE,
                        basisq, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_implicit, "dq", restrictq, CEED_TRANSPOSE,
@@ -1236,6 +1242,7 @@ int main(int argc, char **argv) {
   // Clean up libCEED
   CeedVectorDestroy(&qdata);
   CeedVectorDestroy(&user->qceed);
+  CeedVectorDestroy(&user->qdotceed);
   //CeedVectorDestroy(&user->gceed);
   CeedVectorDestroy(&user->fceed);
   //CeedVectorDestroy(&user->jceed);

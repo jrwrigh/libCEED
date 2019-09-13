@@ -284,10 +284,11 @@ CEED_QFUNCTION(ExAdvection)(void *ctx, CeedInt Q,
 CEED_QFUNCTION(ImAdvection)(void *ctx, CeedInt Q,
                           const CeedScalar *const *in, CeedScalar *const *out) {
   // Inputs
-  const CeedScalar (*q)[Q] = (CeedScalar(*)[Q])in[0],
-                   (*dq)[5][Q] = (CeedScalar(*)[5][Q])in[1],
-                   (*qdata)[Q] = (CeedScalar(*)[Q])in[2],
-                   (*x)[Q] = (CeedScalar(*)[Q])in[3];
+  const CeedScalar (*qdot)[Q] = (CeedScalar(*)[Q])in[0],
+                   (*q)[Q] = (CeedScalar(*)[Q])in[1],
+                   (*dq)[5][Q] = (CeedScalar(*)[5][Q])in[2],
+                   (*qdata)[Q] = (CeedScalar(*)[Q])in[3],
+                   (*x)[Q] = (CeedScalar(*)[Q])in[4];
   // Outputs
   CeedScalar (*v)[Q] = (CeedScalar(*)[Q])out[0],
              (*dv)[5][Q] = (CeedScalar(*)[5][Q])out[1];
@@ -407,6 +408,8 @@ CEED_QFUNCTION(ImAdvection)(void *ctx, CeedInt Q,
       for (int j=0; j<3; j++)
         dv[j][4][i] += uX[j] * divConv * TauS;
     } // end of stabilization
+
+    for (int j=0; j<5; j++) v[j][i] += wJ*qdot[j][i]; // Add implicit mass matrix
   } // End Quadrature Point Loop
 
   // Return
