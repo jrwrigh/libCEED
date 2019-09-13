@@ -147,6 +147,7 @@ CEED_QFUNCTION(ICsAdvection)(void *ctx, CeedInt Q,
 //   dE/dt + div( E u ) = 0
 //
 // *****************************************************************************
+/*
 CEED_QFUNCTION(ExAdvection)(void *ctx, CeedInt Q,
                           const CeedScalar *const *in, CeedScalar *const *out) {
   // Inputs
@@ -278,7 +279,7 @@ CEED_QFUNCTION(ExAdvection)(void *ctx, CeedInt Q,
   // Return
   return 0;
 }
-
+*/
 // *****************************************************************************
 CEED_QFUNCTION(ImAdvection)(void *ctx, CeedInt Q,
                           const CeedScalar *const *in, CeedScalar *const *out) {

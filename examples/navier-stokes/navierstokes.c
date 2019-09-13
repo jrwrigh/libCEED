@@ -70,13 +70,13 @@ problemData problemOptions[2] = {
   },
   [NS_ADVECTION] = {
     .ics = ICsAdvection,
-    .explicit = ExAdvection,
+    //.explicit = ExAdvection,
     .implicit = ImAdvection,
-    .jacobian = JacAdvection,
+   // .jacobian = JacAdvection,
     .icsfname = ICsAdvection_loc,
-    .explicitfname = ExAdvection_loc,
+    //.explicitfname = ExAdvection_loc,
     .implicitfname = ImAdvection_loc,
-    .jacobianfname = JacAdvection_loc,
+    //.jacobianfname = JacAdvection_loc,
   }
 };
 
@@ -165,12 +165,12 @@ struct User_ {
   DM dm;
   Ceed ceed;
   Units units;
-  CeedVector qceed, gceed, fceed, jceed;
-  CeedOperator op_explicit, op_implicit, op_jacobian;
+  CeedVector qceed, fceed; //gceed, jceed;
+  CeedOperator op_implicit; //op_explicit,, op_jacobian;
   VecScatter ltog;              // Scatter for all entries
   VecScatter ltog0;             // Skip Dirichlet values for Q
   VecScatter gtogD;             // global-to-global; only Dirichlet values for Q
-  Vec Qloc, Qdotloc, Gloc, Floc, Jloc, M, BC;
+  Vec Qloc, Qdotloc, Floc, M, BC; //, Gloc, Jloc,
   char outputfolder[PETSC_MAX_PATH_LEN];
   PetscInt contsteps;
   TS ts;
@@ -194,6 +194,7 @@ struct Units_ {
 
 // This is the RHS of the ODE, given as u_t = G(t,u)
 // This function takes in a state vector Q and writes into G
+/*
 static PetscErrorCode RHS_NS(TS ts, PetscReal t, Vec Q, Vec G, void *userData) {
   PetscErrorCode ierr;
   User user = *(User*)userData;
@@ -243,6 +244,7 @@ static PetscErrorCode RHS_NS(TS ts, PetscReal t, Vec Q, Vec G, void *userData) {
 
   PetscFunctionReturn(0);
 }
+*/
 
 // This is the LHS of the Implicit time stepping method, 
 //given as F(t,Q,Qdot) = 0. This function takes in the state
@@ -269,7 +271,7 @@ static PetscErrorCode IFunction_NS(TS ts, PetscReal t, Vec Q, Vec Qdot, Vec F, v
   ierr = VecGetArrayRead(user->Qloc, (const PetscScalar**)&q); CHKERRQ(ierr);
   ierr = VecGetArray(user->Qdotloc, &qdot); CHKERRQ(ierr);
   ierr = VecGetArray(user->Floc, &f); CHKERRQ(ierr);
-  CeedVectorSetArray(user->qceed, CEED_MEM_HOST, CEED_USE_POINTER, q);
+  CeedVectorSetArray(user->qceed, CEED_MEM_HOST, CEED_USE_POINTER, q);     //why not qdot?????????
   CeedVectorSetArray(user->fceed, CEED_MEM_HOST, CEED_USE_POINTER, f);
 
   // Apply CEED operator
@@ -314,7 +316,7 @@ static PetscErrorCode IFunction_NS(TS ts, PetscReal t, Vec Q, Vec Qdot, Vec F, v
 //
 // Output Parameters:
 // Jvec - output vector
-//
+/*
 static PetscErrorCode JacobianProductMat(Mat mat, Vec Q, Vec JVec) {
   User user;
   PetscScalar *q, *qdot, *j;
@@ -365,7 +367,7 @@ static PetscErrorCode JacobianProductMat(Mat mat, Vec Q, Vec JVec) {
 
   PetscFunctionReturn(0);
 }
-
+*/
 
 static PetscErrorCode MapLocalToDMGlobal(User user, Vec Xloc, Vec Xdm, const PetscReal scale[]) {
   PetscErrorCode ierr;
@@ -464,7 +466,7 @@ int main(int argc, char **argv) {
   DM dm;
   TS ts;
   TSAdapt adapt;
-  Mat J;
+  //Mat J;
   User user;
   Units units;
   char ceedresource[4096] = "/cpu/self";
@@ -484,8 +486,8 @@ int main(int argc, char **argv) {
   CeedBasis basisx, basisxc, basisq;
   CeedElemRestriction restrictx, restrictxc, restrictxi,
                       restrictq, restrictqdi, restrictmult;
-  CeedQFunction qf_setup, qf_mass, qf_ics, qf_explicit, qf_implicit, qf_jacobian;
-  CeedOperator op_setup, op_mass, op_ics, op_explicit, op_implicit, op_jacobian;
+  CeedQFunction qf_setup, qf_mass, qf_ics, qf_implicit; // , qf_explicit, qf_jacobian;
+  CeedOperator op_setup, op_mass, op_ics, op_implicit; // op_explicit, op_jacobian;
   CeedScalar Rd;
   PetscScalar WpermK, Pascal, JperkgK, mpersquareds, kgpercubicm,
               kgpersquaredms, Joulepercubicm;
@@ -920,7 +922,7 @@ int main(int argc, char **argv) {
   CeedQFunctionAddInput(qf_ics, "x", 3, CEED_EVAL_INTERP);
   CeedQFunctionAddOutput(qf_ics, "q0", 5, CEED_EVAL_NONE);
   CeedQFunctionAddOutput(qf_ics, "coords", 3, CEED_EVAL_NONE);
-
+/*
   // Create the Q-function that defines the action of the explicit operator
   CeedQFunctionCreateInterior(ceed, 1, problemOptions[problemChoice].explicit,
                               problemOptions[problemChoice].explicitfname, &qf_explicit);
@@ -930,6 +932,7 @@ int main(int argc, char **argv) {
   CeedQFunctionAddInput(qf_explicit, "x", 3, CEED_EVAL_INTERP);
   CeedQFunctionAddOutput(qf_explicit, "v", 5, CEED_EVAL_INTERP);
   CeedQFunctionAddOutput(qf_explicit, "dv", 5*3, CEED_EVAL_GRAD);
+*/
 
   // Create the Q-function that defines the action of the implicit operator
   CeedQFunctionCreateInterior(ceed, 1, problemOptions[problemChoice].implicit,
@@ -941,6 +944,7 @@ int main(int argc, char **argv) {
   CeedQFunctionAddOutput(qf_implicit, "v", 5, CEED_EVAL_INTERP);
   CeedQFunctionAddOutput(qf_implicit, "dv", 5*3, CEED_EVAL_GRAD);
 
+/*
   // Create the Q-function that defines the action of the jacobian operator
   CeedQFunctionCreateInterior(ceed, 1, problemOptions[problemChoice].jacobian,
                               problemOptions[problemChoice].jacobianfname, &qf_jacobian);
@@ -948,6 +952,7 @@ int main(int argc, char **argv) {
   CeedQFunctionAddInput(qf_jacobian, "deltaq", 5, CEED_EVAL_NONE);
   CeedQFunctionAddInput(qf_jacobian, "qdata", 10, CEED_EVAL_NONE);
   CeedQFunctionAddOutput(qf_jacobian, "dv", 5*3, CEED_EVAL_GRAD);
+  */
 
   // Create the operator that builds the quadrature data for the NS operator
   CeedOperatorCreate(ceed, qf_setup, NULL, NULL, &op_setup);
@@ -975,7 +980,7 @@ int main(int argc, char **argv) {
                        CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_ics, "coords", restrictxc, CEED_TRANSPOSE,
                        CEED_BASIS_COLLOCATED, xceed);
-
+/*
   // Create the physics operator (explicit)
   CeedOperatorCreate(ceed, qf_explicit, NULL, NULL, &op_explicit);
   CeedOperatorSetField(op_explicit, "q", restrictq, CEED_TRANSPOSE,
@@ -990,7 +995,7 @@ int main(int argc, char **argv) {
                        basisq, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_explicit, "dv", restrictq, CEED_TRANSPOSE,
                        basisq, CEED_VECTOR_ACTIVE);
-
+*/
   // Create the physics operator (implicit)
   CeedOperatorCreate(ceed, qf_implicit, NULL, NULL, &op_implicit);
   CeedOperatorSetField(op_implicit, "q", restrictq, CEED_TRANSPOSE,
@@ -1006,6 +1011,7 @@ int main(int argc, char **argv) {
   CeedOperatorSetField(op_implicit, "dv", restrictq, CEED_TRANSPOSE,
                        basisq, CEED_VECTOR_ACTIVE);
 
+/*
   // Create the Jacobian of the physics operator
   CeedOperatorCreate(ceed, qf_jacobian, NULL, NULL, &op_jacobian);
   CeedOperatorSetField(op_jacobian, "q", restrictq, CEED_TRANSPOSE,
@@ -1016,6 +1022,7 @@ int main(int argc, char **argv) {
                        CEED_BASIS_COLLOCATED, qdata);
   CeedOperatorSetField(op_jacobian, "dv", restrictq, CEED_TRANSPOSE,
                        basisq, CEED_VECTOR_ACTIVE);
+    */
 
   // Set up the libCEED context
   CeedScalar ctxSetup[15] = {theta0, thetaC, P0, N, cv, cp, Rd, g, rc, lx, ly, lz, periodic[0], periodic[1], periodic[2]};
@@ -1025,11 +1032,11 @@ int main(int argc, char **argv) {
   switch (problemChoice) {
   case NS_DENSITY_CURRENT:
     CeedQFunctionSetContext(qf_implicit, &ctxNS, sizeof ctxNS);
-    CeedQFunctionSetContext(qf_explicit, &ctxNS, sizeof ctxNS);
+    //CeedQFunctionSetContext(qf_explicit, &ctxNS, sizeof ctxNS);
     break;
   case NS_ADVECTION:
     CeedQFunctionSetContext(qf_implicit, &ctxAd, sizeof ctxAd);
-    CeedQFunctionSetContext(qf_explicit, &ctxAd, sizeof ctxAd);
+   // CeedQFunctionSetContext(qf_explicit, &ctxAd, sizeof ctxAd);
     break;
   default: SETERRQ1(comm, PETSC_ERR_SUP, "Unhandled problem type %d", (int)problemChoice);
   }
@@ -1058,20 +1065,20 @@ int main(int argc, char **argv) {
   user->dm = dm;
   user->ceed = ceed;
   CeedVectorCreate(ceed, 5*lsize, &user->qceed);
-  CeedVectorCreate(ceed, 5*lsize, &user->gceed);
+  //CeedVectorCreate(ceed, 5*lsize, &user->gceed);
   CeedVectorCreate(ceed, 5*lsize, &user->fceed);
-  CeedVectorCreate(ceed, 5*lsize, &user->jceed);
-  user->op_explicit = op_explicit;
+ // CeedVectorCreate(ceed, 5*lsize, &user->jceed);
+  //user->op_explicit = op_explicit;
   user->op_implicit = op_implicit;
-  user->op_jacobian = op_jacobian;
+  //user->op_jacobian = op_jacobian;
   user->ltog = ltog;
   user->ltog0 = ltog0;
   user->gtogD = gtogD;
   user->Qloc = Qloc;
   user->Qdotloc = Qdotloc;
-  ierr = VecDuplicate(Qloc, &user->Gloc); CHKERRQ(ierr);
+ // ierr = VecDuplicate(Qloc, &user->Gloc); CHKERRQ(ierr);
   ierr = VecDuplicate(Qloc, &user->Floc); CHKERRQ(ierr);
-  ierr = VecDuplicate(Qloc, &user->Jloc); CHKERRQ(ierr);
+  //ierr = VecDuplicate(Qloc, &user->Jloc); CHKERRQ(ierr);
 
   // Calculate qdata and ICs
   // Set up state global and local vectors
@@ -1170,25 +1177,25 @@ int main(int argc, char **argv) {
 
 
   // Set up the MatShell for the associated Jacobian operator
-  ierr = MatCreateShell(PETSC_COMM_SELF, 5*lsize, 5*lsize, PETSC_DETERMINE,
-                 PETSC_DETERMINE, user, &J); CHKERRQ(ierr);
+ // ierr = MatCreateShell(PETSC_COMM_SELF, 5*lsize, 5*lsize, PETSC_DETERMINE,
+   //              PETSC_DETERMINE, user, &J); CHKERRQ(ierr);
 
   // Set the MatShell user context
  // ierr = MatShellSetContext(J, user); CHKERRQ(ierr);
 
   // Set the MatShell operation needed for the Jacobian
-  ierr = MatShellSetOperation(J, MATOP_MULT,
-                              (void(*)(void))JacobianProductMat); CHKERRQ(ierr);
+ // ierr = MatShellSetOperation(J, MATOP_MULT,
+   //                           (void(*)(void))JacobianProductMat); CHKERRQ(ierr);
 
 
   // Create and setup TS
   ierr = TSCreate(comm, &ts); CHKERRQ(ierr);
-  ierr = TSSetType(ts, TSRK); CHKERRQ(ierr);
-  ierr = TSRKSetType(ts, TSRK5F); CHKERRQ(ierr);
-  ierr = TSSetRHSFunction(ts, NULL, RHS_NS, &user); CHKERRQ(ierr);
+  //ierr = TSSetType(ts, TSRK); CHKERRQ(ierr);
+  //ierr = TSRKSetType(ts, TSRK5F); CHKERRQ(ierr);
+  //ierr = TSSetRHSFunction(ts, NULL, RHS_NS, &user); CHKERRQ(ierr);
   ierr = TSSetType(ts, TSBEULER); CHKERRQ(ierr);
   ierr = TSSetIFunction(ts, NULL, IFunction_NS, &user); CHKERRQ(ierr);
-  ierr = DMSetMatType(dm, MATSHELL); CHKERRQ(ierr);
+  //ierr = DMSetMatType(dm, MATSHELL); CHKERRQ(ierr);
   //ierr = TSSetIJacobian(ts, J, J, IJacobian_NS, &user); CHKERRQ(ierr);
   ierr = TSSetMaxTime(ts, 500. * units->second); CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts, TS_EXACTFINALTIME_STEPOVER); CHKERRQ(ierr);
@@ -1229,9 +1236,9 @@ int main(int argc, char **argv) {
   // Clean up libCEED
   CeedVectorDestroy(&qdata);
   CeedVectorDestroy(&user->qceed);
-  CeedVectorDestroy(&user->gceed);
+  //CeedVectorDestroy(&user->gceed);
   CeedVectorDestroy(&user->fceed);
-  CeedVectorDestroy(&user->jceed);
+  //CeedVectorDestroy(&user->jceed);
   CeedVectorDestroy(&xcorners);
   CeedBasisDestroy(&basisq);
   CeedBasisDestroy(&basisx);
@@ -1242,14 +1249,14 @@ int main(int argc, char **argv) {
   CeedElemRestrictionDestroy(&restrictxi);
   CeedQFunctionDestroy(&qf_setup);
   CeedQFunctionDestroy(&qf_ics);
-  CeedQFunctionDestroy(&qf_explicit);
+  //CeedQFunctionDestroy(&qf_explicit);
   CeedQFunctionDestroy(&qf_implicit);
-  CeedQFunctionDestroy(&qf_jacobian);
+  //CeedQFunctionDestroy(&qf_jacobian);
   CeedOperatorDestroy(&op_setup);
   CeedOperatorDestroy(&op_ics);
-  CeedOperatorDestroy(&op_explicit);
+  //CeedOperatorDestroy(&op_explicit);
   CeedOperatorDestroy(&op_implicit);
-  CeedOperatorDestroy(&op_jacobian);
+  //CeedOperatorDestroy(&op_jacobian);
   CeedDestroy(&ceed);
 
   // Clean up PETSc
@@ -1257,16 +1264,16 @@ int main(int argc, char **argv) {
   ierr = VecDestroy(&user->M); CHKERRQ(ierr);
   ierr = VecDestroy(&user->BC); CHKERRQ(ierr);
   ierr = VecDestroy(&user->Qloc); CHKERRQ(ierr);
-  ierr = VecDestroy(&user->Qdotloc); CHKERRQ(ierr);  //I added
-  ierr = VecDestroy(&user->Gloc); CHKERRQ(ierr);
+  ierr = VecDestroy(&user->Qdotloc); CHKERRQ(ierr);  //I (Leila) added
+  //ierr = VecDestroy(&user->Gloc); CHKERRQ(ierr);
   ierr = VecDestroy(&user->Floc); CHKERRQ(ierr);
-  ierr = VecDestroy(&user->Jloc); CHKERRQ(ierr);
+  //ierr = VecDestroy(&user->Jloc); CHKERRQ(ierr);
   ierr = VecScatterDestroy(&ltog); CHKERRQ(ierr);
   ierr = VecScatterDestroy(&ltog0); CHKERRQ(ierr);
   ierr = VecScatterDestroy(&gtogD); CHKERRQ(ierr);
   ierr = TSDestroy(&ts); CHKERRQ(ierr);
   ierr = DMDestroy(&dm); CHKERRQ(ierr);
-  ierr = MatDestroy(&J);CHKERRQ(ierr);
+  //ierr = MatDestroy(&J);CHKERRQ(ierr);
   ierr = PetscFree(units); CHKERRQ(ierr);
   ierr = PetscFree(user); CHKERRQ(ierr);
   return PetscFinalize();
