@@ -27,7 +27,6 @@
 /// @defgroup CeedOperator CeedOperator: composed FE-type operations on vectors
 ///
 /// @page FunctionCategories libCEED: Types of Functions
-/// @subsection Types of Functions
 ///   libCEED provides three different header files depending upon the type of
 ///   functions a user requires.
 /// @section Utility Utility Functions
@@ -54,10 +53,21 @@
 #else
 #  define CEED_EXTERN extern
 #endif
+
 #ifndef CEED_QFUNCTION
 #define CEED_QFUNCTION(name) \
   static const char name ## _loc[] = __FILE__ ":" #name;        \
   static int name
+#endif
+
+#ifndef CeedPragmaSIMD
+#  if defined(__GNUC__) && __GNUC__ >= 5
+#    define CeedPragmaSIMD _Pragma("GCC ivdep")
+#  elif defined(_OPENMP) && _OPENMP >= 201307 // OpenMP-4.0 (July, 2013)
+#    define CeedPragmaSIMD _Pragma("omp simd")
+#  else
+#    define CeedPragmaSIMD
+#  endif
 #endif
 
 #include <assert.h>
@@ -318,6 +328,11 @@ CEED_EXTERN int CeedLobattoQuadrature(CeedInt Q, CeedScalar *qref1d,
                                       CeedScalar *qweight1d);
 CEED_EXTERN int CeedQRFactorization(Ceed ceed, CeedScalar *mat, CeedScalar *tau,
                                     CeedInt m, CeedInt n);
+CEED_EXTERN int CeedSymmetricSchurDecomposition(Ceed ceed, CeedScalar *mat,
+                                       CeedScalar *lambda, CeedInt n);
+CEED_EXTERN int CeedSimultaneousDiagonalization(Ceed ceed, CeedScalar *matA,
+                                    CeedScalar *matB, CeedScalar *x,
+                                    CeedScalar *lambda, CeedInt n);
 
 /// Handle for the object describing the user CeedQFunction
 ///
@@ -345,7 +360,9 @@ typedef int (*CeedQFunctionUser)(void *ctx, const CeedInt Q,
                                  CeedScalar *const *out);
 
 CEED_EXTERN int CeedQFunctionCreateInterior(Ceed ceed, CeedInt vlength,
-    CeedQFunctionUser f, const char *focca, CeedQFunction *qf);
+    CeedQFunctionUser f, const char *source, CeedQFunction *qf);
+CEED_EXTERN int CeedQFunctionCreateInteriorByName(Ceed ceed, const char *name,
+    CeedQFunction *qf);
 CEED_EXTERN int CeedQFunctionAddInput(CeedQFunction qf, const char *fieldname,
                                       CeedInt size, CeedEvalMode emode);
 CEED_EXTERN int CeedQFunctionAddOutput(CeedQFunction qf, const char *fieldname,

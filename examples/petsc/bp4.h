@@ -24,13 +24,19 @@
 // *****************************************************************************
 CEED_QFUNCTION(SetupDiff3)(void *ctx, const CeedInt Q,
                            const CeedScalar *const *in, CeedScalar *const *out) {
-  #ifndef M_PI
-#define M_PI    3.14159265358979323846
-  #endif
+#ifndef M_PI
+#  define M_PI    3.14159265358979323846
+#endif
   const CeedScalar *x = in[0], *J = in[1], *w = in[2];
-  CeedScalar *qd = out[0], *true_soln = out[1], *rhs = out[2];
+  CeedScalar *qdata = out[0], *true_soln = out[1], *rhs = out[2];
 
+  // Quadrature Point Loop
+  CeedPragmaSIMD
   for (CeedInt i=0; i<Q; i++) {
+    // Stored in Voigt convention
+    // 0 5 4
+    // 5 1 3
+    // 4 3 2
     const CeedScalar J11 = J[i+Q*0];
     const CeedScalar J21 = J[i+Q*1];
     const CeedScalar J31 = J[i+Q*2];
@@ -50,12 +56,12 @@ CEED_QFUNCTION(SetupDiff3)(void *ctx, const CeedInt Q,
     const CeedScalar A32 = J12*J31 - J11*J32;
     const CeedScalar A33 = J11*J22 - J12*J21;
     const CeedScalar qw = w[i] / (J11*A11 + J21*A12 + J31*A13);
-    qd[i+Q*0] = qw * (A11*A11 + A12*A12 + A13*A13);
-    qd[i+Q*1] = qw * (A11*A21 + A12*A22 + A13*A23);
-    qd[i+Q*2] = qw * (A11*A31 + A12*A32 + A13*A33);
-    qd[i+Q*3] = qw * (A21*A21 + A22*A22 + A23*A23);
-    qd[i+Q*4] = qw * (A21*A31 + A22*A32 + A23*A33);
-    qd[i+Q*5] = qw * (A31*A31 + A32*A32 + A33*A33);
+    qdata[i+Q*0] = qw * (A11*A11 + A12*A12 + A13*A13);
+    qdata[i+Q*1] = qw * (A21*A21 + A22*A22 + A23*A23);
+    qdata[i+Q*2] = qw * (A31*A31 + A32*A32 + A33*A33);
+    qdata[i+Q*3] = qw * (A21*A31 + A22*A32 + A23*A33);
+    qdata[i+Q*4] = qw * (A11*A31 + A12*A32 + A13*A33);
+    qdata[i+Q*5] = qw * (A11*A21 + A12*A22 + A13*A23);
 
     const CeedScalar c[3] = { 0, 1., 2. };
     const CeedScalar k[3] = { 1., 2., 3. };
@@ -77,39 +83,46 @@ CEED_QFUNCTION(SetupDiff3)(void *ctx, const CeedInt Q,
     rhs[i+1*Q] = rhs[i+0*Q];
     // Component 3
     rhs[i+2*Q] = rhs[i+0*Q];
-  }
+  } // End of Quadrature Point Loop
   return 0;
 }
 
 CEED_QFUNCTION(Diff3)(void *ctx, const CeedInt Q,
                       const CeedScalar *const *in, CeedScalar *const *out) {
-  const CeedScalar *ug = in[0], *qd = in[1];
+  const CeedScalar *ug = in[0], *qdata = in[1];
   CeedScalar *vg = out[0];
 
+  // Quadrature Point Loop
+  CeedPragmaSIMD
   for (CeedInt i=0; i<Q; i++) {
-    // Component 1
-    const CeedScalar ug00 = ug[i+(0+0*3)*Q];
-    const CeedScalar ug01 = ug[i+(0+1*3)*Q];
-    const CeedScalar ug02 = ug[i+(0+2*3)*Q];
-    vg[i+(0+0*3)*Q] = qd[i+Q*0]*ug00 + qd[i+Q*1]*ug01 + qd[i+Q*2]*ug02;
-    vg[i+(0+1*3)*Q] = qd[i+Q*1]*ug00 + qd[i+Q*3]*ug01 + qd[i+Q*4]*ug02;
-    vg[i+(0+2*3)*Q] = qd[i+Q*2]*ug00 + qd[i+Q*4]*ug01 + qd[i+Q*5]*ug02;
+    // Read spatial derivatives of u components
+    const CeedScalar uJ[3][3]        = {{ug[i+(0+0*3)*Q],
+                                         ug[i+(0+1*3)*Q],
+                                         ug[i+(0+2*3)*Q]},
+                                        {ug[i+(1+0*3)*Q],
+                                         ug[i+(1+1*3)*Q],
+                                         ug[i+(1+2*3)*Q]},
+                                        {ug[i+(2+0*3)*Q],
+                                         ug[i+(2+1*3)*Q],
+                                         ug[i+(2+2*3)*Q]}
+                                       };
+    // Read qdata (dXdxdXdxT symmetric matrix)
+    const CeedScalar dXdxdXdxT[3][3] = {{qdata[i+0*Q],
+                                         qdata[i+5*Q],
+                                         qdata[i+4*Q]},
+                                        {qdata[i+5*Q],
+                                         qdata[i+1*Q],
+                                         qdata[i+3*Q]},
+                                        {qdata[i+4*Q],
+                                         qdata[i+3*Q],
+                                         qdata[i+2*Q]}
+                                       };
 
-    // Component 2
-    const CeedScalar ug10 = ug[i+(1+0*3)*Q];
-    const CeedScalar ug11 = ug[i+(1+1*3)*Q];
-    const CeedScalar ug12 = ug[i+(1+2*3)*Q];
-    vg[i+(1+0*3)*Q] = qd[i+Q*0]*ug10 + qd[i+Q*1]*ug11 + qd[i+Q*2]*ug12;
-    vg[i+(1+1*3)*Q] = qd[i+Q*1]*ug10 + qd[i+Q*3]*ug11 + qd[i+Q*4]*ug12;
-    vg[i+(1+2*3)*Q] = qd[i+Q*2]*ug10 + qd[i+Q*4]*ug11 + qd[i+Q*5]*ug12;
-
-    // Component 3
-    const CeedScalar ug20 = ug[i+(2+0*3)*Q];
-    const CeedScalar ug21 = ug[i+(2+1*3)*Q];
-    const CeedScalar ug22 = ug[i+(2+2*3)*Q];
-    vg[i+(2+0*3)*Q] = qd[i+Q*0]*ug20 + qd[i+Q*1]*ug21 + qd[i+Q*2]*ug22;
-    vg[i+(2+1*3)*Q] = qd[i+Q*1]*ug20 + qd[i+Q*3]*ug21 + qd[i+Q*4]*ug22;
-    vg[i+(2+2*3)*Q] = qd[i+Q*2]*ug20 + qd[i+Q*4]*ug21 + qd[i+Q*5]*ug22;
-  }
+    for (int k=0; k<3; k++) // k = component
+      for (int j=0; j<3; j++) // j = direction of vg
+        vg[i+(k+j*3)*Q] = (uJ[k][0] * dXdxdXdxT[0][j] +
+                           uJ[k][1] * dXdxdXdxT[1][j] +
+                           uJ[k][2] * dXdxdXdxT[2][j]);
+  } // End of Quadrature Point Loop
   return 0;
 }

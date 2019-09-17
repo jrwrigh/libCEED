@@ -25,13 +25,15 @@
 CEED_QFUNCTION(SetupMass3)(void *ctx, const CeedInt Q,
                            const CeedScalar *const *in, CeedScalar *const *out) {
   const CeedScalar *x = in[0], *J = in[1], *w = in[2];
-  CeedScalar *rho = out[0], *true_soln = out[1], *rhs = out[2];
+  CeedScalar *qdata = out[0], *true_soln = out[1], *rhs = out[2];
 
+  // Quadrature Point Loop
+  CeedPragmaSIMD
   for (CeedInt i=0; i<Q; i++) {
     const CeedScalar det = (J[i+Q*0]*(J[i+Q*4]*J[i+Q*8] - J[i+Q*5]*J[i+Q*7]) -
                             J[i+Q*1]*(J[i+Q*3]*J[i+Q*8] - J[i+Q*5]*J[i+Q*6]) +
                             J[i+Q*2]*(J[i+Q*3]*J[i+Q*7] - J[i+Q*4]*J[i+Q*6]));
-    rho[i] = det * w[i];
+    qdata[i] = det * w[i];
 
     // Component 1
     true_soln[i+0*Q] =  sqrt(x[i]*x[i] + x[i+Q]*x[i+Q] + x[i+2*Q]*x[i+2*Q]);;
@@ -41,28 +43,30 @@ CEED_QFUNCTION(SetupMass3)(void *ctx, const CeedInt Q,
     true_soln[i+2*Q] = true_soln[i+0*Q];
 
     // Component 1
-    rhs[i+0*Q] = rho[i] * true_soln[i+0*Q];
+    rhs[i+0*Q] = qdata[i] * true_soln[i+0*Q];
     // Component 2
-    rhs[i+1*Q] = rho[i] * true_soln[i+0*Q];
+    rhs[i+1*Q] = qdata[i] * true_soln[i+0*Q];
     // Component 3
-    rhs[i+2*Q] = rho[i] * true_soln[i+0*Q];
-  }
+    rhs[i+2*Q] = qdata[i] * true_soln[i+0*Q];
+  } // End of Quadrature Point Loop
   return 0;
 }
 
 CEED_QFUNCTION(Mass3)(void *ctx, const CeedInt Q,
                       const CeedScalar *const *in, CeedScalar *const *out) {
-  const CeedScalar *u = in[0], *rho = in[1];
+  const CeedScalar *u = in[0], *qdata = in[1];
   CeedScalar *v = out[0];
 
+  // Quadrature Point Loop
+  CeedPragmaSIMD
   for (CeedInt i=0; i<Q; i++) {
-    const CeedScalar r = rho[i];
+    const CeedScalar r = qdata[i];
     // Component 1
     v[i+0*Q] = r * u[i+0*Q];
     // Component 2
     v[i+1*Q] = r * u[i+1*Q];
     // Component 3
     v[i+2*Q] = r * u[i+2*Q];
-  }
+  } // End of Quadrature Point Loop
   return 0;
 }
