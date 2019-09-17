@@ -4,6 +4,7 @@ build/*
 # General
 *.o
 *.so
+*.dylib
 *.d
 *.DIR
 doc/html
