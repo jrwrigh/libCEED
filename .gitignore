@@ -9,6 +9,7 @@ build/*
 *.DIR
 doc/html
 ceed.pc
+config.mk
 
 # Mac specific
 .DS_Store
