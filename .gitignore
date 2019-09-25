@@ -4,6 +4,7 @@ build/*
 # General
 *.o
 *.so
+*.json
 *.dylib
 *.d
 *.DIR
