@@ -24,3 +24,6 @@ config.mk
 
 # Debugging
 vgcore*
+*.vtr
+*.vts
+*.bin*
