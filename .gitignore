@@ -9,6 +9,9 @@ build/*
 doc/html
 ceed.pc
 config.mk
+*.vtr
+*.vts
+*.bin*
 
 # Mac specific
 .DS_Store
@@ -22,3 +25,5 @@ config.mk
 
 # Debugging
 vgcore*
+*.json
+*.dylib
