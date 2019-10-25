@@ -30,32 +30,7 @@ int CeedGetXsmmInd_NonTensor(CeedInt add, CeedInt P, CeedInt Q, CeedInt B,
          (B == P ? (J == Q ? 0:1) : (B == Q ? 2:3));
 }
 
-// Default Tensor Contact
-static int CeedTensorContract_Xsmm_C1(CeedTensorContract contract,
-                                      CeedInt A, CeedInt B, CeedInt C,
-                                      CeedInt J, const CeedScalar *restrict t,
-                                      CeedTransposeMode tmode,
-                                      const CeedInt Add,
-                                      const CeedScalar *restrict u,
-                                      CeedScalar *restrict v) {
-  CeedScalar alpha = 1.0, beta = 1.0;
-  char transu = 'N', transt = 'N';
-  if ((tmode == CEED_TRANSPOSE && C != 1)
-      || (tmode == CEED_NOTRANSPOSE && C == 1))
-    transt = 'T';
-
-  if (!Add)
-    beta = 0.0;
-
-  // libXSMM GEMM
-  libxsmm_dgemm(&transt, &transu, &J, &A, &B,
-                &alpha, &t[0], NULL, &u[0], NULL,
-                &beta, &v[0], NULL);
-
-  return 0;
-}
-
-// Switch for Tensor Contract
+// Tensor Contract
 static int CeedTensorContractApply_Xsmm(CeedTensorContract contract, CeedInt A,
                                         CeedInt B, CeedInt C, CeedInt J,
                                         const CeedScalar *restrict t,
@@ -85,11 +60,7 @@ static int CeedTensorContractApply_Xsmm(CeedTensorContract contract, CeedInt A,
     ind = CeedGetXsmmInd_NonTensor(add, impl->P, impl->Q, B, C, J);
 
   // Run kernel or fallback to default implementation
-  if (C != 1)
-    for (CeedInt a=0; a<A; a++)
-      impl->kernels[ind](&u[a*B*C], &t[0], &v[a*J*C], NULL, NULL, NULL);
-  else
-    CeedTensorContract_Xsmm_C1(contract, A, B, C, J, t, tmode, add, u, v);
+ impl->kernels[ind](u, t, v);
 
   return 0;
 }
@@ -118,6 +89,7 @@ int CeedTensorContractCreate_Xsmm(CeedBasis basis,
     ierr = CeedBasisGetNumNodes1D(basis, &impl->P); CeedChk(ierr);
     ierr = CeedBasisGetNumQuadraturePoints1D(basis, &impl->Q); CeedChk(ierr);
     ierr = CeedBasisGetDimension(basis, &impl->dim); CeedChk(ierr);
+    ierr = CeedBasisGetNumComponents(basis, &impl->ncomp); CeedChk(ierr);
     // Set up kernel pointer array
     impl->numkernels = 2*2*4*impl->dim;
     ierr = CeedCalloc(impl->numkernels, &impl->kernels); CeedChk(ierr);
@@ -126,17 +98,27 @@ int CeedTensorContractCreate_Xsmm(CeedBasis basis,
         for (CeedInt tmode = 0; tmode <= 1; tmode++)
           for (CeedInt grad = 0; grad <=1; grad++)
             for (CeedInt dim = 0; dim < impl->dim; dim++) {
+              // Kernel options
               const int flags = LIBXSMM_GEMM_FLAGS('N', tmode ? 'T' : 'N');
               CeedInt B = grad ? impl->Q : (tmode ? impl->Q : impl->P),
                       J = grad ? impl->Q : (tmode ? impl->P : impl->Q),
-                      C = nelem*CeedIntPow(J, dim);
+                      C = nelem*CeedIntPow(J, dim),
+                      A = impl->ncomp*CeedIntPow(B, impl->dim-1 - dim);
               int ind = CeedGetXsmmInd_Tensor(nelem, add, tmode, B, C, J, dim,
                                               impl->dim);
               CeedScalar alpha = 1.0, beta = 1.0;
-              if (!add) beta = 0.0;
-              impl->kernels[ind] = libxsmm_dmmdispatch(C, J, B,
-                                   NULL, NULL, NULL, &alpha,
-                                   &beta, &flags, NULL);
+              if (!add)
+                beta = 0.0;
+
+              // LIBXSMM kernel
+              libxsmm_descriptor_blob xgemm_blob;
+              const libxsmm_gemm_prefetch_type prefetch =
+                                                 LIBXSMM_GEMM_PREFETCH_NONE;
+              const libxsmm_gemm_descriptor* xgemm_desc = 0;
+              xgemm_desc = libxsmm_gemm_descriptor_dinit(&xgemm_blob,
+                             LIBXSMM_GEMM_PRECISION(double),
+                             A, J, B, B, J, J, alpha, beta, flags, prefetch);
+              impl->kernels[ind] = libxsmm_create_pgemm_ac_rm(xgemm_desc).dmm;
               if (!impl->kernels[ind])
                 // LCOV_EXCL_START
                 return CeedError(ceed, 1, "LIBXSMM kernel failed to build.");
@@ -146,6 +128,7 @@ int CeedTensorContractCreate_Xsmm(CeedBasis basis,
     ierr = CeedBasisGetNumNodes(basis, &impl->P); CeedChk(ierr);
     ierr = CeedBasisGetNumQuadraturePoints(basis, &impl->Q); CeedChk(ierr);
     ierr = CeedBasisGetDimension(basis, &impl->dim); CeedChk(ierr);
+    ierr = CeedBasisGetNumComponents(basis, &impl->ncomp); CeedChk(ierr);
     // Set up kernel pointer array
     impl->numkernels = 4*2*2;
     ierr = CeedCalloc(impl->numkernels, &impl->kernels); CeedChk(ierr);
@@ -155,14 +138,22 @@ int CeedTensorContractCreate_Xsmm(CeedBasis basis,
           for (CeedInt grad = 1; grad <= impl->dim; grad+=impl->dim-1) {
             const int flags = LIBXSMM_GEMM_FLAGS('N', tmode ? 'T' : 'N');
             CeedInt B = tmode ? grad*impl->Q : impl->P,
-                    J = tmode ? impl->P : grad*impl->Q;
-            int ind = CeedGetXsmmInd_NonTensor(add, impl->P, impl->Q, B, nelem,
-                                               J);
+                    J = tmode ? impl->P : grad*impl->Q,
+                    C = nelem, A = impl->ncomp;
+            int ind = CeedGetXsmmInd_NonTensor(add, impl->P, impl->Q, B, C, J);
             CeedScalar alpha = 1.0, beta = 1.0;
-            if (!add) beta = 0.0;
-            impl->kernels[ind] = libxsmm_dmmdispatch(nelem, J, B,
-                                 NULL, NULL, NULL, &alpha,
-                                 &beta, &flags, NULL);
+            if (!add)
+              beta = 0.0;
+
+            // LIBXSMM kernel
+            libxsmm_descriptor_blob xgemm_blob;
+            const libxsmm_gemm_prefetch_type prefetch =
+                                               LIBXSMM_GEMM_PREFETCH_NONE;
+            const libxsmm_gemm_descriptor* xgemm_desc = 0;
+            xgemm_desc = libxsmm_gemm_descriptor_dinit(&xgemm_blob,
+                           LIBXSMM_GEMM_PRECISION(double),
+                           A, J, B, B, J, J, alpha, beta, flags, prefetch);
+            impl->kernels[ind] = libxsmm_create_pgemm_ac_rm(xgemm_desc).dmm;
             if (!impl->kernels[ind])
               // LCOV_EXCL_START
               return CeedError(ceed, 1, "LIBXSMM kernel failed to build.");
