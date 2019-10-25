@@ -192,12 +192,6 @@ CEED_QFUNCTION(ICsDC)(void *ctx, CeedInt Q,
 // its transpose (dXdx_k,j) to properly compute integrals of the form:
 // int( gradv gradu )
 //
-// Product of Inverse and Transpose:
-//   dXdxdXdxT = dXdx_j,k * dXdx_k,j
-//
-// Stored: dXdxdXdxT
-//   and then multiplied by wJ (quadrature weights times determinant of Jacobian)
-//
 // *******************************************************************************
 CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
                    const CeedScalar *const *in, CeedScalar *const *out) {
