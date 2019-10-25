@@ -264,14 +264,15 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
                                      qdata[9][i]}
                                    };
     // -- Grad-to-Grad qdata
-    // ---- dXdx_j,k * dXdx_k,j
-    CeedScalar dXdxdXdxT[3][3];
-    for (int j=0; j<3; j++)
+    // dU/dx
+    for (int j=0; j<3; j++) 
       for (int k=0; k<3; k++) {
-        dXdxdXdxT[j][k] = 0;
-        for (int l=0; l<3; l++)
-          dXdxdXdxT[j][k] += dXdx[j][l]*dXdx[k][l];
+        drhodx[j] += drho[k] * dXdx[k][j]; 
+        dEdx[j] += dE[k] * dXdx[k][j];
+        for (int i=0; i<3; i++)
+          dudx[j][k] += du[j][i] * dXdx[i][k];
       }
+      
 
     // -- gradT
     const CeedScalar gradT[3]  = {(dE[0]/rho - E*drho[0]/(rho*rho) -
@@ -326,9 +327,9 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     const CeedInt Fuviscidx[3][3] = {{0, 1, 2}, {1, 3, 4}, {2, 4, 5}}; // symmetric matrix indices
     for (int j=0; j<3; j++)
       for (int k=0; k<3; k++)
-        dv[k][j+1][i] -= wJ*(Fu[Fuviscidx[j][0]]*dXdxdXdxT[k][0] +
-                             Fu[Fuviscidx[j][1]]*dXdxdXdxT[k][1] +
-                             Fu[Fuviscidx[j][2]]*dXdxdXdxT[k][2]);
+        dv[k][j+1][i] -= wJ*(Fu[Fuviscidx[j][0]]*dXdx[k][0] +
+                             Fu[Fuviscidx[j][1]]*dXdx[k][1] +
+                             Fu[Fuviscidx[j][2]]*dXdx[k][2]);
     // ---- -rho g khat
     v[1][i] = 0;
     v[2][i] = 0;
@@ -341,8 +342,8 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
                                      u[2]*dXdx[j][2]);
     // ---- Fevisc
     for (int j=0; j<3; j++)
-      dv[j][4][i] -= wJ * (Fe[0]*dXdxdXdxT[j][0] + Fe[1]*dXdxdXdxT[j][1] +
-                           Fe[2]*dXdxdXdxT[j][2]);
+      dv[j][4][i] -= wJ * (Fe[0]*dXdx[j][0] + Fe[1]*dXdx[j][1] +
+                           Fe[2]*dXdx[j][2]);
     // ---- No Change
     v[4][i] = 0;
 
