@@ -179,6 +179,19 @@ CEED_QFUNCTION(ICsDC)(void *ctx, CeedInt Q,
 // Temperature:
 //   T = (E / rho - (u u) / 2 ) / cv
 //
+//********************************************
+// Stabilization:
+//
+//   Tau = [TauC, TauM, TauM, TauM, TauE]
+//      f1 = rho  sqrt(2 / (C1  dt) + ui uj gij + C2 mu^2 gij gij)   
+//           gij = dXi/dX * dXi/dX 
+// TauC = Cc f1 / (8 gii)                          
+// TauM = 1 / f1
+// TauE = TauM / (Ce cv)                          
+//
+//  SU   = Galerkin + grad(v) . ( Ai^T * Tau * (Aj q,j) )
+//  SUPG = Galerkin + grad(v) . ( Ai^T * Tau * (qdot + Aj q,j - body force) )   
+//                                       (diffussive terms will be added later)
 // Constants:
 //   lambda = - 2 / 3,  From Stokes hypothesis
 //   mu              ,  Dynamic viscosity
@@ -229,16 +242,16 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
                                      dq[1][0][i],
                                      dq[2][0][i]
                                     };
-    const CeedScalar du[3][3]   = {{(dq[0][1][i] - drho[0]*u[0]) / rho,
-                                    (dq[1][1][i] - drho[1]*u[0]) / rho,
-                                    (dq[2][1][i] - drho[2]*u[0]) / rho},
-                                   {(dq[0][2][i] - drho[0]*u[1]) / rho,
-                                    (dq[1][2][i] - drho[1]*u[1]) / rho,
-                                    (dq[2][2][i] - drho[2]*u[1]) / rho},
-                                   {(dq[0][3][i] - drho[0]*u[2]) / rho,
-                                    (dq[1][3][i] - drho[1]*u[2]) / rho,
-                                    (dq[2][3][i] - drho[2]*u[2]) / rho}
-                                  };
+    const CeedScalar dU[3][3]   = {{dq[0][1][i],
+                                    dq[1][1][i],
+                                    dq[2][1][i]},
+                                   {dq[0][2][i],
+                                    dq[1][2][i],
+                                    dq[2][2][i]},
+                                   {dq[0][3][i],
+                                    dq[1][3][i],
+                                    dq[2][3][i]}
+                                  };                                
     const CeedScalar dE[3]      =   {dq[0][4][i],
                                      dq[1][4][i],
                                      dq[2][4][i]
@@ -259,16 +272,27 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
                                    };
     // -- Grad-to-Grad qdata
     // dU/dx
+    CeedScalar du[3][3];
     CeedScalar drhodx[3];
-    CeedScalar dudx[3][3];
     CeedScalar dEdx[3];
-    for (int j=0; j<3; j++) 
+    CeedScalar dUdx[3][3];
+    CeedScalar dudx[3][3];
+    CeedScalar dXdxdXdxT[3][3];
+    for (int j=0; j<3; j++) {
+      drhodx[j] =0;
+      dEdx[j] = 0;
       for (int k=0; k<3; k++) {
-        drhodx[j] += drho[k] * dXdx[k][j]; 
+        du[j][k] = (dU[j][k] - drho[k]*u[j]) / rho;
+        drhodx[j] += drho[k] * dXdx[k][j];
         dEdx[j] += dE[k] * dXdx[k][j];
-        for (int i=0; i<3; i++)
-          dudx[j][k] += du[j][i] * dXdx[i][k];
-      }
+        dUdx[j][k] = 0;
+        dudx[j][k] = 0;
+        dXdxdXdxT[j][k] = 0;
+        for (int l=0; l<3; l++) {
+          dUdx[j][k] += dU[j][l] * dXdx[l][k];
+          dudx[j][k] += du[j][l] * dXdx[l][k];
+          dXdxdXdxT[j][k] += dXdx[j][l]*dXdx[k][l];  //dXdx_j,k * dXdx_k,j
+      }}}
       
 
    // -- gradT
@@ -299,8 +323,23 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
                                     u[0]*Fu[2] + u[1]*Fu[4] + u[2]*Fu[5] +
                                     k *gradT[2]
                                   };
-    // -- P
-    const CeedScalar P         =  (E - (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])*rho/2) * (gamma - 1);
+    // ke = kinetic energy
+    const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
+    // P = pressure
+    const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1.);
+
+    // Tau = [TauC, TauM, TauM, TauM, TauE]
+    CeedScalar uX[3];
+    for (int j=0; j<3; j++) uX[j] = dXdx[j][0]*u[0] + dXdx[j][1]*u[1] + dXdx[j][2]*u[2];
+    const CeedScalar uiujgij = uX[0]*uX[0] + uX[1]*uX[1] + uX[2]*uX[2];
+    const CeedScalar C1   = 1.;
+    const CeedScalar C2   = 1.;
+    const CeedScalar Cc   = 1.;
+    const CeedScalar Ce   = 1.; 
+    const CeedScalar f1   = rho * sqrt( 2. / (C1 * dt) + uiujgij + C2 * mu*mu *  );
+    const CeedScalar TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
+    const CeedScalar TauM = 1./f1;
+    const CeedScalar TauE = TauM / (Ce * cv);
 
     // The Physics
 
