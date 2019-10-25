@@ -265,6 +265,9 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
                                    };
     // -- Grad-to-Grad qdata
     // dU/dx
+    CeedScalar drhodx[3];
+    CeedScalar dudx[3][3];
+    CeedScalar dEdx[3];
     for (int j=0; j<3; j++) 
       for (int k=0; k<3; k++) {
         drhodx[j] += drho[k] * dXdx[k][j]; 
@@ -274,25 +277,25 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
       }
       
 
-    // -- gradT
-    const CeedScalar gradT[3]  = {(dE[0]/rho - E*drho[0]/(rho*rho) -
-                                   (u[0]*du[0][0] + u[1]*du[1][0] + u[2]*du[2][0]))/cv,
-                                  (dE[1]/rho - E*drho[1]/(rho*rho) -
-                                   (u[0]*du[0][1] + u[1]*du[1][1] + u[2]*du[2][1]))/cv,
-                                  (dE[2]/rho - E*drho[2]/(rho*rho) -
-                                   (u[0]*du[0][2] + u[1]*du[1][2] + u[2]*du[2][2]) - g)/cv
+   // -- gradT
+    const CeedScalar gradT[3]  = {(dEdx[0]/rho - E*drhodx[0]/(rho*rho) -
+                                  (u[0]*dudx[0][0] + u[1]*dudx[1][0] + u[2]*dudx[2][0]))/cv,
+                                  (dEdx[1]/rho - E*drhodx[1]/(rho*rho) -
+                                  (u[0]*dudx[0][1] + u[1]*dudx[1][1] + u[2]*dudx[2][1]))/cv,
+                                  (dEdx[2]/rho - E*drhodx[2]/(rho*rho) -
+                                  (u[0]*dudx[0][2] + u[1]*dudx[1][2] + u[2]*dudx[2][2]) - g)/cv
                                  };
     // -- Fuvisc
     // ---- Symmetric 3x3 matrix
-    const CeedScalar Fu[6]     =  { mu *(du[0][0] * (2 + lambda) +
-                                         lambda * (du[1][1] + du[2][2])),
-                                    mu *(du[0][1] + du[1][0]),
-                                    mu *(du[0][2] + du[2][0]),
-                                    mu *(du[1][1] * (2 + lambda) +
-                                         lambda * (du[0][0] + du[2][2])),
-                                    mu *(du[1][2] + du[2][1]),
-                                    mu *(du[2][2] * (2 + lambda) +
-                                         lambda * (du[0][0] + du[1][1]))
+    const CeedScalar Fu[6]     =  { mu *(dudx[0][0] * (2 + lambda) +
+                                         lambda * (dudx[1][1] + dudx[2][2])),
+                                    mu *(dudx[0][1] + dudx[1][0]),
+                                    mu *(dudx[0][2] + dudx[2][0]),
+                                    mu *(dudx[1][1] * (2 + lambda) +
+                                         lambda * (dudx[0][0] + dudx[2][2])),
+                                    mu *(dudx[1][2] + dudx[2][1]),
+                                    mu *(dudx[2][2] * (2 + lambda) +
+                                         lambda * (dudx[0][0] + dudx[1][1]))
                                   };
     // -- Fevisc
     const CeedScalar Fe[3]     =  { u[0]*Fu[0] + u[1]*Fu[1] + u[2]*Fu[2] +
