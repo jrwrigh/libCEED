@@ -571,6 +571,14 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     // ---- No Change
     v[4][i] = -rho*g*u[2]*wJ;
 
+    //SU
+    for (int j=0; j<5; j++)
+      for (int k=0; k<3; k++)
+        dv[k][j][i]  -= Stab_Conv[j][k] * dXdx[k][0] + Stab_Conv[j][k] * dXdx[k][1] +
+                        Stab_Conv[j][k] * dXdx[k][2];
+
+      
+
   } // End Quadrature Point Loop
 
   // Return
