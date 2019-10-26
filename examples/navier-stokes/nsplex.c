@@ -847,7 +847,7 @@ int main(int argc, char **argv) {
   }
 
   CeedQFunctionSetContext(qf_ics, &ctxSetup, sizeof ctxSetup);
-  CeedScalar ctxNS[6] = {lambda, mu, k, cv, cp, g};
+  CeedScalar ctxNS[7] = {lambda, mu, k, cv, cp, g, Rd};
   struct Advection2dContext_ ctxAdvection2d = { //K struct that passes data needed at quadrature points for both advection
     .CtauS = CtauS,
     .strong_form = strong_form,
