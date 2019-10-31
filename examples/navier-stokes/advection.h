@@ -252,7 +252,7 @@ CEED_QFUNCTION(Advection)(void *ctx, CeedInt Q,
 
   return 0;
 }
-
+// *****************************************************************************
 CEED_QFUNCTION(IFunction_Advection)(void *ctx, CeedInt Q,
                           const CeedScalar *const *in, CeedScalar *const *out) {
   // Inputs

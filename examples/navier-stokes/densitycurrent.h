@@ -152,6 +152,7 @@ CEED_QFUNCTION(ICsDC)(void *ctx, CeedInt Q,
   return 0;
 }
 
+
 // *******************************************************************************
 // This QFunction implements the following formulation of Navier-Stokes
 //
@@ -579,6 +580,407 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
 
       
 
+  } // End Quadrature Point Loop
+
+  // Return
+  return 0;
+}
+// *******************************************************************************
+CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
+                   const CeedScalar *const *in, CeedScalar *const *out) {
+  // Inputs
+  const CeedScalar (*q)[Q] = (CeedScalar(*)[Q])in[0],
+                   (*dq)[5][Q] = (CeedScalar(*)[5][Q])in[1],
+                   (*qdot)[Q] = (CeedScalar(*)[Q])in[2],
+                   (*qdata)[Q] = (CeedScalar(*)[Q])in[3];                 
+  // Outputs
+  CeedScalar (*v)[Q] = (CeedScalar(*)[Q])out[0],
+             (*dv)[5][Q] = (CeedScalar(*)[5][Q])out[1];
+  // Context
+  const CeedScalar *context = (const CeedScalar *)ctx;
+  const CeedScalar lambda = context[0];
+  const CeedScalar mu     = context[1];
+  const CeedScalar k      = context[2];
+  const CeedScalar cv     = context[3];
+  const CeedScalar cp     = context[4];
+  const CeedScalar g      = context[5];
+  const CeedScalar Rd     = context[6];
+  const CeedScalar gamma  = cp / cv;
+
+  CeedPragmaSIMD
+  // Quadrature Point Loop
+  for (CeedInt i=0; i<Q; i++) {
+    // Setup
+    // -- Interp in
+    const CeedScalar rho        =    q[0][i];
+    const CeedScalar u[3]       =   {q[1][i] / rho,
+                                     q[2][i] / rho,
+                                     q[3][i] / rho
+                                    };
+    const CeedScalar E          =    q[4][i];
+    // -- Grad in
+    const CeedScalar drho[3]    =   {dq[0][0][i],
+                                     dq[1][0][i],
+                                     dq[2][0][i]
+                                    };
+    const CeedScalar dU[3][3]   = {{dq[0][1][i],
+                                    dq[1][1][i],
+                                    dq[2][1][i]},
+                                   {dq[0][2][i],
+                                    dq[1][2][i],
+                                    dq[2][2][i]},
+                                   {dq[0][3][i],
+                                    dq[1][3][i],
+                                    dq[2][3][i]}
+                                  };                                
+    const CeedScalar dE[3]      =   {dq[0][4][i],
+                                     dq[1][4][i],
+                                     dq[2][4][i]
+                                    };
+    // -- Interp-to-Interp qdata
+    const CeedScalar wJ         =    qdata[0][i];
+    // -- Interp-to-Grad qdata
+    // ---- Inverse of change of coordinate matrix: X_i,j
+    const CeedScalar dXdx[3][3] =  {{qdata[1][i],
+                                     qdata[2][i],
+                                     qdata[3][i]},
+                                    {qdata[4][i],
+                                     qdata[5][i],
+                                     qdata[6][i]},
+                                    {qdata[7][i],
+                                     qdata[8][i],
+                                     qdata[9][i]}
+                                   };
+    // -- Grad-to-Grad qdata
+    // dU/dx
+    CeedScalar du[3][3];
+    CeedScalar drhodx[3];
+    CeedScalar dEdx[3];
+    CeedScalar dUdx[3][3];
+    CeedScalar dudx[3][3];
+    CeedScalar dXdxdXdxT[3][3];
+    for (int j=0; j<3; j++) {
+      drhodx[j] =0;
+      dEdx[j] = 0;
+      for (int k=0; k<3; k++) {
+        du[j][k] = (dU[j][k] - drho[k]*u[j]) / rho;
+        drhodx[j] += drho[k] * dXdx[k][j];
+        dEdx[j] += dE[k] * dXdx[k][j];
+        dUdx[j][k] = 0;
+        dudx[j][k] = 0;
+        dXdxdXdxT[j][k] = 0;
+        for (int l=0; l<3; l++) {
+          dUdx[j][k] += dU[j][l] * dXdx[l][k];
+          dudx[j][k] += du[j][l] * dXdx[l][k];
+          dXdxdXdxT[j][k] += dXdx[j][l]*dXdx[k][l];  //dXdx_j,k * dXdx_k,j
+      }}}
+      
+
+   // -- gradT
+    const CeedScalar gradT[3]  = {(dEdx[0]/rho - E*drhodx[0]/(rho*rho) -
+                                  (u[0]*dudx[0][0] + u[1]*dudx[1][0] + u[2]*dudx[2][0]))/cv,
+                                  (dEdx[1]/rho - E*drhodx[1]/(rho*rho) -
+                                  (u[0]*dudx[0][1] + u[1]*dudx[1][1] + u[2]*dudx[2][1]))/cv,
+                                  (dEdx[2]/rho - E*drhodx[2]/(rho*rho) -
+                                  (u[0]*dudx[0][2] + u[1]*dudx[1][2] + u[2]*dudx[2][2]))/cv
+                                 };
+    // -- Fuvisc
+    // ---- Symmetric 3x3 matrix
+    const CeedScalar Fu[6]     =  { mu *(dudx[0][0] * (2 + lambda) +
+                                         lambda * (dudx[1][1] + dudx[2][2])),
+                                    mu *(dudx[0][1] + dudx[1][0]),
+                                    mu *(dudx[0][2] + dudx[2][0]),
+                                    mu *(dudx[1][1] * (2 + lambda) +
+                                         lambda * (dudx[0][0] + dudx[2][2])),
+                                    mu *(dudx[1][2] + dudx[2][1]),
+                                    mu *(dudx[2][2] * (2 + lambda) +
+                                         lambda * (dudx[0][0] + dudx[1][1]))
+                                  };
+    // -- Fevisc
+    const CeedScalar Fe[3]     =  { u[0]*Fu[0] + u[1]*Fu[1] + u[2]*Fu[2] +
+                                    k *gradT[0],
+                                    u[0]*Fu[1] + u[1]*Fu[3] + u[2]*Fu[4] +
+                                    k *gradT[1],
+                                    u[0]*Fu[2] + u[1]*Fu[4] + u[2]*Fu[5] +
+                                    k *gradT[2]
+                                  };
+    // ke = kinetic energy
+    const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
+    // P = pressure
+    const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1.);
+
+    // Tau = [TauC, TauM, TauM, TauM, TauE]
+    CeedScalar uX[3];
+    for (int j=0; j<3; j++) uX[j] = dXdx[j][0]*u[0] + dXdx[j][1]*u[1] + dXdx[j][2]*u[2];
+    const CeedScalar uiujgij = uX[0]*uX[0] + uX[1]*uX[1] + uX[2]*uX[2];
+    //const CeedScalar gijgij =     //find later
+    const CeedScalar C1   = 1.;
+    const CeedScalar C2   = 1.;
+    const CeedScalar Cc   = 1.;
+    const CeedScalar Ce   = 1.; 
+    const CeedScalar f1   = rho * sqrt(uiujgij);   //This is correct for SU
+    const CeedScalar TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
+    const CeedScalar TauM = 1./f1;
+    const CeedScalar TauE = TauM / (Ce * cv);
+
+        //- Stabilizing terms
+    //----- Convection Ai^T * Tau * Aj * q,j
+    const CeedScalar Stab_Conv[5][3] ={{TauM*(u[0]*u[0] - (Rd*ke)/cv)*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] -
+                                     dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] +
+                                     drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) + 
+                                     TauM*u[0]*u[1]*(drho[1]*(u[1]*u[1] - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] -
+                                     dU[0][0]*u[1] + dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv +
+                                     (Rd*dU[0][1]*u[0])/cv + (Rd*dU[2][1]*u[2])/cv) + TauM*u[0]*u[2]*(drho[2]*(u[2]*u[2]  - 
+                                     (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - dU[2][1]*u[1] - dU[0][0]*u[2] + dU[2][2]*u[2]*(Rd/cv - 2) + 
+                                     drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + (Rd*dU[1][2]*u[1])/cv) + 
+                                     TauE*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv)*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[2]*u[2] + ke))/cv) - dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) -
+                                     dU[0][0]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) +
+                                     drho[2]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv +
+                                     (Rd*dU[1][0]*u[0]*u[1])/cv + (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + 
+                                     (Rd*dU[2][1]*u[1]*u[2])/cv),
+                                  
+                                     TauM*(u[1]*u[1] - (Rd*ke)/cv)*(drho[1]*(u[1]*u[1] - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] -
+                                     dU[2][2]*u[1] - dU[0][0]*u[1] + dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] -
+                                     (Rd*dE[1])/cv + (Rd*dU[0][1]*u[0])/cv + (Rd*dU[2][1]*u[2])/cv) + TauM*u[0]*u[1]*(drho[0]*(u[0]*u[0] -
+                                     (Rd*ke)/cv) - dU[0][2]*u[2] - dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) +
+                                     drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) +
+                                     TauM*u[1]*u[2]*(drho[2]*(u[2]*u[2]  - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - dU[2][1]*u[1] -
+                                     dU[0][0]*u[2] + dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + 
+                                     (Rd*dU[0][2]*u[0])/cv + (Rd*dU[1][2]*u[1])/cv) + TauE*u[1]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv)*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - dU[1][1]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[1]*u[1] + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - dE[0]*u[0]*(Rd/cv + 1) -
+                                     dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv) +
+                                     drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + 
+                                     (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv),
+                                     
+                                     TauM*(u[2]*u[2] - (Rd*ke)/cv)*(drho[2]*(u[2]*u[2] - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - 
+                                     dU[2][1]*u[1] - dU[0][0]*u[2] + dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - 
+                                     (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + (Rd*dU[1][2]*u[1])/cv) + TauM*u[0]*u[2]*(drho[0]*(u[0]*u[0] -
+                                     (Rd*ke)/cv) - dU[0][2]*u[2] - dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) +
+                                     drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) + 
+                                     TauM*u[1]*u[2]*(drho[1]*(u[1]*u[1]  - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] - 
+                                     dU[0][0]*u[1] + dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + 
+                                     (Rd*dU[0][1]*u[0])/cv + (Rd*dU[2][1]*u[2])/cv) + TauE*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv)*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - dU[1][1]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[1]*u[1] + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv)}, 
+                                   
+                                    {TauC*(dU[0][0] + dU[1][1] + dU[2][2]) - TauM*u[1]*(drho[1]*(u[1]*u[1]  - (Rd*ke)/cv) - dU[1][0]*u[0] - 
+                                     dU[1][2]*u[2] - dU[2][2]*u[1] - dU[0][0]*u[1] + dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + 
+                                     drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + (Rd*dU[0][1]*u[0])/cv + (Rd*dU[2][1]*u[2])/cv) - 
+                                     TauM*u[2]*(drho[2]*(u[2]*u[2]  - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - dU[2][1]*u[1] - dU[0][0]*u[2] + 
+                                     dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + 
+                                     (Rd*dU[1][2]*u[1])/cv) - TauE*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv)*(drho[0]*u[0]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) - dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[2]*u[2]  + ke))/cv) - dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - 
+                                     dU[0][0]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + 
+                                     drho[2]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + 
+                                     (Rd*dU[1][0]*u[0]*u[1])/cv + (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + 
+                                     (Rd*dU[2][1]*u[1]*u[2])/cv) + TauM*u[0]*(Rd/cv - 2)*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - 
+                                     dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + 
+                                     drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv),
+                                    
+                                     (Rd*TauM*u[0]*(drho[1]*(u[1]*u[1] - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] - dU[0][0]*u[1] + 
+                                     dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + (Rd*dU[0][1]*u[0])/cv + 
+                                     (Rd*dU[2][1]*u[2])/cv))/cv - TauM*u[1]*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - dU[1][1]*u[0] - 
+                                     dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - 
+                                     (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) + (Rd*TauE*u[0]*u[1]*(drho[0]*u[0]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) - dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[2]*u[2]  + ke))/cv) - dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - 
+                                     dU[0][0]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + 
+                                     drho[2]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + 
+                                     (Rd*dU[1][0]*u[0]*u[1])/cv + (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + 
+                                     (Rd*dU[2][1]*u[1]*u[2])/cv))/cv,
+                                    
+                                     (Rd*TauM*u[0]*(drho[2]*(u[2]*u[2] - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - dU[2][1]*u[1] - dU[0][0]*u[2] + 
+                                     dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + 
+                                     (Rd*dU[1][2]*u[1])/cv))/cv - TauM*u[2]*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - dU[1][1]*u[0] - 
+                                     dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + 
+                                     (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) + (Rd*TauE*u[0]*u[2]*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv))/cv},
+                                   
+                                    {(Rd*TauM*u[1]*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + 
+                                     dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + 
+                                     (Rd*dU[2][0]*u[2])/cv))/cv - TauM*u[0]*(drho[1]*(u[1]*u[1]  - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - 
+                                     dU[2][2]*u[1] - dU[0][0]*u[1] + dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + 
+                                     (Rd*dU[0][1]*u[0])/cv + (Rd*dU[2][1]*u[2])/cv) + (Rd*TauE*u[0]*u[1]*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv))/cv,
+                                   
+                                     TauC*(dU[0][0] + dU[1][1] + dU[2][2]) - TauM*u[0]*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - 
+                                     dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - 
+                                     (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) - TauM*u[2]*(drho[2]*(u[2]*u[2] - (Rd*ke)/cv) - 
+                                     dU[1][1]*u[2] - dU[2][0]*u[0] - dU[2][1]*u[1] - dU[0][0]*u[2] + dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + 
+                                     drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + (Rd*dU[1][2]*u[1])/cv) - TauE*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[1]*u[1]  + ke))/cv)*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - dU[1][1]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - dE[0]*u[0]*(Rd/cv + 1) - 
+                                     dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv) + 
+                                     drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + 
+                                     (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + (Rd*dU[1][2]*u[1]*u[2])/cv + 
+                                     (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv) + TauM*u[1]*(Rd/cv - 2)*(drho[1]*(u[1]*u[1]  - (Rd*ke)/cv) - 
+                                     dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] - dU[0][0]*u[1] + dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + 
+                                     drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + (Rd*dU[0][1]*u[0])/cv + (Rd*dU[2][1]*u[2])/cv),
+                                    
+                                     (Rd*TauM*u[1]*(drho[2]*(u[2]*u[2] - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - dU[2][1]*u[1] - dU[0][0]*u[2] + 
+                                     dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + 
+                                     (Rd*dU[1][2]*u[1])/cv))/cv - TauM*u[2]*(drho[1]*(u[1]*u[1]  - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - 
+                                     dU[2][2]*u[1] - dU[0][0]*u[1] + dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + 
+                                     (Rd*dU[0][1]*u[0])/cv + (Rd*dU[2][1]*u[2])/cv) + (Rd*TauE*u[1]*u[2]*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv))/cv}, 
+                                   
+                                    {(Rd*TauM*u[2]*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + 
+                                     dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + 
+                                     (Rd*dU[2][0]*u[2])/cv))/cv - TauM*u[0]*(drho[2]*(u[2]*u[2]  - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - 
+                                     dU[2][1]*u[1] - dU[0][0]*u[2] + dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + 
+                                     (Rd*dU[0][2]*u[0])/cv + (Rd*dU[1][2]*u[1])/cv) + (Rd*TauE*u[0]*u[2]*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv))/cv,
+                                   
+                                     (Rd*TauM*u[2]*(drho[1]*(u[1]*u[1] - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] - dU[0][0]*u[1] + 
+                                     dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + (Rd*dU[0][1]*u[0])/cv + 
+                                     (Rd*dU[2][1]*u[2])/cv))/cv - TauM*u[1]*(drho[2]*(u[2]*u[2]  - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - 
+                                     dU[2][1]*u[1] - dU[0][0]*u[2] + dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + 
+                                     (Rd*dU[0][2]*u[0])/cv + (Rd*dU[1][2]*u[1])/cv) + (Rd*TauE*u[1]*u[2]*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv))/cv,
+                                   
+                                     TauC*(dU[0][0] + dU[1][1] + dU[2][2]) - TauM*u[0]*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - 
+                                     dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + 
+                                     drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + (Rd*dU[2][0]*u[2])/cv) - 
+                                     TauM*u[1]*(drho[1]*(u[1]*u[1]  - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] - dU[0][0]*u[1] + 
+                                     dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + (Rd*dU[0][1]*u[0])/cv + 
+                                     (Rd*dU[2][1]*u[2])/cv) - TauE*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv)*(drho[0]*u[0]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) - dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[2]*u[2]  + ke))/cv) - dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - 
+                                     dU[0][0]*(E*(Rd/cv + 1) - (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + 
+                                     drho[2]*u[2]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + 
+                                     (Rd*dU[1][0]*u[0]*u[1])/cv + (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + 
+                                     (Rd*dU[2][1]*u[1]*u[2])/cv) + TauM*u[2]*(Rd/cv - 2)*(drho[2]*(u[2]*u[2]  - (Rd*ke)/cv) - dU[1][1]*u[2] - 
+                                     dU[2][0]*u[0] - dU[2][1]*u[1] - dU[0][0]*u[2] + dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + 
+                                     drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + (Rd*dU[1][2]*u[1])/cv)}, 
+                                   
+                                    {-(Rd*TauM*(drho[0]*(u[0]*u[0] - (Rd*ke)/cv) - dU[0][2]*u[2] - dU[1][1]*u[0] - dU[2][2]*u[0] - dU[0][1]*u[1] + 
+                                     dU[0][0]*u[0]*(Rd/cv - 2) + drho[1]*u[0]*u[1] + drho[2]*u[0]*u[2] - (Rd*dE[0])/cv + (Rd*dU[1][0]*u[1])/cv + 
+                                     (Rd*dU[2][0]*u[2])/cv))/cv - TauE*u[0]*(Rd/cv + 1)*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv),
+                                   
+                                     -(Rd*TauM*(drho[1]*(u[1]*u[1] - (Rd*ke)/cv) - dU[1][0]*u[0] - dU[1][2]*u[2] - dU[2][2]*u[1] - dU[0][0]*u[1] + 
+                                     dU[1][1]*u[1]*(Rd/cv - 2) + drho[0]*u[0]*u[1] + drho[2]*u[1]*u[2] - (Rd*dE[1])/cv + (Rd*dU[0][1]*u[0])/cv + 
+                                     (Rd*dU[2][1]*u[2])/cv))/cv - TauE*u[1]*(Rd/cv + 1)*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv),
+                                   
+                                     -(Rd*TauM*(drho[2]*(u[2]*u[2] - (Rd*ke)/cv) - dU[1][1]*u[2] - dU[2][0]*u[0] - dU[2][1]*u[1] - dU[0][0]*u[2] + 
+                                     dU[2][2]*u[2]*(Rd/cv - 2) + drho[0]*u[0]*u[2] + drho[1]*u[1]*u[2] - (Rd*dE[2])/cv + (Rd*dU[0][2]*u[0])/cv + 
+                                     (Rd*dU[1][2]*u[1])/cv))/cv - TauE*u[2]*(Rd/cv + 1)*(drho[0]*u[0]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) - 
+                                     dU[1][1]*(E*(Rd/cv + 1) - (Rd*(u[1]*u[1]  + ke))/cv) - dU[2][2]*(E*(Rd/cv + 1) - (Rd*(u[2]*u[2]  + ke))/cv) - 
+                                     dE[0]*u[0]*(Rd/cv + 1) - dE[1]*u[1]*(Rd/cv + 1) - dE[2]*u[2]*(Rd/cv + 1) - dU[0][0]*(E*(Rd/cv + 1) - 
+                                     (Rd*(u[0]*u[0] + ke))/cv) + drho[1]*u[1]*(E*(Rd/cv + 1) - (2*Rd*ke)/cv) + drho[2]*u[2]*(E*(Rd/cv + 1) - 
+                                     (2*Rd*ke)/cv) + (Rd*dU[0][1]*u[0]*u[1])/cv + (Rd*dU[0][2]*u[0]*u[2])/cv + (Rd*dU[1][0]*u[0]*u[1])/cv + 
+                                     (Rd*dU[1][2]*u[1]*u[2])/cv + (Rd*dU[2][0]*u[0]*u[2])/cv + (Rd*dU[2][1]*u[1]*u[2])/cv)}
+                                  };
+
+    // The Physics
+    //-----mass matrix
+    for (int j=0; j<5; j++) 
+      v[j][i] += wJ*qdot[j][i];
+
+    // -- Density
+    // ---- u rho
+    for (int j=0; j<3; j++)
+      dv[j][0][i]  -= wJ*(rho*u[0]*dXdx[j][0] + rho*u[1]*dXdx[j][1] +
+                         rho*u[2]*dXdx[j][2]);
+    // ---- No Change
+    v[0][i] = 0;
+
+    // -- Momentum
+    // ---- rho (u x u) + P I3
+    for (int j=0; j<3; j++)
+      for (int k=0; k<3; k++)
+        dv[k][j+1][i]  -= wJ*((rho*u[j]*u[0] + (j==0?P:0))*dXdx[k][0] +
+                             (rho*u[j]*u[1] + (j==1?P:0))*dXdx[k][1] +
+                             (rho*u[j]*u[2] + (j==2?P:0))*dXdx[k][2]);
+    // ---- Fuvisc
+    const CeedInt Fuviscidx[3][3] = {{0, 1, 2}, {1, 3, 4}, {2, 4, 5}}; // symmetric matrix indices
+    for (int j=0; j<3; j++)
+      for (int k=0; k<3; k++)
+        dv[k][j+1][i] += wJ*(Fu[Fuviscidx[j][0]]*dXdx[k][0] +
+                             Fu[Fuviscidx[j][1]]*dXdx[k][1] +
+                             Fu[Fuviscidx[j][2]]*dXdx[k][2]);
+    // ---- -rho g khat
+    v[1][i] = 0;
+    v[2][i] = 0;
+    v[3][i] = rho*g*wJ;
+
+    // -- Total Energy Density
+    // ---- (E + P) u
+    for (int j=0; j<3; j++)
+      dv[j][4][i]  -= wJ * (E + P) * (u[0]*dXdx[j][0] + u[1]*dXdx[j][1] +
+                                     u[2]*dXdx[j][2]);
+    // ---- Fevisc
+    for (int j=0; j<3; j++)
+      dv[j][4][i] += wJ * (Fe[0]*dXdx[j][0] + Fe[1]*dXdx[j][1] +
+                           Fe[2]*dXdx[j][2]);
+    // ---- No Change
+    v[4][i] = rho*g*u[2]*wJ;
+
+    //SU
+    for (int j=0; j<5; j++)
+      for (int k=0; k<3; k++)
+        dv[k][j][i]  += Stab_Conv[j][k] * dXdx[k][0] + Stab_Conv[j][k] * dXdx[k][1] +
+                        Stab_Conv[j][k] * dXdx[k][2];
+                        
+    Advection2dContext context = ctx;
+    for (int j=0; j<5; j++)
+      for (int k=0; k<3; k++)
+        switch (context->stabilization) {
+        case 0:
+          break;
+        case 1: 
+          dv[k][j][i] += Stab_Conv[j][k] * dXdx[k][0] + 
+                         Stab_Conv[j][k] * dXdx[k][1] +
+                         Stab_Conv[j][k] * dXdx[k][2];
+          break;
+        case 2: 
+          dv[k][j][i] += Stab_Conv[j][k] * dXdx[k][0] +   //Convective terms
+                         Stab_Conv[j][k] * dXdx[k][1] +
+                         Stab_Conv[j][k] * dXdx[k][2]; 
+
+          dv[k][j][i] += Stab_Conv[j][k] * dXdx[k][0] +   //Body force
+                         Stab_Conv[j][k] * dXdx[k][1] +
+                         Stab_Conv[j][k] * dXdx[k][2];                   
+          break;
+      }
   } // End Quadrature Point Loop
 
   // Return
