@@ -222,6 +222,7 @@ struct User_ {
   Vec M;
   char outputfolder[PETSC_MAX_PATH_LEN];
   PetscInt contsteps;
+  PetscReal dt;
 };
 
 struct Units_ {
@@ -466,6 +467,7 @@ int main(int argc, char **argv) {
   MPI_Comm comm;
   DM dm, dmcoord;
   TS ts;
+  PetscReal dt;
   TSAdapt adapt;
   User user;
   Units units;
@@ -523,6 +525,7 @@ int main(int argc, char **argv) {
   PetscInt contsteps    = 0;        // -
   PetscInt degree;
   PetscInt qextra       = 2;        // -
+  dt = 0.0;
   DMBoundaryType periodicity[] = {DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE};
 
   ierr = PetscInitialize(&argc, &argv, NULL, help);
@@ -849,7 +852,7 @@ int main(int argc, char **argv) {
   }
 
   CeedQFunctionSetContext(qf_ics, &ctxSetup, sizeof ctxSetup);
-  CeedScalar ctxNS[7] = {lambda, mu, k, cv, cp, g, Rd};
+  CeedScalar ctxNS[8] = {lambda, mu, k, cv, cp, g, Rd, dt};
   struct Advection2dContext_ ctxAdvection2d = { //K struct that passes data needed at quadrature points for both advection
     .CtauS = CtauS,
     .strong_form = strong_form,
@@ -949,7 +952,7 @@ int main(int argc, char **argv) {
     //ierr = DMLocalToGlobal(dm, Qloc, INSERT_VALUES, Q);CHKERRQ(ierr);
   }
   ierr = DMRestoreLocalVector(dm, &Qloc);CHKERRQ(ierr);
-
+  
   // Create and setup TS
   ierr = TSCreate(comm, &ts); CHKERRQ(ierr);
   if (implicit) {  //K this is 2nd order Backward Differences (gen-alpha with rho_inf=0)
@@ -968,6 +971,7 @@ int main(int argc, char **argv) {
                               1.e-12 * units->second,
                               1.e2 * units->second); CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
+  ierr = TSGetTimeStep (ts, &dt); CHKERRQ(ierr);
   if (!contsteps) { // print initial condition
     ierr = TSMonitor_NS(ts, 0, 0., Q, user); CHKERRQ(ierr);
   } else { // continue from time of last output
@@ -985,6 +989,9 @@ int main(int argc, char **argv) {
     ierr = TSSetTime(ts, time * user->units->second); CHKERRQ(ierr);
   }
   ierr = TSMonitorSet(ts, TSMonitor_NS, user, NULL); CHKERRQ(ierr);
+
+  // Pass dt to the user
+  user->dt = dt;
 
   // Solve
   ierr = TSSolve(ts, Q); CHKERRQ(ierr);

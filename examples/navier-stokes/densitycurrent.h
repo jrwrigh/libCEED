@@ -328,7 +328,7 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     // ke = kinetic energy
     const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
     // P = pressure
-    const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1.);
+    const CeedScalar P  = ( E - ke * rho ) * (gamma - 1.);
 
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     CeedScalar uX[3];
@@ -605,6 +605,7 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
   const CeedScalar cp     = context[4];
   const CeedScalar g      = context[5];
   const CeedScalar Rd     = context[6];
+  const CeedScalar dt     = context[7];
   const CeedScalar gamma  = cp / cv;
 
   CeedPragmaSIMD
@@ -707,7 +708,7 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     // ke = kinetic energy
     const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
     // P = pressure
-    const CeedScalar P  =  ( E - ke * rho ) * (gamma - 1.);
+    const CeedScalar P  = ( E - ke * rho ) * (gamma - 1.);
 
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     CeedScalar uX[3];
