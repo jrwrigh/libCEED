@@ -692,11 +692,11 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
         case 0:        // Galerkin (actually HV)
           break;
         case 1:        // SU
-          dv[k][j][i] -= SU[j][k] * dXdx[k][0] + 
+          dv[k][j][i] += SU[j][k] * dXdx[k][0] + 
                          SU[j][k] * dXdx[k][1] +
                          SU[j][k] * dXdx[k][2];
           break;
-        case 2:        // SUPG is not implemented for explicit scheme 
+        case 2:        // SUPG will be added
           break;              
       }  
    
