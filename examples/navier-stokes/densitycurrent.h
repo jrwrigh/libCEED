@@ -389,10 +389,10 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     CeedScalar SU[5][3];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
-        for (int l=0; l<5; l++)
+        for (int l=0; l<5; l++) {
           Fconv_qT[j][k][l] = Fconv_q[j][l][k];
-          SU[k][j] = Fconv_qT[j][k][l] * Tau_StrongConv[l]
-    
+          SU[k][j] = Fconv_qT[j][k][l] * Tau_StrongConv[l];
+        }
     // The Physics
     // -- Density
     // ---- u rho
@@ -443,7 +443,9 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
           dv[k][j][i] -= SU[j][k] * dXdx[k][0] + 
                          SU[j][k] * dXdx[k][1] +
                          SU[j][k] * dXdx[k][2];
-        case 2:        // SUPG is not implemented for explicit scheme               
+          break;
+        case 2:        // SUPG is not implemented for explicit scheme  
+          break;             
       }  
 
   } // End Quadrature Point Loop
@@ -624,6 +626,7 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     const CeedScalar TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
     const CeedScalar TauM = 1./f1;
     const CeedScalar TauE = TauM / (Ce * cv);
+    const CeedScalar Tau[5] = {TauC, TauM, TauM, TauM, TauE};
 
     // Tau * StrongConv
     CeedScalar Tau_StrongConv[5];
@@ -634,10 +637,10 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     CeedScalar SU[5][3];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
-        for (int l=0; l<5; l++)
+        for (int l=0; l<5; l++) {
           Fconv_qT[j][k][l] = Fconv_q[j][l][k];
-          SU[k][j] = Fconv_qT[j][k][l] * Tau_StrongConv[l]
-
+          SU[k][j] = Fconv_qT[j][k][l] * Tau_StrongConv[l];
+        }
     // The Physics
     //-----mass matrix
     for (int j=0; j<5; j++) 
@@ -686,16 +689,17 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     for (int j=0; j<5; j++)
       for (int k=0; k<3; k++)
         switch (context->stabilization) {
-        case 0:   // Galerkin (actually HV)
+        case 0:        // Galerkin (actually HV)
           break;
-        case 1:   // SU
-          dv[k][j][i] += SU[j][k] * dXdx[k][0] + 
+        case 1:        // SU
+          dv[k][j][i] -= SU[j][k] * dXdx[k][0] + 
                          SU[j][k] * dXdx[k][1] +
                          SU[j][k] * dXdx[k][2];
           break;
-        case 2: //SUPG to be added                  
-          break;
-      }
+        case 2:        // SUPG is not implemented for explicit scheme 
+          break;              
+      }  
+   
   } // End Quadrature Point Loop
 
   // Return
