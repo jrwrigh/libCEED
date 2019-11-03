@@ -330,24 +330,24 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     // P = pressure
     const CeedScalar P  = ( E - ke * rho ) * (gamma - 1.);
 
-    // Fconv_q[3][5][5] = dF(convective)/dq at each direction
-    CeedScalar Fconv_q[3][5][5] = {0};
+    // dFconvdq[3][5][5] = dF(convective)/dq at each direction
+    CeedScalar dFconvdq[3][5][5] = {{{0}}};
     for (int j=0; j<3; j++)
       for (int l=0; l<3; l++){
-        Fconv_q[j][l+1][0] = -u[j]*u[l] + (l==j?(ke*Rd/cv):0);
-        Fconv_q[j][l+1][4] = (l==j?(Rd/cv):0);
-        Fconv_q[j][l+1][l+1] = (j!=l?u[j]:0);
+        dFconvdq[j][l+1][0] = -u[j]*u[l] + (l==j?(ke*Rd/cv):0);
+        dFconvdq[j][l+1][4] = (l==j?(Rd/cv):0);
+        dFconvdq[j][l+1][l+1] = (j!=l?u[j]:0);
         for (int k=0; k<3; k++){
-          Fconv_q[j][0][k] = (k==(j+1)?1:0);
-          Fconv_q[j][j+1][k+1] = u[k] * ((k==j?2:0) - Rd/cv);  
+          dFconvdq[j][0][k] = (k==(j+1)?1:0);
+          dFconvdq[j][j+1][k+1] = u[k] * ((k==j?2:0) - Rd/cv);  
         }
       }
-    Fconv_q[0][2][1] = u[1];
-    Fconv_q[0][3][1] = u[2];
-    Fconv_q[1][1][2] = u[0];
-    Fconv_q[1][3][2] = u[2];
-    Fconv_q[2][1][3] = u[0];
-    Fconv_q[2][2][3] = u[1]; 
+    dFconvdq[0][2][1] = u[1];
+    dFconvdq[0][3][1] = u[2];
+    dFconvdq[1][1][2] = u[0];
+    dFconvdq[1][3][2] = u[2];
+    dFconvdq[2][1][3] = u[0];
+    dFconvdq[2][2][3] = u[1]; 
 
     // dqdx collects drhodx, dUdx and dEdx in one vector
     CeedScalar dqdx[5][3];
@@ -363,7 +363,7 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++)
-          StrongConv[k] += Fconv_q[j][k][l] * dqdx[l][j];
+          StrongConv[k] += dFconvdq[j][k][l] * dqdx[l][j];
 
 
     // Tau = [TauC, TauM, TauM, TauM, TauE]
@@ -385,13 +385,13 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     for (int k=0; k<5; k++)
       Tau_StrongConv[k] = Tau[k] * StrongConv[k];
     
-    CeedScalar Fconv_qT[3][5][5];
+    CeedScalar dFconvdqT[3][5][5];
     CeedScalar SU[5][3];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++) {
-          Fconv_qT[j][k][l] = Fconv_q[j][l][k];
-          SU[k][j] = Fconv_qT[j][k][l] * Tau_StrongConv[l];
+          dFconvdqT[j][k][l] = dFconvdq[j][l][k];
+          SU[k][j] = dFconvdqT[j][k][l] * Tau_StrongConv[l];
         }
     // The Physics
     // -- Density
@@ -506,6 +506,9 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
                                      dq[1][4][i],
                                      dq[2][4][i]
                                     };
+
+    //const CeedScalar Qdot[5]      = 
+
     // -- Interp-to-Interp qdata
     const CeedScalar wJ         =    qdata[0][i];
     // -- Interp-to-Grad qdata
@@ -543,7 +546,6 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
           dudx[j][k] += du[j][l] * dXdx[l][k];
           dXdxdXdxT[j][k] += dXdx[j][l]*dXdx[k][l];  //dXdx_j,k * dXdx_k,j
       }}}
-      
 
    // -- gradT
     const CeedScalar gradT[3]  = {(dEdx[0]/rho - E*drhodx[0]/(rho*rho) -
@@ -575,28 +577,36 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
                                   };
     // ke = kinetic energy
     const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
+
     // P = pressure
     const CeedScalar P  = ( E - ke * rho ) * (gamma - 1.);
 
-    // Fconv_q[3][5][5] = dF(convective)/dq at each direction
-    CeedScalar Fconv_q[3][5][5] = {0};
+    // dFconvdq[3][5][5] = dF(convective)/dq at each direction
+    CeedScalar dFconvdq[3][5][5] = {{{0}}};
     for (int j=0; j<3; j++)
       for (int l=0; l<3; l++){
-        Fconv_q[j][l+1][0] = -u[j]*u[l] + (l==j?(ke*Rd/cv):0);
-        Fconv_q[j][l+1][4] = (l==j?(Rd/cv):0);
-        Fconv_q[j][l+1][l+1] = (j!=l?u[j]:0);
+        dFconvdq[j][l+1][0] = -u[j]*u[l] + (l==j?(ke*Rd/cv):0);
+        dFconvdq[j][l+1][4] = (l==j?(Rd/cv):0);
+        dFconvdq[j][l+1][l+1] = (j!=l?u[j]:0);
         for (int k=0; k<3; k++){
-          Fconv_q[j][0][k] = (k==(j+1)?1:0);
-          Fconv_q[j][j+1][k+1] = u[k] * ((k==j?2:0) - Rd/cv);  
+          dFconvdq[j][0][k] = (k==(j+1)?1:0);
+          dFconvdq[j][j+1][k+1] = u[k] * ((k==j?2:0) - Rd/cv);  
         }
       }
-    Fconv_q[0][2][1] = u[1];
-    Fconv_q[0][3][1] = u[2];
-    Fconv_q[1][1][2] = u[0];
-    Fconv_q[1][3][2] = u[2];
-    Fconv_q[2][1][3] = u[0];
-    Fconv_q[2][2][3] = u[1]; 
+    dFconvdq[0][2][1] = u[1];
+    dFconvdq[0][3][1] = u[2];
+    dFconvdq[1][1][2] = u[0];
+    dFconvdq[1][3][2] = u[2];
+    dFconvdq[2][1][3] = u[0];
+    dFconvdq[2][2][3] = u[1]; 
 
+    // dFconvdqT = dFconvdq^T 
+    CeedScalar dFconvdqT[3][5][5];
+    for (int j=0; j<3; j++)
+      for (int k=0; k<5; k++)
+        for (int l=0; l<5; l++)
+          dFconvdqT[j][k][l] = dFconvdq[j][l][k];
+      
     // dqdx collects drhodx, dUdx and dEdx in one vector
     CeedScalar dqdx[5][3];
     for (int j=0; j<3; j++) {
@@ -611,36 +621,45 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++)
-          StrongConv[k] += Fconv_q[j][k][l] * dqdx[l][j];
+          StrongConv[k] += dFconvdq[j][k][l] * dqdx[l][j];
+    
+    // Body force
+    const CeedScalar BodyForce[5] = {0, 0, 0, rho*g, rho*g*u[2]};
+
+    // Strong residual
+    CeedScalar StrongResid[5];
+    for (int j=0; j<5; j++)
+      StrongResid[j] = qdot[j][i] + StrongConv[j] + BodyForce[j];
 
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     CeedScalar uX[3];
     for (int j=0; j<3; j++) uX[j] = dXdx[j][0]*u[0] + dXdx[j][1]*u[1] + dXdx[j][2]*u[2];
     const CeedScalar uiujgij = uX[0]*uX[0] + uX[1]*uX[1] + uX[2]*uX[2];
-    //const CeedScalar gijgij =     //find later
+    //const CeedScalar gijgij =     //needed when we add diffusion to the residual
     const CeedScalar C1   = 1.;
-    const CeedScalar C2   = 1.;
+    //const CeedScalar C2   = 1.;   //needed when we add diffusion to the residual
     const CeedScalar Cc   = 1.;
     const CeedScalar Ce   = 1.; 
     const CeedScalar f1   = rho * sqrt(uiujgij);   //This is correct for SU
+    const CeedScalar f1supg   = rho * sqrt(2./(C1*dt) + uiujgij);
     const CeedScalar TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
     const CeedScalar TauM = 1./f1;
     const CeedScalar TauE = TauM / (Ce * cv);
     const CeedScalar Tau[5] = {TauC, TauM, TauM, TauM, TauE};
 
-    // Tau * StrongConv
-    CeedScalar Tau_StrongConv[5];
-    for (int k=0; k<5; k++)
-      Tau_StrongConv[k] = Tau[k] * StrongConv[k];
     
-    CeedScalar Fconv_qT[3][5][5];
     CeedScalar SU[5][3];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
-        for (int l=0; l<5; l++) {
-          Fconv_qT[j][k][l] = Fconv_q[j][l][k];
-          SU[k][j] = Fconv_qT[j][k][l] * Tau_StrongConv[l];
-        }
+        for (int l=0; l<5; l++)
+          SU[k][j] = dFconvdqT[j][k][l] * Tau[l] * StrongConv[l];
+
+    CeedScalar SUPG[5][3];
+    for (int j=0; j<3; j++)
+     for (int k=0; k<5; k++)
+       for (int l=0; l<5; l++)
+         SUPG[k][j] = dFconvdqT[j][k][l] * Tau[l] * StrongResid[l];
+      
     // The Physics
     //-----mass matrix
     for (int j=0; j<5; j++) 
@@ -697,6 +716,9 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
                          SU[j][k] * dXdx[k][2];
           break;
         case 2:        // SUPG will be added
+          dv[k][j][i] += SUPG[j][k] * dXdx[k][0] + 
+                         SUPG[j][k] * dXdx[k][1] +
+                         SUPG[j][k] * dXdx[k][2];
           break;              
       }  
    
