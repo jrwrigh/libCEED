@@ -583,22 +583,23 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     const CeedScalar P  = ( E - ke * rho ) * (gamma - 1.);
     // dFconvdq[3][5][5] = dF(convective)/dq at each direction
     CeedScalar dFconvdq[3][5][5] = {{{0}}};
-    for (int j=0; j<3; j++)
-      for (int l=0; l<3; l++){
-        dFconvdq[j][l+1][0] = -u[j]*u[l] + (l==j?(ke*Rd/cv):0);
-        dFconvdq[j][l+1][4] = (l==j?(Rd/cv):0);
-        dFconvdq[j][l+1][l+1] = (j!=l?u[j]:0);
-        for (int k=0; k<3; k++){
-          dFconvdq[j][0][k] = (k==(j+1)?1:0);
-          dFconvdq[j][j+1][k+1] = u[k] * ((k==j?2:0) - Rd/cv);  
-        }
-      }
+    for (int j=0; j<3; j++) {
+      dFconvdq[j][4][0] = u[j] * (2*Rd*ke/cv - E*gamma);
+      dFconvdq[j][4][4] = u[j] * gamma;
+      for (int k=0; k<3; k++){
+        dFconvdq[j][k+1][0] = -u[j]*u[k] + (j==k?(ke*Rd/cv):0);
+        dFconvdq[j][k+1][4] = (j==k?(Rd/cv):0);
+        dFconvdq[j][k+1][k+1] = (j!=k?u[j]:0);
+        dFconvdq[j][0][k+1] = (j==k?1:0);
+        dFconvdq[j][j+1][k+1] = u[k] * ((j==k?2:0) - Rd/cv); 
+        dFconvdq[j][4][k+1] = -(Rd/cv)*u[j]*u[k] + (j==k?(E*gamma - Rd*ke/cv):0);
+        }}
     dFconvdq[0][2][1] = u[1];
     dFconvdq[0][3][1] = u[2];
     dFconvdq[1][1][2] = u[0];
     dFconvdq[1][3][2] = u[2];
     dFconvdq[2][1][3] = u[0];
-    dFconvdq[2][2][3] = u[1]; 
+    dFconvdq[2][2][3] = u[1];
     // dFconvdqT = dFconvdq^T 
     CeedScalar dFconvdqT[3][5][5];
     for (int j=0; j<3; j++)
