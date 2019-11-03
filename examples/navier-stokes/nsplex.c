@@ -525,7 +525,7 @@ int main(int argc, char **argv) {
   PetscInt contsteps    = 0;        // -
   PetscInt degree;
   PetscInt qextra       = 2;        // -
-  dt = 0.0;
+  dt                    = 1.e-7;    // initial dt
   DMBoundaryType periodicity[] = {DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE};
 
   ierr = PetscInitialize(&argc, &argv, NULL, help);
