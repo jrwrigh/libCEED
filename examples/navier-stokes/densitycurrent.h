@@ -364,6 +364,8 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++)
           StrongConv[k] += dFconvdq[j][k][l] * dqdx[l][j];
+    // Body force
+    const CeedScalar BodyForce[5] = {0, 0, 0, rho*g, rho*g*u[2]};
     // Stabilization
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     CeedScalar uX[3];
@@ -414,11 +416,8 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
       dv[j][4][i] -= wJ * (Fe[0]*dXdx[j][0] + Fe[1]*dXdx[j][1] +
                            Fe[2]*dXdx[j][2]);
     // Body Force
-    v[0][i] = 0;
-    v[1][i] = 0;
-    v[2][i] = 0;
-    v[3][i] = -rho*g*wJ;
-    v[4][i] = -rho*g*u[2]*wJ;
+    for (int j=0; j<5; j++)
+      v[j][i] -= wJ * BodyForce[j];
     //Stabilization
     Advection2dContext context = ctx;
     for (int j=0; j<5; j++)
@@ -659,11 +658,9 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
       dv[j][4][i] += wJ * (Fe[0]*dXdx[j][0] + Fe[1]*dXdx[j][1] +
                            Fe[2]*dXdx[j][2]);
     // Body Force
-    v[0][i] = 0;
-    v[1][i] = 0;
-    v[2][i] = 0;
-    v[3][i] = rho*g*wJ;
-    v[4][i] = rho*g*u[2]*wJ;
+    for (int j=0; j<5; j++)
+      v[j][i] = wJ*BodyForce[j];
+
     //Stabilization
     CeedScalar uX[3];
     for (int j=0; j<3; j++) uX[j] = dXdx[j][0]*u[0] + dXdx[j][1]*u[1] + dXdx[j][2]*u[2];
