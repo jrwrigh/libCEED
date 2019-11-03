@@ -182,17 +182,15 @@ CEED_QFUNCTION(ICsDC)(void *ctx, CeedInt Q,
 //
 //********************************************
 // Stabilization:
-//
 //   Tau = [TauC, TauM, TauM, TauM, TauE]
-//      f1 = rho  sqrt(2 / (C1  dt) + ui uj gij + C2 mu^2 gij gij)   
+//      f1 = rho  sqrt(ui uj gij)   
 //           gij = dXi/dX * dXi/dX 
 // TauC = Cc f1 / (8 gii)                          
 // TauM = 1 / f1
 // TauE = TauM / (Ce cv)                          
 //
 //  SU   = Galerkin + grad(v) . ( Ai^T * Tau * (Aj q,j) )
-//  SUPG = Galerkin + grad(v) . ( Ai^T * Tau * (qdot + Aj q,j - body force) )   
-//                                       (diffussive terms will be added later)
+//
 // Constants:
 //   lambda = - 2 / 3,  From Stokes hypothesis
 //   mu              ,  Dynamic viscosity
@@ -295,8 +293,6 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
           dudx[j][k] += du[j][l] * dXdx[l][k];
           dXdxdXdxT[j][k] += dXdx[j][l]*dXdx[k][l];  //dXdx_j,k * dXdx_k,j
       }}}
-      
-
    // -- gradT
     const CeedScalar gradT[3]  = {(dEdx[0]/rho - E*drhodx[0]/(rho*rho) -
                                   (u[0]*dudx[0][0] + u[1]*dudx[1][0] + u[2]*dudx[2][0]))/cv,
@@ -329,7 +325,6 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
     // P = pressure
     const CeedScalar P  = ( E - ke * rho ) * (gamma - 1.);
-
     // dFconvdq[3][5][5] = dF(convective)/dq at each direction
     CeedScalar dFconvdq[3][5][5] = {{{0}}};
     for (int j=0; j<3; j++)
@@ -348,7 +343,12 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     dFconvdq[1][3][2] = u[2];
     dFconvdq[2][1][3] = u[0];
     dFconvdq[2][2][3] = u[1]; 
-
+    // dFconvdqT = dFconvdq^T 
+    CeedScalar dFconvdqT[3][5][5];
+    for (int j=0; j<3; j++)
+      for (int k=0; k<5; k++)
+        for (int l=0; l<5; l++)
+          dFconvdqT[j][k][l] = dFconvdq[j][l][k];
     // dqdx collects drhodx, dUdx and dEdx in one vector
     CeedScalar dqdx[5][3];
     for (int j=0; j<3; j++) {
@@ -357,15 +357,13 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
       for (int k=0; k<3; k++)
         dqdx[k+1][j] = dUdx[k][j];
     }
-
-    // StrongConv += dF/dq * dq/dx    (convective)
+    // StrongConv = dF/dq * dq/dx    (Strong convection)
     CeedScalar StrongConv[5];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++)
           StrongConv[k] += dFconvdq[j][k][l] * dqdx[l][j];
-
-
+    // Stabilization
     // Tau = [TauC, TauM, TauM, TauM, TauE]
     CeedScalar uX[3];
     for (int j=0; j<3; j++) uX[j] = dXdx[j][0]*u[0] + dXdx[j][1]*u[1] + dXdx[j][2]*u[2];
@@ -374,34 +372,23 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     const CeedScalar C2   = 1.;
     const CeedScalar Cc   = 1.;
     const CeedScalar Ce   = 1.; 
-    const CeedScalar f1   = rho * sqrt(uiujgij);   //This is correct for SU
+    const CeedScalar f1   = rho * sqrt(uiujgij);
     const CeedScalar TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
     const CeedScalar TauM = 1./f1;
     const CeedScalar TauE = TauM / (Ce * cv);
     const CeedScalar Tau[5] = {TauC, TauM, TauM, TauM, TauE};
-    
-    // Tau * StrongConv
-    CeedScalar Tau_StrongConv[5];
-    for (int k=0; k<5; k++)
-      Tau_StrongConv[k] = Tau[k] * StrongConv[k];
-    
-    CeedScalar dFconvdqT[3][5][5];
-    CeedScalar SU[5][3];
+    // SU
+    CeedScalar stab[5][3];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
-        for (int l=0; l<5; l++) {
-          dFconvdqT[j][k][l] = dFconvdq[j][l][k];
-          SU[k][j] = dFconvdqT[j][k][l] * Tau_StrongConv[l];
-        }
+        for (int l=0; l<5; l++)
+          stab[k][j] = dFconvdqT[j][k][l] * Tau[l] * StrongConv[l];   
     // The Physics
     // -- Density
     // ---- u rho
     for (int j=0; j<3; j++)
       dv[j][0][i]  = wJ*(rho*u[0]*dXdx[j][0] + rho*u[1]*dXdx[j][1] +
                          rho*u[2]*dXdx[j][2]);
-    // ---- No Change
-    v[0][i] = 0;
-
     // -- Momentum
     // ---- rho (u x u) + P I3
     for (int j=0; j<3; j++)
@@ -416,11 +403,6 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
         dv[k][j+1][i] -= wJ*(Fu[Fuviscidx[j][0]]*dXdx[k][0] +
                              Fu[Fuviscidx[j][1]]*dXdx[k][1] +
                              Fu[Fuviscidx[j][2]]*dXdx[k][2]);
-    // ---- -rho g khat
-    v[1][i] = 0;
-    v[2][i] = 0;
-    v[3][i] = -rho*g*wJ;
-
     // -- Total Energy Density
     // ---- (E + P) u
     for (int j=0; j<3; j++)
@@ -430,9 +412,13 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
     for (int j=0; j<3; j++)
       dv[j][4][i] -= wJ * (Fe[0]*dXdx[j][0] + Fe[1]*dXdx[j][1] +
                            Fe[2]*dXdx[j][2]);
-    // ---- No Change
+    // Body Force
+    v[0][i] = 0;
+    v[1][i] = 0;
+    v[2][i] = 0;
+    v[3][i] = -rho*g*wJ;
     v[4][i] = -rho*g*u[2]*wJ;
-
+    //Stabilization
     Advection2dContext context = ctx;
     for (int j=0; j<5; j++)
       for (int k=0; k<3; k++)
@@ -440,9 +426,9 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
         case 0:        // Galerkin (actually HV)
           break;
         case 1:        // SU
-          dv[k][j][i] -= SU[j][k] * dXdx[k][0] + 
-                         SU[j][k] * dXdx[k][1] +
-                         SU[j][k] * dXdx[k][2];
+          dv[k][j][i] -= stab[j][k] * dXdx[k][0] + 
+                         stab[j][k] * dXdx[k][1] +
+                         stab[j][k] * dXdx[k][2];
           break;
         case 2:        // SUPG is not implemented for explicit scheme  
           break;             
@@ -453,6 +439,25 @@ CEED_QFUNCTION(DC)(void *ctx, CeedInt Q,
   // Return
   return 0;
 }
+// *******************************************************************************
+// 
+// Implicit scheme with Galerkin, SU and, SUPG
+//********************************************
+// Stabilization:
+//
+//  SU   -->  f1=  rho  sqrt( ui uj gij ) 
+//  SUPG -->  f1 = rho  sqrt( 2 / (C1  dt) + ui uj gij + C2 mu^2 gij gij ) 
+//  
+// gij = dXi/dX * dXi/dX 
+// TauC = Cc f1 / (8 gii)                          
+// TauM = 1 / f1
+// TauE = TauM / (Ce cv)                          
+// Tau = [TauC, TauM, TauM, TauM, TauE]
+//
+//  SU   = Galerkin + grad(v) . ( Ai^T * Tau * (Aj q,j) )
+//  SUPG = Galerkin + grad(v) . ( Ai^T * Tau * (qdot + Aj q,j - body force) )   
+//                                       (diffussive terms will be added later)
+// 
 // *******************************************************************************
 CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
                    const CeedScalar *const *in, CeedScalar *const *out) {
@@ -506,9 +511,6 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
                                      dq[1][4][i],
                                      dq[2][4][i]
                                     };
-
-    //const CeedScalar Qdot[5]      = 
-
     // -- Interp-to-Interp qdata
     const CeedScalar wJ         =    qdata[0][i];
     // -- Interp-to-Grad qdata
@@ -546,7 +548,6 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
           dudx[j][k] += du[j][l] * dXdx[l][k];
           dXdxdXdxT[j][k] += dXdx[j][l]*dXdx[k][l];  //dXdx_j,k * dXdx_k,j
       }}}
-
    // -- gradT
     const CeedScalar gradT[3]  = {(dEdx[0]/rho - E*drhodx[0]/(rho*rho) -
                                   (u[0]*dudx[0][0] + u[1]*dudx[1][0] + u[2]*dudx[2][0]))/cv,
@@ -577,10 +578,8 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
                                   };
     // ke = kinetic energy
     const CeedScalar ke = ( u[0]*u[0] + u[1]*u[1] + u[2]*u[2] ) / 2.;
-
     // P = pressure
     const CeedScalar P  = ( E - ke * rho ) * (gamma - 1.);
-
     // dFconvdq[3][5][5] = dF(convective)/dq at each direction
     CeedScalar dFconvdq[3][5][5] = {{{0}}};
     for (int j=0; j<3; j++)
@@ -599,14 +598,12 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     dFconvdq[1][3][2] = u[2];
     dFconvdq[2][1][3] = u[0];
     dFconvdq[2][2][3] = u[1]; 
-
     // dFconvdqT = dFconvdq^T 
     CeedScalar dFconvdqT[3][5][5];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++)
-          dFconvdqT[j][k][l] = dFconvdq[j][l][k];
-      
+          dFconvdqT[j][k][l] = dFconvdq[j][l][k];   
     // dqdx collects drhodx, dUdx and dEdx in one vector
     CeedScalar dqdx[5][3];
     for (int j=0; j<3; j++) {
@@ -615,64 +612,27 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
       for (int k=0; k<3; k++)
         dqdx[k+1][j] = dUdx[k][j];
     }
-
-    // StrongConv += dF/dq * dq/dx    (convective)
+    // StrongConv = dF/dq * dq/dx    (Strong convection)
     CeedScalar StrongConv[5];
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++)
           StrongConv[k] += dFconvdq[j][k][l] * dqdx[l][j];
-    
     // Body force
     const CeedScalar BodyForce[5] = {0, 0, 0, rho*g, rho*g*u[2]};
-
     // Strong residual
     CeedScalar StrongResid[5];
     for (int j=0; j<5; j++)
-      StrongResid[j] = qdot[j][i] + StrongConv[j] + BodyForce[j];
-
-    // Tau = [TauC, TauM, TauM, TauM, TauE]
-    CeedScalar uX[3];
-    for (int j=0; j<3; j++) uX[j] = dXdx[j][0]*u[0] + dXdx[j][1]*u[1] + dXdx[j][2]*u[2];
-    const CeedScalar uiujgij = uX[0]*uX[0] + uX[1]*uX[1] + uX[2]*uX[2];
-    //const CeedScalar gijgij =     //needed when we add diffusion to the residual
-    const CeedScalar C1   = 1.;
-    //const CeedScalar C2   = 1.;   //needed when we add diffusion to the residual
-    const CeedScalar Cc   = 1.;
-    const CeedScalar Ce   = 1.; 
-    const CeedScalar f1   = rho * sqrt(uiujgij);   //This is correct for SU
-    const CeedScalar f1supg   = rho * sqrt(2./(C1*dt) + uiujgij);
-    const CeedScalar TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
-    const CeedScalar TauM = 1./f1;
-    const CeedScalar TauE = TauM / (Ce * cv);
-    const CeedScalar Tau[5] = {TauC, TauM, TauM, TauM, TauE};
-
-    
-    CeedScalar SU[5][3];
-    for (int j=0; j<3; j++)
-      for (int k=0; k<5; k++)
-        for (int l=0; l<5; l++)
-          SU[k][j] = dFconvdqT[j][k][l] * Tau[l] * StrongConv[l];
-
-    CeedScalar SUPG[5][3];
-    for (int j=0; j<3; j++)
-     for (int k=0; k<5; k++)
-       for (int l=0; l<5; l++)
-         SUPG[k][j] = dFconvdqT[j][k][l] * Tau[l] * StrongResid[l];
-      
+      StrongResid[j] = qdot[j][i] + StrongConv[j] + BodyForce[j];       
     // The Physics
     //-----mass matrix
     for (int j=0; j<5; j++) 
       v[j][i] += wJ*qdot[j][i];
-
     // -- Density
     // ---- u rho
     for (int j=0; j<3; j++)
       dv[j][0][i]  -= wJ*(rho*u[0]*dXdx[j][0] + rho*u[1]*dXdx[j][1] +
                          rho*u[2]*dXdx[j][2]);
-    // ---- No Change
-    v[0][i] = 0;
-
     // -- Momentum
     // ---- rho (u x u) + P I3
     for (int j=0; j<3; j++)
@@ -687,11 +647,6 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
         dv[k][j+1][i] += wJ*(Fu[Fuviscidx[j][0]]*dXdx[k][0] +
                              Fu[Fuviscidx[j][1]]*dXdx[k][1] +
                              Fu[Fuviscidx[j][2]]*dXdx[k][2]);
-    // ---- -rho g khat
-    v[1][i] = 0;
-    v[2][i] = 0;
-    v[3][i] = rho*g*wJ;
-
     // -- Total Energy Density
     // ---- (E + P) u
     for (int j=0; j<3; j++)
@@ -701,27 +656,68 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
     for (int j=0; j<3; j++)
       dv[j][4][i] += wJ * (Fe[0]*dXdx[j][0] + Fe[1]*dXdx[j][1] +
                            Fe[2]*dXdx[j][2]);
-    // ---- No Change
+    // Body Force
+    v[0][i] = 0;
+    v[1][i] = 0;
+    v[2][i] = 0;
+    v[3][i] = rho*g*wJ;
     v[4][i] = rho*g*u[2]*wJ;
-                        
+    //Stabilization
+    CeedScalar uX[3];
+    for (int j=0; j<3; j++) uX[j] = dXdx[j][0]*u[0] + dXdx[j][1]*u[1] + dXdx[j][2]*u[2];
+    const CeedScalar uiujgij = uX[0]*uX[0] + uX[1]*uX[1] + uX[2]*uX[2];
+    //const CeedScalar gijgij =     //needed when we add diffusion to the residual
+    const CeedScalar C1   = 1.;
+    //const CeedScalar C2   = 1.;   //needed when we add diffusion to the residual
+    const CeedScalar Cc   = 1.;
+    const CeedScalar Ce   = 1.; 
+    CeedScalar f1;
+    CeedScalar TauC;      
+    CeedScalar TauM;
+    CeedScalar TauE;
+    CeedScalar stab[5][3];               
     Advection2dContext context = ctx;
-    for (int j=0; j<5; j++)
-      for (int k=0; k<3; k++)
-        switch (context->stabilization) {
-        case 0:        // Galerkin (actually HV)
-          break;
-        case 1:        // SU
-          dv[k][j][i] += SU[j][k] * dXdx[k][0] + 
-                         SU[j][k] * dXdx[k][1] +
-                         SU[j][k] * dXdx[k][2];
-          break;
-        case 2:        // SUPG will be added
-          dv[k][j][i] += SUPG[j][k] * dXdx[k][0] + 
-                         SUPG[j][k] * dXdx[k][1] +
-                         SUPG[j][k] * dXdx[k][2];
-          break;              
-      }  
-   
+    switch (context->stabilization) {
+    case 0:        // Galerkin (actually HV)
+      break;
+    case 1:        // SU
+      f1   = rho * sqrt(uiujgij);
+      TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
+      TauM = 1./f1;
+      TauE = TauM / (Ce * cv);
+      const CeedScalar TauSU[5] = {TauC, TauM, TauM, TauM, TauE};
+
+      for (int j=0; j<3; j++)
+        for (int k=0; k<5; k++)
+          for (int l=0; l<5; l++)
+            stab[k][j] = dFconvdqT[j][k][l] * TauSU[l] * StrongConv[l];
+
+      for (int j=0; j<5; j++)
+        for (int k=0; k<3; k++)
+          dv[k][j][i] += stab[j][k] * dXdx[k][0] + 
+                         stab[j][k] * dXdx[k][1] +
+                         stab[j][k] * dXdx[k][2];
+      break;
+    case 2:        // SUPG
+      f1   = rho * sqrt(2./(C1*dt) + uiujgij);
+      TauC = (Cc * f1) / ( 8 * (dXdxdXdxT[0][0] + dXdxdXdxT[1][1] + dXdxdXdxT[2][2]));      
+      TauM = 1./f1;
+      TauE = TauM / (Ce * cv);
+      const CeedScalar TauSUPG[5] = {TauC, TauM, TauM, TauM, TauE};
+
+      for (int j=0; j<3; j++)
+        for (int k=0; k<5; k++)
+          for (int l=0; l<5; l++)
+            stab[k][j] = dFconvdqT[j][k][l] * TauSUPG[l] * StrongResid[l];
+
+      for (int j=0; j<5; j++)
+        for (int k=0; k<3; k++)
+          dv[k][j][i] += stab[j][k] * dXdx[k][0] + 
+                         stab[j][k] * dXdx[k][1] +
+                         stab[j][k] * dXdx[k][2];
+      break;              
+    } 
+ 
   } // End Quadrature Point Loop
 
   // Return
