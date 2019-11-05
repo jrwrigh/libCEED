@@ -525,27 +525,25 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
                                    };
     // -- Grad-to-Grad qdata
     // dU/dx
-    CeedScalar du[3][3];
-    CeedScalar drhodx[3];
-    CeedScalar dEdx[3];
-    CeedScalar dUdx[3][3];
-    CeedScalar dudx[3][3];
-    CeedScalar dXdxdXdxT[3][3];
+    CeedScalar du[3][3] = {{0}};
+    CeedScalar drhodx[3] = {0};
+    CeedScalar dEdx[3] = {0};
+    CeedScalar dUdx[3][3] = {{0}};
+    CeedScalar dXdxdXdxT[3][3] = {{0}};
     for (int j=0; j<3; j++) {
-      drhodx[j] =0;
-      dEdx[j] = 0;
       for (int k=0; k<3; k++) {
         du[j][k] = (dU[j][k] - drho[k]*u[j]) / rho;
         drhodx[j] += drho[k] * dXdx[k][j];
         dEdx[j] += dE[k] * dXdx[k][j];
-        dUdx[j][k] = 0;
-        dudx[j][k] = 0;
-        dXdxdXdxT[j][k] = 0;
         for (int l=0; l<3; l++) {
           dUdx[j][k] += dU[j][l] * dXdx[l][k];
-          dudx[j][k] += du[j][l] * dXdx[l][k];
           dXdxdXdxT[j][k] += dXdx[j][l]*dXdx[k][l];  //dXdx_j,k * dXdx_k,j
       }}}
+    CeedScalar dudx[3][3] = {{0}};
+    for (int j=0; j<3; j++)
+      for (int k=0; k<3; k++)
+        for (int l=0; l<3; l++)
+          dudx[j][k] += du[j][l] * dXdx[l][k];
    // -- gradT
     const CeedScalar gradT[3]  = {(dEdx[0]/rho - E*drhodx[0]/(rho*rho) -
                                   (u[0]*dudx[0][0] + u[1]*dudx[1][0] + u[2]*dudx[2][0]))/cv,
