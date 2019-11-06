@@ -92,11 +92,11 @@ problemData problemOptions[] = { //K key data for runtime choice of problem
     .setup_loc = Setup_loc,
     .ics = ICsDC,
     .apply_rhs = DC,
-    .bc = NULL,
     .ics_loc = ICsDC_loc,
     .apply_rhs_loc = DC_loc,
     .apply_ifunction = IFunction_DC,
     .apply_ifunction_loc = IFunction_DC_loc,
+    .bc = NULL,
   },
   [NS_ADVECTION] = {
     .dim = 3,
@@ -105,11 +105,11 @@ problemData problemOptions[] = { //K key data for runtime choice of problem
     .setup_loc = Setup_loc,
     .ics = ICsAdvection,
     .apply_rhs = Advection,
-    .bc = NULL,
     .ics_loc = ICsAdvection_loc,
     .apply_rhs_loc = Advection_loc,  
     .apply_ifunction = IFunction_Advection,
     .apply_ifunction_loc = IFunction_Advection_loc,
+     .bc = NULL,
   },
   [NS_ADVECTION2D] = {
     .dim = 2,
@@ -130,10 +130,10 @@ problemData problemOptions[] = { //K key data for runtime choice of problem
     .setup = Setup,
     .setup_loc = Setup_loc,
     .ics = ICsDC,
-    .bc = NULL,
     .ics_loc = ICsDC_loc,
     .apply_ifunction = IFunction_DCPrim,
     .apply_ifunction_loc = IFunction_DCPrim_loc,
+    .bc = NULL,
   },
 };
 
