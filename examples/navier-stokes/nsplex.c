@@ -53,11 +53,13 @@ typedef enum {
   NS_DENSITY_CURRENT = 0,
   NS_ADVECTION = 1,
   NS_ADVECTION2D = 2,
+  NS_DENSITY_CURRENT_PRIMITIVE = 3
 } problemType;
 static const char *const problemTypes[] = {
   "density_current",
   "advection",
   "advection2d",
+  "density_current_primitive",
   "problemType","NS_",0
 };
 
@@ -121,6 +123,17 @@ problemData problemOptions[] = { //K key data for runtime choice of problem
     .apply_ifunction = IFunction_Advection2d,
     .apply_ifunction_loc = IFunction_Advection2d_loc,
     .bc = NULL,
+  },
+  [NS_DENSITY_CURRENT_PRIMITIVE] = {
+    .dim = 3,
+    .qdatasize = 10,
+    .setup = Setup,
+    .setup_loc = Setup_loc,
+    .ics = ICsDC,
+    .bc = NULL,
+    .ics_loc = ICsDC_loc,
+    .apply_ifunction = IFunction_DCPrim,
+    .apply_ifunction_loc = IFunction_DCPrim_loc,
   },
 };
 
@@ -862,6 +875,7 @@ int main(int argc, char **argv) {
   switch (problemChoice) {
   case NS_DENSITY_CURRENT:
     CeedQFunctionSetContext(qf_rhs, &ctxNS, sizeof ctxNS);
+  case NS_DENSITY_CURRENT_PRIMITIVE:
     CeedQFunctionSetContext(qf_ifunction, &ctxNS, sizeof ctxNS);
   case NS_ADVECTION: //K with no "break" this case will get ctxAdvection2d.  Changes made to advection.h to use struct for both rhs and ifunction.  Same for rhs in advection2d.h that was still using enumerated ctx. No need for a separate one as nothing depends on dimension.
   case NS_ADVECTION2D:
