@@ -21,7 +21,7 @@ class QFunctionBase(ABC):
    def apply(self, q, u, v):
    """Apply the action of a CeedQFunction."""
     # libCEED call
-     libceed.CeedQFunctionApply(self.qf, q, u.vec, v.vec)
+     libceed.CeedQFunctionApply(self.qf, q, u.vector, v.vector)
 
   # Destructor
   def __del__(self):
