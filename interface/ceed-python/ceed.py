@@ -38,20 +38,55 @@ class Ceed():
 
   # CeedQFunction
   def qFunction(self, vlength, f, source):
-    return QFunction(self, vlength, f, source)
+    # Create
+    qf = QFunction(self, vlength, f, source)
+
+    # Refrence
+    self.qfunctions.append(qf)
+
+    # Return
+    return qf
 
   def qFunctionByName(self, name):
-    return QFunctionByName(self, name)
+    # Create
+    qf = QFunctionByName(self, name)
+
+    # Refrence
+    self.qfunctions.append(qf)
+
+    # Return
+    return qf
 
   def identityQFunction(self, size):
-    return QFunctionIdentity(self, size)
+    # Create
+    qf = QFunctionIdentity(self, size)
+
+    # Refrence
+    self.qfunctions.append(qf)
+
+    # Return
+    return qf
 
   # CeedOperator
   def operator(self, qf, dqf, qdfT):
-    return Operator(self, qf, dqf, qdfT)
+    # Create
+    op = Operator(self, qf, dqf, qdfT)
+
+    # Refrence
+    self.operators.append(op)
+
+    # Return
+    return op
 
   def compositeOperator(self):
-    return CompositeOperator(self)
+    # Create
+    op = CompositeOperator(self)
+
+    # Refrence
+    self.operators.append(op)
+
+    # Return
+    return op
 
   # Destructor
   def __def__(self):
