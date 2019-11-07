@@ -875,8 +875,14 @@ int main(int argc, char **argv) {
   switch (problemChoice) {
   case NS_DENSITY_CURRENT:
     CeedQFunctionSetContext(qf_rhs, &ctxNS, sizeof ctxNS);
+    CeedQFunctionSetContext(qf_ifunction, &ctxNS, sizeof ctxNS);
+    CeedQFunctionSetContext(qf_rhs, &ctxAdvection2d, sizeof ctxAdvection2d); 
+    CeedQFunctionSetContext(qf_ifunction, &ctxAdvection2d, sizeof ctxAdvection2d);
+    break;
   case NS_DENSITY_CURRENT_PRIMITIVE:
     CeedQFunctionSetContext(qf_ifunction, &ctxNS, sizeof ctxNS);
+    CeedQFunctionSetContext(qf_ifunction, &ctxAdvection2d, sizeof ctxAdvection2d);
+    break;
   case NS_ADVECTION: //K with no "break" this case will get ctxAdvection2d.  Changes made to advection.h to use struct for both rhs and ifunction.  Same for rhs in advection2d.h that was still using enumerated ctx. No need for a separate one as nothing depends on dimension.
   case NS_ADVECTION2D:
     CeedQFunctionSetContext(qf_rhs, &ctxAdvection2d, sizeof ctxAdvection2d); //K This function associates the struct with qf_rhs and in next line qf_ifunction
