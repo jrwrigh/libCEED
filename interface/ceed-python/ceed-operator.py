@@ -79,6 +79,7 @@ class CompositeOperator(OperatorBase):
   # Attributes
   self.ceed = fii.NULL
   self.op = ffi.NULL
+  self.subs = []
 
   # Constructor
   def __init__(self, ceed):
@@ -90,3 +91,12 @@ class CompositeOperator(OperatorBase):
 
     # libCEED call
     libceed.CeedCompositeOperatorCreate(self.ceed, self.op)
+
+  # Add sub operators
+  def addSub(self, subop):
+    """Add a sub-operator to a composite CeedOperator."""
+    # References to dependencies
+    self.subs.append(subop)
+
+    # libCEED call
+    libceed.CeedOperatorAddSup(self.op, subop)
