@@ -1,13 +1,81 @@
-class Operator:
-    def __init__(self, ceed, qf, dqf, qdfT):
-        libceed.CeedOperatorCreate(ceed, qf, dqf, dqfT, self)
+# Copyright (c) 2017, Lawrence Livermore National Security, LLC. Produced at
+# the Lawrence Livermore National Laboratory. LLNL-CODE-734707. All Rights
+# reserved. See files LICENSE and NOTICE for details.
+#
+# This file is part of CEED, a collection of benchmarks, miniapps, software
+# libraries and APIs for efficient high-order finite element and spectral
+# element discretizations for exascale applications. For more information and
+# source code availability see http://github.com/ceed.
+#
+# The CEED research is supported by the Exascale Computing Project 17-SC-20-SC,
+# a collaborative effort of two U.S. Department of Energy organizations (Office
+# of Science and the National Nuclear Security Administration) responsible for
+# the planning and preparation of a capable exascale ecosystem, including
+# software, applications, hardware, advanced system engineering and early
+# testbed platforms, in support of the nation's exascale computing imperative.
 
-    def setField(self, fieldname, restriction, lmode, basis, v):
-        libceed.CeedOperatorSetField(self, fieldname, restriction,
-                                     lmode, basis, v)
+from abc import ABC
 
-    def apply(self, in, out, request):
-        libceed.CeedOperatorApply(self, in, out, request)
+class OperatorBase(ABC):
+  # Apply CeedOperator
+  def apply(self, u, v, request):
+    # libCEED call
+    libceed.CeedOperatorApply(self.op, u.vec, v.vec, request)
 
-    def __del__(self):
-        libceed.CeedOperatorDestroy(self)
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    libceed.CeedOperatorDestroy(self.op)
+
+class Operator(OperatorBase):
+  # Constructor
+  def __init__(self, ceed, qf, dqf, qdfT):
+    # CeedOperator object
+    self.op = ffi.new("CeedOperator *")
+
+    # References to dependencies
+    self.ceed = ceed
+    self.qf = qf
+    if (dqf):
+      self.dqf = dqf
+    else:
+      self.dqf = ffi.NULL
+    if (dqfT):
+      self.dqfT = dqfT
+    else:
+      self.dqfT = ffi.NULL
+    self.fields = []
+
+    # libCEED call
+    libceed.CeedOperatorCreate(self.ceed, self.qf, self.dqf, self.dqfT, self.op)
+
+  # References to field components
+  class OperatorField:
+    def __init(self, restriction, basis, vec):
+      # References to dependencies
+      self.rstr = restriction
+      if basis:
+        self.basis = basis
+      if vec:
+        self.vec = vec
+
+  # Add field to CeedOperator
+  def setField(self, fieldname, restriction, lmode, basis, vec):
+    # References to dependencies
+    self.fields.append(OperatorField(restriction, basis, vec))
+
+    # libCEED call
+    libceed.CeedOperatorSetField(self.op, fieldname, restriction.rstr,
+                                     lmode, basis.basis, vec.vec)
+
+class CompositeOperator(OperatorBase):
+  # Constructor
+  def __init__(self, ceed):
+    # CeedOperator object
+    self.op = ffi.new("CeedOperator *")
+
+    # References to dependencies
+    self.ceed = ceed
+
+    # libCEED call
+    libceed.CeedCompositeOperatorCreate(self.ceed, self.op)
