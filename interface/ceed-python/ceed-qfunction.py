@@ -14,6 +14,7 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
+from _ceed import ffi, lib
 from abc import ABC
 
 class QFunctionBase(ABC):
@@ -21,12 +22,12 @@ class QFunctionBase(ABC):
    def apply(self, q, u, v):
    """Apply the action of a CeedQFunction."""
     # libCEED call
-     libceed.CeedQFunctionApply(self.qf, q, u.vector, v.vector)
+     lib.CeedQFunctionApply(self.qf, q, u.vector, v.vector)
 
   # Destructor
   def __del__(self):
     # libCEED call
-    libceed.CeedQFunctionDestroy(self.qf)
+    lib..CeedQFunctionDestroy(self.qf)
 
 class QFunction(QFunctionBase):
   """CeedQFunction: independent operations at quadrature points."""
@@ -42,18 +43,18 @@ class QFunction(QFunctionBase):
     self.ceed = ceed
 
    # libCEED call
-   libceed.CeedQFunctionCreateInterior(self.ceed, vlength, f, source, self.qf)
+   lib.CeedQFunctionCreateInterior(self.ceed, vlength, f, source, self.qf)
 
   # Add fields to CeedQFunction
   def addInput(self, fieldname, size, emode):
     """Add a CeedQFunction input."""
     # libCEED call
-    libceed.CeedQFunctionAddInput(self.qf, fieldname, size, emode)
+    lib.CeedQFunctionAddInput(self.qf, fieldname, size, emode)
 
   def addOutput(self, fieldname, size, emode):
     """Add a CeedQFunction output."""
     # libCEED call
-    libceed.CeedQFunctionAddOutput(self.qf, fieldname, size, emode)
+    lib.CeedQFunctionAddOutput(self.qf, fieldname, size, emode)
 
 class QFunctionByName(QFunctionBase):
   """CeedQFunctionByName: independent operations at quadrature points from gallery."""
@@ -69,7 +70,7 @@ class QFunctionByName(QFunctionBase):
     self.ceed = ceed
 
    # libCEED call
-   libceed.CeedQFunctionCreateByName(self.ceed, name, self.qf)
+   lib.CeedQFunctionCreateByName(self.ceed, name, self.qf)
 
 class QFunctionIdentity(QFunctionBase):
   """CeedIdenityQFunction: identity qfunction operation."""
@@ -85,4 +86,4 @@ class QFunctionIdentity(QFunctionBase):
     self.ceed = ceed
 
    # libCEED call
-   libceed.CeedQFunctionCreateIdentity(self.ceed, size, self.qf)
+   lib.CeedQFunctionCreateIdentity(self.ceed, size, self.qf)

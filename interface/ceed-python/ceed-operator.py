@@ -14,6 +14,7 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
+from _ceed import ffi, lib
 from abc import ABC
 
 class OperatorBase(ABC):
@@ -21,12 +22,12 @@ class OperatorBase(ABC):
   def apply(self, u, v, request):
     """Apply CeedOperator to a vector."""
     # libCEED call
-    libceed.CeedOperatorApply(self.op, u.vector, v.vector, request)
+    lib.CeedOperatorApply(self.op, u.vector, v.vector, request)
 
   # Destructor
   def __del__(self):
     # libCEED call
-    libceed.CeedOperatorDestroy(self.op)
+    lib.CeedOperatorDestroy(self.op)
 
 class Operator(OperatorBase):
   """CeedOperator: composed FE-type operations on vectors."""
@@ -52,7 +53,7 @@ class Operator(OperatorBase):
       self.dqfT = dqfT
 
     # libCEED call
-    libceed.CeedOperatorCreate(self.ceed, self.qf, self.dqf, self.dqfT, self.op)
+    lib.CeedOperatorCreate(self.ceed, self.qf, self.dqf, self.dqfT, self.op)
 
   # References to field components
   class OperatorField:
@@ -71,7 +72,7 @@ class Operator(OperatorBase):
     self.fields.append(OperatorField(restriction, basis, vector))
 
     # libCEED call
-    libceed.CeedOperatorSetField(self.op, fieldname, restriction.restriction,
+    lib.CeedOperatorSetField(self.op, fieldname, restriction.restriction,
                                      lmode, basis.basis, vector.vector)
 
 class CompositeOperator(OperatorBase):
@@ -90,7 +91,7 @@ class CompositeOperator(OperatorBase):
     self.ceed = ceed
 
     # libCEED call
-    libceed.CeedCompositeOperatorCreate(self.ceed, self.op)
+    lib.CeedCompositeOperatorCreate(self.ceed, self.op)
 
   # Add sub operators
   def addSub(self, subop):
@@ -99,4 +100,4 @@ class CompositeOperator(OperatorBase):
     self.subs.append(subop)
 
     # libCEED call
-    libceed.CeedOperatorAddSup(self.op, subop)
+    lib.CeedOperatorAddSup(self.op, subop)

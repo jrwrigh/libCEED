@@ -14,6 +14,8 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
+from _ceed import ffi, lib
+
 class Ceed():
   """Ceed: core components."""
   # Attributes
@@ -31,7 +33,7 @@ class Ceed():
 
     # libCEED call
     resourceAscii = resource.encode('ascii')
-    libceed.CeedInit(resourceAscii, self.ceed)
+    lib.CeedInit(resourceAscii, self.ceed)
 
   # CeedVector
 
@@ -94,4 +96,4 @@ class Ceed():
   # Destructor
   def __def__(self):
     # libCEED call
-    libceed.CeedDestroy(self.ceed)
+    lib.CeedDestroy(self.ceed)
