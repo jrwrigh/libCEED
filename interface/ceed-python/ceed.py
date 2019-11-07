@@ -25,12 +25,13 @@ class Ceed():
   self.operators = []
 
   # Constructor
-  def __init__(self, resource):
+  def __init__(self, resource = "/cpu/self"):
     # libCEED object
     self.ceed = ffi.new("Ceed *")
 
     # libCEED call
-    libceed.CeedInit(resource, self.ceed)
+    resourceAscii = resource.encode('ascii')
+    libceed.CeedInit(resourceAscii, self.ceed)
 
   # CeedVector
 
