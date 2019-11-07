@@ -19,6 +19,7 @@ from abc import ABC
 class QFunctionBase(ABC):
   # Apply CeedQFunction
    def apply(self, q, u, v):
+   """Apply the action of a CeedQFunction."""
     # libCEED call
      libceed.CeedQFunctionApply(self.qf, q, u.vec, v.vec)
 
@@ -28,6 +29,11 @@ class QFunctionBase(ABC):
     libceed.CeedQFunctionDestroy(self.qf)
 
 class QFunction(QFunctionBase):
+  """CeedQFunction: independent operations at quadrature points."""
+  # Attributes
+  self.ceed = ffi.NULL
+  self.qf = ffi.NULL
+
   def __init__(self, ceed, vlength, f, source):
     # libCEED object
     self.qf = ffi.new("CeedQFunction *")
@@ -40,14 +46,21 @@ class QFunction(QFunctionBase):
 
   # Add fields to CeedQFunction
   def addInput(self, fieldname, size, emode):
+    """Add a CeedQFunction input."""
     # libCEED call
     libceed.CeedQFunctionAddInput(self.qf, fieldname, size, emode)
 
   def addOutput(self, fieldname, size, emode):
+    """Add a CeedQFunction output."""
     # libCEED call
     libceed.CeedQFunctionAddOutput(self.qf, fieldname, size, emode)
 
 class QFunctionByName(QFunctionBase):
+  """CeedQFunctionByName: independent operations at quadrature points from gallery."""
+  # Attributes
+  self.ceed = ffi.NULL
+  self.qf = ffi.NULL
+
   def __init__(self, ceed, name):
     # libCEED object
     self.qf = ffi.new("CeedQFunction *")
@@ -59,6 +72,11 @@ class QFunctionByName(QFunctionBase):
    libceed.CeedQFunctionCreateByName(self.ceed, name, self.qf)
 
 class QFunctionIdentity(QFunctionBase):
+  """CeedIdenityQFunction: identity qfunction operation."""
+  # Attributes
+  self.ceed = ffi.NULL
+  self.qf = ffi.NULL
+
   def __init__(self, ceed, size):
     # libCEED object
     self.qf = ffi.new("CeedQFunction *")

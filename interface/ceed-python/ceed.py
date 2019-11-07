@@ -15,17 +15,19 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 class Ceed():
+  """Ceed: core components."""
+  # Attributes
+  self.ceed = ffi.NULL
+  self.vectors = []
+  self.restrictions = []
+  self.bases = []
+  self.qfunctions = []
+  self.operators = []
+
   # Constructor
   def __init__(self, resource):
     # libCEED object
     self.ceed = ffi.new("Ceed *")
-
-    # References to dependencies
-    self.vectors = []
-    self.restrictions = []
-    self.bases = []
-    self.qfunctions = []
-    self.operators = []
 
     # libCEED call
     libceed.CeedInit(resource, self.ceed)
