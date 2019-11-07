@@ -14,8 +14,6 @@ CeedBasis = "typedef struct CeedBasis_private *CeedBasis;"
 
 CeedElemRestriction = "typedef struct CeedElemRestriction_private *CeedElemRestriction;"
 
-CeedTensorContract = "typedef struct CeedTensorContract_private *CeedTensorContract;"
-
 CeedQFunction = "typedef struct CeedQFunction_private *CeedQFunction;"
 
 CeedOperator = "typedef struct CeedOperator_private *CeedOperator;"
