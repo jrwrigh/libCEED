@@ -6,6 +6,6 @@ setup(name="libceed",
       description="libceed python bindings",
       py_modules=["libceed"],
       setup_requires=["cffi"],
-      cffi_modules=["ceed-build.py:ffibuilder"],
+      cffi_modules=["build-ceed.py:ffibuilder"],
       install_requires=["cffi"],
 )
