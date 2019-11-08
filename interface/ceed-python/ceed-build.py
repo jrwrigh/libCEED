@@ -205,7 +205,7 @@ typedef int (*CeedQFunctionUser)(void *ctx, const CeedInt Q,
 # so it is often just the "#include".
 ffibuilder.set_source("_ceed",
   """
-  #include "../../include/ceed.h"   // the C header of the library
+  #include <ceed.h>   // the C header of the library
   """,
   include_dirs=[os.path.abspath('../../include')], # include path
   libraries=['ceed'],   # library name, for the linker

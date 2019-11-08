@@ -11,3 +11,13 @@ python3 libceed-build.py
 ```
 
  it creates the library named `_ceed.cpython-36m-x86_64-linux-gnu.so`. I personally need to rename it to `_ceed.so` (Python doesn't like dashes in module names and I couldn't figure out how to have cffi avoid producing that suffix).
+
+# Setup.py
+
+Now this works and removes the middle bit
+
+```
+python setup.py build_ext
+python setup.py develop
+
+```
