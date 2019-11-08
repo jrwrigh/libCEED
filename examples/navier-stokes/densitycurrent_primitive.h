@@ -21,8 +21,8 @@
 //   Semi-Implicit Formulations of the Navier-Stokes Equations: Application to
 //   Nonhydrostatic Atmospheric Modeling, Giraldo, Restelli, and Lauter (2010).
 
-#ifndef densitycurrent_prim_h
-#define densitycurrent_prim_h
+#ifndef densitycurrent_primitive_h
+#define densitycurrent_primitive_h
 
 #include <math.h>
 
@@ -75,7 +75,7 @@
 //   lz              ,  Characteristic length scale of domain in z
 //
 // *****************************************************************************
-CEED_QFUNCTION(ICsDC)(void *ctx, CeedInt Q,
+CEED_QFUNCTION(ICsDCPrim)(void *ctx, CeedInt Q,
                       const CeedScalar *const *in, CeedScalar *const *out) {
 
 #ifndef M_PI

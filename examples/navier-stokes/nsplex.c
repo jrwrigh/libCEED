@@ -47,7 +47,7 @@ const char help[] = "Solve Navier-Stokes using PETSc and libCEED\n";
 #include "advection.h"
 #include "advection2d.h"
 #include "densitycurrent.h"
-#include "densitycurrent_prim.h"
+#include "densitycurrent_primitive.h"
 
 // Problem Options //K strings mapped to numbers
 typedef enum {
@@ -130,8 +130,8 @@ problemData problemOptions[] = { //K key data for runtime choice of problem
     .qdatasize = 10,
     .setup = Setup,
     .setup_loc = Setup_loc,
-    .ics = ICsDC,
-    .ics_loc = ICsDC_loc,
+    .ics = ICsDCPrim,
+    .ics_loc = ICsDCPrim_loc,
     .apply_ifunction = IFunction_DCPrim,
     .apply_ifunction_loc = IFunction_DCPrim_loc,
     .bc = NULL,
