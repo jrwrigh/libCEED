@@ -1,4 +1,5 @@
 README.md
+libceed.py
 setup.py
 libceed.egg-info/PKG-INFO
 libceed.egg-info/SOURCES.txt

@@ -16,25 +16,43 @@
 
 from _ceed import ffi, lib
 
-class Ceed():
+# ------------------------------------------------------------------------------
+class ceed():
   """Ceed: core components."""
   # Attributes
-  self.ceed = ffi.NULL
-  self.vectors = []
-  self.restrictions = []
-  self.bases = []
-  self.qfunctions = []
-  self.operators = []
+  pointer = ffi.NULL
+  vectors = []
+  restrictions = []
+  bases = []
+  qfunctions = []
+  operators = []
 
   # Constructor
   def __init__(self, resource = "/cpu/self"):
     # libCEED object
-    self.ceed = ffi.new("Ceed *")
+    self.pointer = ffi.new("Ceed *")
 
     # libCEED call
-    resourceAscii = resource.encode('ascii')
-    lib.CeedInit(resourceAscii, self.ceed)
+    resourceAscii = ffi.new("char[]", resource.encode('ascii'))
+    lib.CeedInit(resourceAscii, self.pointer)
 
+  # Preferred MemType
+  def getPreferredMemType(self):
+    """Return Ceed preferred memory type."""
+    # libCEED call
+    memtype = ffi.new("CeedMemType *", lib.CEED_MEM_HOST)
+    lib.CeedGetPreferredMemType(self.pointer[0], memtype)
+
+    if (memtype[0] == lib.CEED_MEM_HOST):
+      return "ceed_mem_host"
+    else:
+      return "ceed_mem_device"
+
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedDestroy(self.pointer)
+'''
   # CeedVector
 
   # CeedElemRestriction
@@ -92,8 +110,4 @@ class Ceed():
 
     # Return
     return op
-
-  # Destructor
-  def __def__(self):
-    # libCEED call
-    lib.CeedDestroy(self.ceed)
+'''

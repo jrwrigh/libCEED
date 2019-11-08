@@ -18,6 +18,9 @@ import os
 from cffi import FFI
 ffibuilder = FFI()
 
+# ------------------------------------------------------------------------------
+# Strings for cdef
+# ------------------------------------------------------------------------------
 CeedInt = "typedef int32_t CeedInt;"
 
 CeedScalar = "typedef double CeedScalar;"
@@ -48,8 +51,10 @@ CeedQuadMode = "typedef enum { CEED_GAUSS = 0, CEED_GAUSS_LOBATTO = 1, } CeedQua
 
 CeedElemTopology = "typedef enum { CEED_LINE = 1 << 16 | 0, CEED_TRIANGLE = 2 << 16 | 1, CEED_QUAD = 2 << 16 | 2, CEED_TET = 3 << 16 | 3, CEED_PYRAMID = 3 << 16 | 4, CEED_PRISM = 3 << 16 | 5, CEED_HEX = 3 << 16 | 6, } CeedElemTopology;"
 
+# ------------------------------------------------------------------------------
 # cdef() expects a single string declaring the C types, functions and
 # globals needed to use the shared object. It must be in valid C syntax.
+# ------------------------------------------------------------------------------
 ffibuilder.cdef(
   CeedInt +
   CeedScalar +
@@ -64,6 +69,7 @@ ffibuilder.cdef(
   int CeedInit(const char *resource, Ceed *ceed);
   int CeedGetResource(Ceed ceed, const char **resource);
   int CeedDestroy(Ceed *ceed);
+  int CeedGetPreferredMemType(Ceed ceed, CeedMemType *type);
   """ +
   CeedRequest +
   """
@@ -199,10 +205,12 @@ typedef int (*CeedQFunctionUser)(void *ctx, const CeedInt Q,
   """
 )
 
+# ------------------------------------------------------------------------------
 # set_source() gives the name of the python extension module to
 # produce, and some C source code as a string.  This C code needs
 # to make the declarated functions, types and globals available,
 # so it is often just the "#include".
+# ------------------------------------------------------------------------------
 ffibuilder.set_source("_ceed",
   """
   #include <ceed.h>   // the C header of the library
@@ -213,5 +221,10 @@ ffibuilder.set_source("_ceed",
   runtime_library_dirs=[os.path.abspath('../../lib')] # library path, at runtime
 )
 
+# ------------------------------------------------------------------------------
+# Builder
+# ------------------------------------------------------------------------------
 if __name__ == "__main__":
     ffibuilder.compile(verbose=True)
+
+# ------------------------------------------------------------------------------

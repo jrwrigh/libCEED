@@ -6,3 +6,7 @@ import libceed
 
 if __name__ == "__main__":
   ceed = libceed.ceed('/cpu/self')
+
+  memtype = ceed.getPreferredMemType()
+
+  print(memtype)

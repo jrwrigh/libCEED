@@ -17,27 +17,30 @@
 from _ceed import ffi, lib
 from abc import ABC
 
+# ------------------------------------------------------------------------------
 class OperatorBase(ABC):
+  # Attributes
+  ceed = fii.NULL
+  pointer = ffi.NULL
+
   # Apply CeedOperator
   def apply(self, u, v, request):
     """Apply CeedOperator to a vector."""
     # libCEED call
-    lib.CeedOperatorApply(self.op, u.vector, v.vector, request)
+    lib.CeedOperatorApply(self.pointer, u.pointer[0], v.pointer[0], request)
 
   # Destructor
   def __del__(self):
     # libCEED call
-    lib.CeedOperatorDestroy(self.op)
+    lib.CeedOperatorDestroy(self.pointer)
 
+# ------------------------------------------------------------------------------
 class Operator(OperatorBase):
   """CeedOperator: composed FE-type operations on vectors."""
-  # Attributes
-  self.ceed = fii.NULL
-  self.op = ffi.NULL
-  self.qf = ffi.NULL
-  self.dqf = ffi.NULL
-  self.dqfT = ffi.NULL
-  self.fields = []
+  qf = ffi.NULL
+  dqf = ffi.NULL
+  dqfT = ffi.NULL
+  fields = []
 
   # Constructor
   def __init__(self, ceed, qf, dqf = None, qdfT = None):
@@ -53,7 +56,9 @@ class Operator(OperatorBase):
       self.dqfT = dqfT
 
     # libCEED call
-    lib.CeedOperatorCreate(self.ceed, self.qf, self.dqf, self.dqfT, self.op)
+    lib.CeedOperatorCreate(self.ceed.pointer[0], self.qf.pointer[0],
+                           self.dqf.pointer[0], self.dqfT.pointer[0],
+                           self.pointer)
 
   # References to field components
   class OperatorField:
@@ -72,15 +77,16 @@ class Operator(OperatorBase):
     self.fields.append(OperatorField(restriction, basis, vector))
 
     # libCEED call
-    lib.CeedOperatorSetField(self.op, fieldname, restriction.restriction,
-                                     lmode, basis.basis, vector.vector)
+    fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
+    lib.CeedOperatorSetField(self.pointe[0], fieldnameAscii,
+                             restriction.pointer[0], lmode, basis.pointer[0],
+                             vector.pointer[0])
 
+# ------------------------------------------------------------------------------
 class CompositeOperator(OperatorBase):
   """CompositeCeedOperator: composition of multiple CeedOperators."""
   # Attributes
-  self.ceed = fii.NULL
-  self.op = ffi.NULL
-  self.subs = []
+  subs = []
 
   # Constructor
   def __init__(self, ceed):
@@ -91,7 +97,7 @@ class CompositeOperator(OperatorBase):
     self.ceed = ceed
 
     # libCEED call
-    lib.CeedCompositeOperatorCreate(self.ceed, self.op)
+    lib.CeedCompositeOperatorCreate(self.ceed.pointer[0], self.pointer)
 
   # Add sub operators
   def addSub(self, subop):
@@ -100,4 +106,6 @@ class CompositeOperator(OperatorBase):
     self.subs.append(subop)
 
     # libCEED call
-    lib.CeedOperatorAddSup(self.op, subop)
+    lib.CeedOperatorAddSup(self.pointer[0], subop.pointer[0])
+
+# ------------------------------------------------------------------------------
