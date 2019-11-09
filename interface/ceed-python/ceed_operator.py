@@ -45,7 +45,8 @@ class _Operator(_OperatorBase):
 
     # libCEED call
     lib.CeedOperatorCreate(self.ceed.pointer[0], self.qf.pointer[0],
-                           self.dqf.pointer[0], self.dqfT.pointer[0],
+                           self.dqf.pointer[0] if dqf else ffi.NULL,
+                           self.dqfT.pointer[0] if dqfT else ffi.NULL,
                            self.pointer)
 
   # Add field to CeedOperator
