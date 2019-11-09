@@ -20,19 +20,19 @@ from abc import ABC
 # ------------------------------------------------------------------------------
 class _QFunctionBase(ABC):
   # Attributes
-  ceed = ffi.NULL
-  pointer = ffi.NULL
+  _ceed = ffi.NULL
+  _pointer = ffi.NULL
 
   # Apply CeedQFunction
   def apply(self, q, u, v):
     """Apply the action of a CeedQFunction."""
     # libCEED call
-    lib.CeedQFunctionApply(self.pointer[0], q, u.pointer[0], v.pointer[0])
+    lib.CeedQFunctionApply(self._pointer[0], q, u._pointer[0], v._pointer[0])
 
   # Destructor
   def __del__(self):
     # libCEED call
-    lib.CeedQFunctionDestroy(self.pointer)
+    lib.CeedQFunctionDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
 class _QFunction(_QFunctionBase):
@@ -40,28 +40,28 @@ class _QFunction(_QFunctionBase):
 
   def __init__(self, ceed, vlength, f, source):
     # libCEED object
-    self.pointer = ffi.new("CeedQFunction *")
+    self._pointer = ffi.new("CeedQFunction *")
 
-    # References to dependencies
-    self.ceed = ceed
+    # Reference to Ceed
+    self._ceed = ceed
 
     # libCEED call
     sourceAscii = ffi.new("char[]", source.encode('ascii'))
-    lib.CeedQFunctionCreateInterior(self.ceed.pointer[0], vlength, f,
-                                    sourceAscii, self.pointer)
+    lib.CeedQFunctionCreateInterior(self._ceed._pointer[0], vlength, f,
+                                    sourceAscii, self._pointer)
 
   # Add fields to CeedQFunction
   def addInput(self, fieldname, size, emode):
     """Add a CeedQFunction input."""
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
-    lib.CeedQFunctionAddInput(self.pointer[0], fieldnameAscii, size, emode)
+    lib.CeedQFunctionAddInput(self._pointer[0], fieldnameAscii, size, emode)
 
   def addOutput(self, fieldname, size, emode):
     """Add a CeedQFunction output."""
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
-    lib.CeedQFunctionAddOutput(self.pointer[0], fieldnameAscii, size, emode)
+    lib.CeedQFunctionAddOutput(self._pointer[0], fieldnameAscii, size, emode)
 
 # ------------------------------------------------------------------------------
 class _QFunctionByName(_QFunctionBase):
@@ -71,12 +71,13 @@ class _QFunctionByName(_QFunctionBase):
     # libCEED object
     self.pointer = ffi.new("CeedQFunction *")
 
-    # References to dependencies
-    self.ceed = ceed
+    # Reference to Ceed
+    self._ceed = ceed
 
     # libCEED call
     nameAscii = ffi.new("char[]", name.encode('ascii'))
-    lib.CeedQFunctionCreateByName(self.ceed.pointer[0], nameAscii, self.pointer)
+    lib.CeedQFunctionCreateByName(self._ceed._pointer[0], nameAscii,
+                                  self._pointer)
 
 # ------------------------------------------------------------------------------
 class _QFunctionIdentity(_QFunctionBase):
@@ -84,12 +85,12 @@ class _QFunctionIdentity(_QFunctionBase):
 
   def __init__(self, ceed, size):
     # libCEED object
-    self.pointer = ffi.new("CeedQFunction *")
+    self._pointer = ffi.new("CeedQFunction *")
 
-    # References to dependencies
-    self.ceed = ceed
+    # Reference to Ceed
+    self._ceed = ceed
 
     # libCEED call
-    lib.CeedQFunctionCreateIdentity(self.ceed.ceed[0], size, self.qf)
+    lib.CeedQFunctionCreateIdentity(self._ceed._pointer[0], size, self._pointer)
 
 # ------------------------------------------------------------------------------

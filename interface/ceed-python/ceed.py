@@ -48,23 +48,23 @@ ceed_hex         = lib.CEED_HEX
 class ceed():
   """Ceed: core components."""
   # Attributes
-  pointer = ffi.NULL
+  _pointer = ffi.NULL
 
   # Constructor
   def __init__(self, resource = "/cpu/self"):
     # libCEED object
-    self.pointer = ffi.new("Ceed *")
+    self._pointer = ffi.new("Ceed *")
 
     # libCEED call
     resourceAscii = ffi.new("char[]", resource.encode('ascii'))
-    lib.CeedInit(resourceAscii, self.pointer)
+    lib.CeedInit(resourceAscii, self._pointer)
 
   # Get Resource
   def getResource(self):
     """Get the full resource name for a Ceed context."""
     # libCEED call
     resource = ffi.new("char **")
-    lib.CeedGetResource(self.pointer[0], resource)
+    lib.CeedGetResource(self._pointer[0], resource)
 
     return ffi.string(resource[0]).decode("UTF-8")
 
@@ -73,55 +73,36 @@ class ceed():
     """Return Ceed preferred memory type."""
     # libCEED call
     memtype = ffi.new("CeedMemType *", ceed_mem_host)
-    lib.CeedGetPreferredMemType(self.pointer[0], memtype)
+    lib.CeedGetPreferredMemType(self._pointer[0], memtype)
 
     return memtype[0]
 
-  # CeedQFunction
-  def qFunction(self, vlength, f, source):
-    # Create
-    qf = QFunction(self, vlength, f, source)
-
-    # Return
-    return qf
-
-  def qFunctionByName(self, name):
-    # Create
-    qf = QFunctionByName(self, name)
-
-    # Return
-    return qf
-
-  def identityQFunction(self, size):
-    # Create
-    qf = QFunctionIdentity(self, size)
-
-    # Return
-    return qf
-
-  # CeedOperator
-  def operator(self, qf, dqf, qdfT):
-    # Create
-    op = Operator(self, qf, dqf, qdfT)
-
-    # Return
-    return op
-
-  def compositeOperator(self):
-    # Create
-    op = CompositeOperator(self)
-
-    # Return
-    return op
-
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedDestroy(self.pointer)
-'''
   # CeedVector
 
   # CeedElemRestriction
 
   # CeedBasis
-'''
+
+  # CeedQFunction
+  def qFunction(self, vlength, f, source):
+    return _QFunction(self, vlength, f, source)
+
+  def qFunctionByName(self, name):
+    return _QFunctionByName(self, name)
+
+  def identityQFunction(self, size):
+    return _QFunctionIdentity(self, size)
+
+  # CeedOperator
+  def operator(self, qf, dqf, qdfT):
+    return _Operator(self, qf, dqf, qdfT)
+
+  def compositeOperator(self):
+    return = _CompositeOperator(self)
+
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedDestroy(self._pointer)
+
+# ------------------------------------------------------------------------------
