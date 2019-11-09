@@ -85,19 +85,24 @@ class ceed():
 
   # CeedQFunction
   def qFunction(self, vlength, f, source):
+    """CeedQFunction: independent operations at quadrature points."""
     return _QFunction(self, vlength, f, source)
 
   def qFunctionByName(self, name):
+    """CeedQFunctionByName: independent operations at quadrature points from gallery."""
     return _QFunctionByName(self, name)
 
   def identityQFunction(self, size):
+    """CeedIdenityQFunction: identity qfunction operation."""
     return _QFunctionIdentity(self, size)
 
   # CeedOperator
   def operator(self, qf, dqf, qdfT):
+    """CeedOperator: composed FE-type operations on vectors."""
     return _Operator(self, qf, dqf, qdfT)
 
   def compositeOperator(self):
+    """CompositeCeedOperator: composition of multiple CeedOperators."""
     return = _CompositeOperator(self)
 
   # Destructor
