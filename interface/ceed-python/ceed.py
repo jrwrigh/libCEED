@@ -17,6 +17,34 @@
 from _ceed import ffi, lib
 
 # ------------------------------------------------------------------------------
+# Ceed Enums
+# ------------------------------------------------------------------------------
+ceed_mem_host    = lib.CEED_MEM_HOST
+ceed_mem_device  = lib.CEED_MEM_DEVICE
+
+ceed_copy_values = lib.CEED_COPY_VALUES
+ceed_use_pointer = lib.CEED_USE_POINTER
+ceed_use_pointer = lib.CEED_OWN_POINTER
+
+ceed_transpose   = lib.CEED_TRANSPOSE
+ceed_notranspose = lib.CEED_NOTRANSPOSE
+
+ceed_eval_none   = lib.CEED_EVAL_NONE
+ceed_eval_interp = lib.CEED_EVAL_INTERP
+ceed_eval_grad   = lib.CEED_EVAL_GRAD
+ceed_eval_div    = lib.CEED_EVAL_DIV
+ceed_eval_curl   = lib.CEED_EVAL_CURL
+ceed_eval_weight = lib.CEED_EVAL_WEIGHT
+
+ceed_line        = lib.CEED_LINE
+ceed_triangle    = lib.CEED_TRIANGLE
+ceed_quad        = lib.CEED_QUAD
+ceed_tet         = lib.CEED_TET
+ceed_pyramid     = lib.CEED_PYRAMID
+ceed_prism       = lib.CEED_PRISM
+ceed_hex         = lib.CEED_HEX
+
+# ------------------------------------------------------------------------------
 class ceed():
   """Ceed: core components."""
   # Attributes
@@ -49,15 +77,10 @@ class ceed():
   def getPreferredMemType(self):
     """Return Ceed preferred memory type."""
     # libCEED call
-    memtype = ffi.new("CeedMemType *", lib.CEED_MEM_HOST)
+    memtype = ffi.new("CeedMemType *", ceed_mem_host)
     lib.CeedGetPreferredMemType(self.pointer[0], memtype)
 
-    if (memtype[0] == lib.CEED_MEM_HOST):
-      return "ceed_mem_host"
-    elif (memtype[0] == lib.CEED_MEM_DEVICE):
-      return "ceed_mem_device"
-    else:
-      return "error"
+    if memtype[0]
 
   # Destructor
   def __del__(self):
