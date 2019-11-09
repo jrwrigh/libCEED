@@ -80,7 +80,7 @@ class ceed():
     memtype = ffi.new("CeedMemType *", ceed_mem_host)
     lib.CeedGetPreferredMemType(self.pointer[0], memtype)
 
-    if memtype[0]
+    return memtype[0]
 
   # Destructor
   def __del__(self):
