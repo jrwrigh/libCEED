@@ -49,11 +49,6 @@ class ceed():
   """Ceed: core components."""
   # Attributes
   pointer = ffi.NULL
-  vectors = []
-  restrictions = []
-  bases = []
-  qfunctions = []
-  operators = []
 
   # Constructor
   def __init__(self, resource = "/cpu/self"):
@@ -82,6 +77,43 @@ class ceed():
 
     return memtype[0]
 
+  # CeedQFunction
+  def qFunction(self, vlength, f, source):
+    # Create
+    qf = QFunction(self, vlength, f, source)
+
+    # Return
+    return qf
+
+  def qFunctionByName(self, name):
+    # Create
+    qf = QFunctionByName(self, name)
+
+    # Return
+    return qf
+
+  def identityQFunction(self, size):
+    # Create
+    qf = QFunctionIdentity(self, size)
+
+    # Return
+    return qf
+
+  # CeedOperator
+  def operator(self, qf, dqf, qdfT):
+    # Create
+    op = Operator(self, qf, dqf, qdfT)
+
+    # Return
+    return op
+
+  def compositeOperator(self):
+    # Create
+    op = CompositeOperator(self)
+
+    # Return
+    return op
+
   # Destructor
   def __del__(self):
     # libCEED call
@@ -92,56 +124,4 @@ class ceed():
   # CeedElemRestriction
 
   # CeedBasis
-
-  # CeedQFunction
-  def qFunction(self, vlength, f, source):
-    # Create
-    qf = QFunction(self, vlength, f, source)
-
-    # Refrence
-    self.qfunctions.append(qf)
-
-    # Return
-    return qf
-
-  def qFunctionByName(self, name):
-    # Create
-    qf = QFunctionByName(self, name)
-
-    # Refrence
-    self.qfunctions.append(qf)
-
-    # Return
-    return qf
-
-  def identityQFunction(self, size):
-    # Create
-    qf = QFunctionIdentity(self, size)
-
-    # Refrence
-    self.qfunctions.append(qf)
-
-    # Return
-    return qf
-
-  # CeedOperator
-  def operator(self, qf, dqf, qdfT):
-    # Create
-    op = Operator(self, qf, dqf, qdfT)
-
-    # Refrence
-    self.operators.append(op)
-
-    # Return
-    return op
-
-  def compositeOperator(self):
-    # Create
-    op = CompositeOperator(self)
-
-    # Refrence
-    self.operators.append(op)
-
-    # Return
-    return op
 '''
