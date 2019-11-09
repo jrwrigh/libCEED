@@ -60,21 +60,9 @@ class _Operator(_OperatorBase):
                            self.dqf.pointer[0], self.dqfT.pointer[0],
                            self.pointer)
 
-  # References to field components
-  class OperatorField:
-    def __init(self, restriction, basis, vector):
-      # References to dependencies
-      self.restriction = restriction
-      if (basis):
-        self.basis = basis
-      if (vector):
-        self.vector = vector
-
   # Add field to CeedOperator
   def setField(self, fieldname, restriction, lmode, basis, vector):
     """Provide a field to a CeedOperator for use by its CeedQFunction."""
-    # References to dependencies
-    self.fields.append(OperatorField(restriction, basis, vector))
 
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
