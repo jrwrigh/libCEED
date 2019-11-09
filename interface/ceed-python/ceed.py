@@ -19,30 +19,30 @@ from _ceed import ffi, lib
 # ------------------------------------------------------------------------------
 # Ceed Enums
 # ------------------------------------------------------------------------------
-ceed_mem_host    = lib.CEED_MEM_HOST
-ceed_mem_device  = lib.CEED_MEM_DEVICE
+mem_host       = lib.CEED_MEM_HOST
+mem_device     = lib.CEED_MEM_DEVICE
 
-ceed_copy_values = lib.CEED_COPY_VALUES
-ceed_use_pointer = lib.CEED_USE_POINTER
-ceed_use_pointer = lib.CEED_OWN_POINTER
+copy_values    = lib.CEED_COPY_VALUES
+use_pointer    = lib.CEED_USE_POINTER
+use_pointer    = lib.CEED_OWN_POINTER
 
-ceed_transpose   = lib.CEED_TRANSPOSE
-ceed_notranspose = lib.CEED_NOTRANSPOSE
+transpose      = lib.CEED_TRANSPOSE
+notranspose    = lib.CEED_NOTRANSPOSE
 
-ceed_eval_none   = lib.CEED_EVAL_NONE
-ceed_eval_interp = lib.CEED_EVAL_INTERP
-ceed_eval_grad   = lib.CEED_EVAL_GRAD
-ceed_eval_div    = lib.CEED_EVAL_DIV
-ceed_eval_curl   = lib.CEED_EVAL_CURL
-ceed_eval_weight = lib.CEED_EVAL_WEIGHT
+eval_none      = lib.CEED_EVAL_NONE
+eval_interp    = lib.CEED_EVAL_INTERP
+eval_grad      = lib.CEED_EVAL_GRAD
+eval_div       = lib.CEED_EVAL_DIV
+eval_curl      = lib.CEED_EVAL_CURL
+eval_weight    = lib.CEED_EVAL_WEIGHT
 
-ceed_line        = lib.CEED_LINE
-ceed_triangle    = lib.CEED_TRIANGLE
-ceed_quad        = lib.CEED_QUAD
-ceed_tet         = lib.CEED_TET
-ceed_pyramid     = lib.CEED_PYRAMID
-ceed_prism       = lib.CEED_PRISM
-ceed_hex         = lib.CEED_HEX
+shape_line     = lib.CEED_LINE
+shape_triangle = lib.CEED_TRIANGLE
+shape_quad     = lib.CEED_QUAD
+shape_tet      = lib.CEED_TET
+shape_pyramid  = lib.CEED_PYRAMID
+shape_prism    = lib.CEED_PRISM
+shape_hex      = lib.CEED_HEX
 
 # ------------------------------------------------------------------------------
 class ceed():
