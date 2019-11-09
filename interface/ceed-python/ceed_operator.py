@@ -37,23 +37,11 @@ class _OperatorBase(ABC):
 # ------------------------------------------------------------------------------
 class _Operator(_OperatorBase):
   """CeedOperator: composed FE-type operations on vectors."""
-  qf = ffi.NULL
-  dqf = ffi.NULL
-  dqfT = ffi.NULL
-  fields = []
 
   # Constructor
   def __init__(self, ceed, qf, dqf = None, qdfT = None):
     # CeedOperator object
     self.op = ffi.new("CeedOperator *")
-
-    # References to dependencies
-    self.ceed = ceed
-    self.qf = qf
-    if (dqf):
-      self.dqf = dqf
-    if (dqfT):
-      self.dqfT = dqfT
 
     # libCEED call
     lib.CeedOperatorCreate(self.ceed.pointer[0], self.qf.pointer[0],
@@ -73,8 +61,6 @@ class _Operator(_OperatorBase):
 # ------------------------------------------------------------------------------
 class _CompositeOperator(_OperatorBase):
   """CompositeCeedOperator: composition of multiple CeedOperators."""
-  # Attributes
-  subs = []
 
   # Constructor
   def __init__(self, ceed):
@@ -90,8 +76,6 @@ class _CompositeOperator(_OperatorBase):
   # Add sub operators
   def addSub(self, subop):
     """Add a sub-operator to a composite CeedOperator."""
-    # References to dependencies
-    self.subs.append(subop)
 
     # libCEED call
     lib.CeedOperatorAddSup(self.pointer[0], subop.pointer[0])
