@@ -18,9 +18,9 @@ from _ceed import ffi, lib
 from abc import ABC
 
 # ------------------------------------------------------------------------------
-class OperatorBase(ABC):
+class _OperatorBase(ABC):
   # Attributes
-  ceed = fii.NULL
+  ceed = ffi.NULL
   pointer = ffi.NULL
 
   # Apply CeedOperator
@@ -35,7 +35,7 @@ class OperatorBase(ABC):
     lib.CeedOperatorDestroy(self.pointer)
 
 # ------------------------------------------------------------------------------
-class Operator(OperatorBase):
+class _Operator(_OperatorBase):
   """CeedOperator: composed FE-type operations on vectors."""
   qf = ffi.NULL
   dqf = ffi.NULL
@@ -83,7 +83,7 @@ class Operator(OperatorBase):
                              vector.pointer[0])
 
 # ------------------------------------------------------------------------------
-class CompositeOperator(OperatorBase):
+class _CompositeOperator(_OperatorBase):
   """CompositeCeedOperator: composition of multiple CeedOperators."""
   # Attributes
   subs = []
