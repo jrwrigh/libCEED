@@ -41,7 +41,7 @@ class _Operator(_OperatorBase):
   # Constructor
   def __init__(self, ceed, qf, dqf = None, qdfT = None):
     # CeedOperator object
-    self.op = ffi.new("CeedOperator *")
+    self.pointer = ffi.new("CeedOperator *")
 
     # libCEED call
     lib.CeedOperatorCreate(self.ceed.pointer[0], self.qf.pointer[0],
@@ -55,7 +55,7 @@ class _Operator(_OperatorBase):
 
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
-    lib.CeedOperatorSetField(self.pointe[0], fieldnameAscii,
+    lib.CeedOperatorSetField(self.pointer[0], fieldnameAscii,
                              restriction.pointer[0], lmode, basis.pointer[0],
                              vector.pointer[0])
 
@@ -66,7 +66,7 @@ class _CompositeOperator(_OperatorBase):
   # Constructor
   def __init__(self, ceed):
     # CeedOperator object
-    self.op = ffi.new("CeedOperator *")
+    self.pointer = ffi.new("CeedOperator *")
 
     # References to dependencies
     self.ceed = ceed
