@@ -36,6 +36,15 @@ class ceed():
     resourceAscii = ffi.new("char[]", resource.encode('ascii'))
     lib.CeedInit(resourceAscii, self.pointer)
 
+  # Get Resource
+  def getResource(self):
+    """Get the full resource name for a Ceed context."""
+    # libCEED call
+    resource = ffi.new("char **")
+    lib.CeedGetResource(self.pointer[0], resource)
+
+    return ffi.string(resource[0]).decode("UTF-8")
+
   # Preferred MemType
   def getPreferredMemType(self):
     """Return Ceed preferred memory type."""
@@ -45,8 +54,10 @@ class ceed():
 
     if (memtype[0] == lib.CEED_MEM_HOST):
       return "ceed_mem_host"
-    else:
+    elif (memtype[0] == lib.CEED_MEM_DEVICE):
       return "ceed_mem_device"
+    else:
+      return "error"
 
   # Destructor
   def __del__(self):

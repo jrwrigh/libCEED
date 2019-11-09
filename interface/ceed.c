@@ -642,7 +642,7 @@ int CeedSetData(Ceed ceed, void **data) {
 }
 
 /**
-  @brief Get the full resource name for a CEED
+  @brief Get the full resource name for a Ceed context
 
   @param ceed            Ceed to get resource name of
   @param[out] resource   Variable to store resource name
