@@ -240,14 +240,14 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
   for (CeedInt i=0; i<Q; i++) {
     // Setup
     // -- Interp in
-    const CeedScalar P        =    q[0][i];
-    const CeedScalar u[3]       =   {q[1][i] / rho,
-                                     q[2][i] / rho,
-                                     q[3][i] / rho
+    const CeedScalar P          =    q[0][i];
+    const CeedScalar u[3]       =   {q[1][i],
+                                     q[2][i],
+                                     q[3][i]
                                     };
     const CeedScalar T          =    q[4][i];
     // -- Grad in
-    const CeedScalar dP[3]    =   {dq[0][0][i],
+    const CeedScalar dP[3]    =     {dq[0][0][i],
                                      dq[1][0][i],
                                      dq[2][0][i]
                                     };
@@ -368,7 +368,7 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
     // Strong residual
     CeedScalar StrongResid[5];
     for (int j=0; j<5; j++)
-      StrongResid[j] = dConsVardt[j][i] + StrongConv[j] + BodyForce[j];       
+      StrongResid[j] = dConsVardt[j] + StrongConv[j] + BodyForce[j];       
     // The Physics
     //-----mass matrix 
     for (int j=0; j<5; j++)
