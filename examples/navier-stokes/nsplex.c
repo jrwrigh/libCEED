@@ -135,6 +135,8 @@ problemData problemOptions[] = { //K key data for runtime choice of problem
     .apply_ifunction = IFunction_DCPrim,
     .apply_ifunction_loc = IFunction_DCPrim_loc,
     .bc = NULL,
+    .apply_rhs = DC,
+    .apply_rhs_loc = DC_loc,
   },
 };
 
@@ -881,6 +883,8 @@ int main(int argc, char **argv) {
     CeedQFunctionSetContext(qf_ifunction, &ctxAdvection2d, sizeof ctxAdvection2d);
     break;
   case NS_DENSITY_CURRENT_PRIMITIVE:
+    CeedQFunctionSetContext(qf_rhs, &ctxNS, sizeof ctxNS);
+    CeedQFunctionSetContext(qf_rhs, &ctxAdvection2d, sizeof ctxAdvection2d); 
     CeedQFunctionSetContext(qf_ifunction, &ctxNS, sizeof ctxNS);
     CeedQFunctionSetContext(qf_ifunction, &ctxAdvection2d, sizeof ctxAdvection2d);
     break;
