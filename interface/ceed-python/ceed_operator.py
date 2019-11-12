@@ -19,6 +19,7 @@ from abc import ABC
 
 # ------------------------------------------------------------------------------
 class _OperatorBase(ABC):
+
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL

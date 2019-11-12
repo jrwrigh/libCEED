@@ -15,27 +15,29 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed import ffi, lib
+from ceed_vector import _Vector
 
 # ------------------------------------------------------------------------------
 # Ceed Enums
 # ------------------------------------------------------------------------------
+# CeedMemType
 mem_host       = lib.CEED_MEM_HOST
 mem_device     = lib.CEED_MEM_DEVICE
-
+# CeedCopyMode
 copy_values    = lib.CEED_COPY_VALUES
 use_pointer    = lib.CEED_USE_POINTER
 use_pointer    = lib.CEED_OWN_POINTER
-
+# CeedTransposeMode
 transpose      = lib.CEED_TRANSPOSE
 notranspose    = lib.CEED_NOTRANSPOSE
-
+# CeedEvalMode
 eval_none      = lib.CEED_EVAL_NONE
 eval_interp    = lib.CEED_EVAL_INTERP
 eval_grad      = lib.CEED_EVAL_GRAD
 eval_div       = lib.CEED_EVAL_DIV
 eval_curl      = lib.CEED_EVAL_CURL
 eval_weight    = lib.CEED_EVAL_WEIGHT
-
+# CeedElemTopology
 shape_line     = lib.CEED_LINE
 shape_triangle = lib.CEED_TRIANGLE
 shape_quad     = lib.CEED_QUAD
@@ -56,7 +58,7 @@ class ceed():
     self._pointer = ffi.new("Ceed *")
 
     # libCEED call
-    resourceAscii = ffi.new("char[]", resource.encode('ascii'))
+    resourceAscii = ffi.new("char[]", resource.encode("ascii"))
     lib.CeedInit(resourceAscii, self._pointer)
 
   # Get Resource
@@ -78,6 +80,9 @@ class ceed():
     return memtype[0]
 
   # CeedVector
+  def vector(self, size):
+    """CeedVector: vector of specified length (does not allocate memory)"""
+    return _Vector(self, size)
 
   # CeedElemRestriction
 
@@ -103,7 +108,7 @@ class ceed():
 
   def compositeOperator(self):
     """CompositeCeedOperator: composition of multiple CeedOperators."""
-    return = _CompositeOperator(self)
+    return _CompositeOperator(self)
 
   # Destructor
   def __del__(self):

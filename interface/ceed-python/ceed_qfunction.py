@@ -19,6 +19,7 @@ from abc import ABC
 
 # ------------------------------------------------------------------------------
 class _QFunctionBase(ABC):
+
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
@@ -38,6 +39,7 @@ class _QFunctionBase(ABC):
 class _QFunction(_QFunctionBase):
   """CeedQFunction: independent operations at quadrature points."""
 
+  # Constructor
   def __init__(self, ceed, vlength, f, source):
     # libCEED object
     self._pointer = ffi.new("CeedQFunction *")
@@ -67,6 +69,7 @@ class _QFunction(_QFunctionBase):
 class _QFunctionByName(_QFunctionBase):
   """CeedQFunctionByName: independent operations at quadrature points from gallery."""
 
+  # Constructor
   def __init__(self, ceed, name):
     # libCEED object
     self.pointer = ffi.new("CeedQFunction *")
@@ -83,6 +86,7 @@ class _QFunctionByName(_QFunctionBase):
 class _QFunctionIdentity(_QFunctionBase):
   """CeedIdenityQFunction: identity qfunction operation."""
 
+  # Constructor
   def __init__(self, ceed, size):
     # libCEED object
     self._pointer = ffi.new("CeedQFunction *")

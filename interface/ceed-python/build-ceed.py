@@ -121,7 +121,7 @@ ffibuilder.cdef(
     CeedVector mult);
   int CeedElemRestrictionView(CeedElemRestriction rstr, FILE *stream);
   int CeedElemRestrictionDestroy(CeedElemRestriction *rstr);
- """ +
+  """ +
   CeedBasis +
   """
   extern CeedBasis CEED_BASIS_COLLOCATED;
@@ -215,10 +215,10 @@ ffibuilder.set_source("_ceed",
   """
   #include <ceed.h>   // the C header of the library
   """,
-  include_dirs=[os.path.abspath('../../include')], # include path
-  libraries=['ceed'],   # library name, for the linker
-  library_dirs=[os.path.abspath('../../lib')], # library path, for the linker
-  runtime_library_dirs=[os.path.abspath('../../lib')] # library path, at runtime
+  include_dirs=[os.path.abspath("../../include")], # include path
+  libraries=["ceed"],   # library name, for the linker
+  library_dirs=[os.path.abspath("../../lib")], # library path, for the linker
+  runtime_library_dirs=[os.path.abspath("../../lib")] # library path, at runtime
 )
 
 # ------------------------------------------------------------------------------
