@@ -19,7 +19,7 @@ import numpy as np
 
 # ------------------------------------------------------------------------------
 class _Vector:
-  """CeedVector: storing and manipulating vectors"""
+  """CeedVector: storing and manipulating vectors."""
 
   # Attributes
   _ceed = ffi.NULL

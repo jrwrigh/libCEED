@@ -16,9 +16,12 @@
 
 from _ceed import ffi, lib
 from ceed_vector import _Vector
+from ceed_elemrestriction import _ElemRestriction,
+                                 _IdentityElemRestriction,
+                                 _BlockedElemRestriction,
 from ceed_qfunction import _QFunction,
                            _QFunctionByName,
-                           _QFunctionIdentity
+                           _IdentityQFunction
 from ceed_operator import _Operator,
                           _CompositeOperator
 
@@ -110,10 +113,27 @@ class ceed():
 
   # CeedVector
   def vector(self, size):
-    """CeedVector: vector of specified length (does not allocate memory)"""
+    """CeedVector: storing and manipulating vectors."""
     return _Vector(self, size)
 
   # CeedElemRestriction
+  def elemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype, cmode,
+                      indices):
+    """CeedElemRestriction: restriction from vectors to elements."""
+    return _ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
+                            cmode, indices)
+
+  def identityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
+                              cmode):
+    """CeedElemRestriction: identity restriction from vectors to elements."""
+    return _IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
+                                    cmode)
+
+  def blockedElemRestriction(self, nelem, elemsize, blksize, nnodes, ncomp,
+                             mtype, cmode, indices):
+    """CeedElemRestriction: blocked restriction from vectors to elements."""
+    return _BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes,
+                                   ncomp, mtype, cmode, indices)
 
   # CeedBasis
 
@@ -128,7 +148,7 @@ class ceed():
 
   def identityQFunction(self, size):
     """CeedIdenityQFunction: identity qfunction operation."""
-    return _QFunctionIdentity(self, size)
+    return _IdentityQFunction(self, size)
 
   # CeedOperator
   def operator(self, qf, dqf, qdfT):

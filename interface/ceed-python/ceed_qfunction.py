@@ -83,7 +83,7 @@ class _QFunctionByName(_QFunctionBase):
                                   self._pointer)
 
 # ------------------------------------------------------------------------------
-class _QFunctionIdentity(_QFunctionBase):
+class _IdentityQFunction(_QFunctionBase):
   """CeedIdentityQFunction: identity qfunction operation."""
 
   # Constructor
