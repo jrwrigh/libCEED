@@ -16,14 +16,9 @@
 
 from _ceed import ffi, lib
 from ceed_vector import _Vector
-from ceed_elemrestriction import _ElemRestriction,
-                                 _IdentityElemRestriction,
-                                 _BlockedElemRestriction,
-from ceed_qfunction import _QFunction,
-                           _QFunctionByName,
-                           _IdentityQFunction
-from ceed_operator import _Operator,
-                          _CompositeOperator
+from ceed_elemrestriction import _ElemRestriction, _IdentityElemRestriction, _BlockedElemRestriction
+from ceed_qfunction import _QFunction, _QFunctionByName, _IdentityQFunction
+from ceed_operator import _Operator, _CompositeOperator
 
 # ------------------------------------------------------------------------------
 # Ceed Enums
