@@ -40,7 +40,6 @@ class _Vector:
   def setArray(self, mtype, cmode, array):
     """Set the array used by a CeedVector, freeing any previously allocated
        array if applicable."""
-
     # Setup the numpy array for the libCEED call
     array_pointer = ffi.new("CeedScalar *")
     array_pointer = ffi.cast("CeedScalar *", array.__array_interface__['data'][0])
@@ -51,9 +50,9 @@ class _Vector:
   # Get Vector's data array
   def getArray(self, mtype, array):
     """Get read/write access to a CeedVector via the specified memory type."""
-
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
+
     # libCEED call
     lib.CeedVectorGetArray(self._pointer[0], mtype, array_pointer)
     array.__array_interface__['data'] = array_pointer
@@ -61,7 +60,6 @@ class _Vector:
   # Get Vector's data array in read-only mode
   def getArrayRead(self, mtype):
     """Get read-only access to a CeedVector via the specified memory type."""
-
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
@@ -76,7 +74,6 @@ class _Vector:
   # Restore the Vector's data array
   def restoreArray(self, array):
     """Restore an array obtained using getArray()."""
-
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
@@ -86,7 +83,6 @@ class _Vector:
   # Restore an array obtained using getArrayRead
   def restoreArrayRead(self, array):
     """Restore an array obtained using getArrayRead()."""
-
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 

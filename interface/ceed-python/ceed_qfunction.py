@@ -84,7 +84,7 @@ class _QFunctionByName(_QFunctionBase):
 
 # ------------------------------------------------------------------------------
 class _QFunctionIdentity(_QFunctionBase):
-  """CeedIdenityQFunction: identity qfunction operation."""
+  """CeedIdentityQFunction: identity qfunction operation."""
 
   # Constructor
   def __init__(self, ceed, size):
