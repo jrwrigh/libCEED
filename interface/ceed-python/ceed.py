@@ -42,12 +42,6 @@ ceed_copymodes = {copy_values: "ceed_copy_values",
                   use_pointer: "ceed_use_pointer",
                   own_pointer: "ceed_own_pointer"}
 
-# CeedTransposeMode
-transpose      = lib.CEED_TRANSPOSE
-notranspose    = lib.CEED_NOTRANSPOSE
-ceed_memtypes  = {transpose:   "ceed_transpose",
-                  notranspose: "ceed_notranspose"}
-
 # CeedEvalMode
 eval_none      = lib.CEED_EVAL_NONE
 eval_interp    = lib.CEED_EVAL_INTERP
@@ -61,6 +55,12 @@ ceed_evalmodes = {eval_none:   "ceed_eval_none",
                   eval_div:    "ceed_eval_div",
                   eval_curl:   "ceed_eval_curl",
                   eval_weight: "ceed_eval_weight"}
+
+# CeedTransposeMode
+transpose           = lib.CEED_TRANSPOSE
+notranspose         = lib.CEED_NOTRANSPOSE
+ceed_transposemodes = {transpose:     "ceed_transpose",
+                       notranspose:   "ceed_notranspose"}
 
 # CeedElemTopology
 shape_line          = lib.CEED_LINE
