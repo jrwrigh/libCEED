@@ -28,7 +28,8 @@ class _OperatorBase(ABC):
   def apply(self, u, v, request):
     """Apply CeedOperator to a vector."""
     # libCEED call
-    lib.CeedOperatorApply(self._pointer, u._pointer[0], v._pointer[0], request)
+    lib.CeedOperatorApply(self._pointer[0], u._pointer[0], v._pointer[0],
+                          request)
 
   # Destructor
   def __del__(self):
