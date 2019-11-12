@@ -32,6 +32,30 @@ class _ElemRestrictionBase(ABC):
     lib.CeedElemRestrictionApply(self._pointer, tmode, lmode, u._pointer[0],
                                  v._pointer[0], request)
 
+  # Create restriction vectors
+  def createVector(self, createLvec = True, CreateEvec = True):
+    """Create CeedVectors associated with a CeedElemRestriction."""
+    # Vector pointers
+    lvecPointer = ffi.new("CeedVector *") if createLvec else ffi.NULL
+    evecPointer = ffi.new("CeedVector *") if createEvec else ffi.NULL
+
+    # libCEED call
+    lib.CeedElemRestrictionCreateVector(self._pointer[0], lvecPointer,
+                                        evecPointer)
+
+    # Return vectors
+    lvec = _VectorClone(self._ceed[0], lvecPointer) if createLvec else None
+    evec = _VectorClone(self._ceed[0], evecPointer) if createEvec else None
+
+    # Return
+    return [lvec, evec]
+
+  # Get ElemRestriction multiplicity
+  def getmultiplicity(self, mult):
+    """Get the multiplicity of nodes in a CeedElemRestriction."""
+    # libCEED call
+    lib.CeedElemRestrictionApply(self._pointer[0], mult._pointer[0])
+
   # Destructor
   def __del__(self):
     # libCEED call
