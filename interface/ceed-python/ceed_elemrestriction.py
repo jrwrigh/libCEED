@@ -33,7 +33,7 @@ class _ElemRestrictionBase(ABC):
                                  v._pointer[0], request)
 
   # Create restriction vectors
-  def createVector(self, createLvec = True, CreateEvec = True):
+  def createVector(self, createLvec = True, createEvec = True):
     """Create CeedVectors associated with a CeedElemRestriction."""
     # Vector pointers
     lvecPointer = ffi.new("CeedVector *") if createLvec else ffi.NULL
@@ -51,8 +51,11 @@ class _ElemRestrictionBase(ABC):
     return [lvec, evec]
 
   # Get ElemRestriction multiplicity
-  def getmultiplicity(self, mult):
+  def getmultiplicity(self):
     """Get the multiplicity of nodes in a CeedElemRestriction."""
+    # Create mult vector
+    [mult, evec] = self.createVector(createEvec = False)
+
     # libCEED call
     lib.CeedElemRestrictionApply(self._pointer[0], mult._pointer[0])
 
