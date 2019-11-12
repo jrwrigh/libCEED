@@ -15,5 +15,6 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from ceed import *
+from ceed_vector import *
 from ceed_qfunction import *
 from ceed_operator import *
