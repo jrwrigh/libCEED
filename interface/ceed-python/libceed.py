@@ -16,6 +16,6 @@
 
 from ceed import *
 from ceed_vector import *
-from ceed_elemrestricton import *
+from ceed_elemrestriction import *
 from ceed_qfunction import *
 from ceed_operator import *
