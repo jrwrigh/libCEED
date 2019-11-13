@@ -15,6 +15,7 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed import ffi, lib
+import sys
 import numpy as np
 
 # ------------------------------------------------------------------------------
@@ -122,6 +123,26 @@ class _Vector:
 
     # libCEED call
     lib.CeedVectorSetValue(self._pointer[0], value)
+
+  # Sync the Vector to a specified memtype
+  def syncArray(self, mtype):
+    """Sync the Vector to a specified memtype."""
+
+    # libCEED call
+    lib.CeedVectorSyncArray(self._pointer[0], mtype)
+
+  # View a Vector
+  def view(self, format = ffi.NULL, file = sys.stdout):
+    """View a Vector."""
+
+    # Check if format is a string before encoding it
+    if type(format) == "str":
+      fstr = format.encode("ascii", "strict")
+    else:
+      fstr = format
+
+    # libCEED call
+    lib.CeedVectorView(self._pointer[0], fstr, file)
 
   # Destructor
   def __del__(self):
