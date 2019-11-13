@@ -15,6 +15,8 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed import ffi, lib
+import sys
+import io
 from ceed_vector import Vector
 from ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
 from ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
@@ -87,6 +89,10 @@ class Ceed():
     # libCEED call
     resourceAscii = ffi.new("char[]", resource.encode("ascii"))
     lib.CeedInit(resourceAscii, self._pointer)
+
+  # Representation
+  def __repr__(self):
+    return "<Ceed instance at " + hex(id(self)) + ">"
 
   # Get Resource
   def get_resource(self):
