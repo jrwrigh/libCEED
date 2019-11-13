@@ -151,7 +151,7 @@ class Vector:
     lib.CeedVectorDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class _VectorClone:
+class _VectorClone(Vector):
   """Copy a Vector."""
 
   # Constructor
@@ -163,7 +163,7 @@ class _VectorClone:
     self._ceed = ceed
 
 # ------------------------------------------------------------------------------
-class _VectorActive:
+class _VectorActive(Vector):
   """Shell to create CEED_VECTOR_ACTIVE."""
 
   # Constructor
@@ -174,7 +174,7 @@ class _VectorActive:
 CEED_VECTOR_ACTIVE = _VectorActive()
 
 # ------------------------------------------------------------------------------
-class _VectorNone:
+class _VectorNone(Vector):
   """Shell to create CEED_VECTOR_NONE."""
 
   # Constructor
