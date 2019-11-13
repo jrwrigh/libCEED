@@ -34,7 +34,7 @@ class _ElemRestrictionBase(ABC):
 
   # Create restriction vectors
   def create_vector(self, createLvec = True, createEvec = True):
-    """Create CeedVectors associated with a ElemRestriction."""
+    """Create CeedVectors associated with an ElemRestriction."""
     # Vector pointers
     lvecPointer = ffi.new("CeedVector *") if createLvec else ffi.NULL
     evecPointer = ffi.new("CeedVector *") if createEvec else ffi.NULL
@@ -52,7 +52,7 @@ class _ElemRestrictionBase(ABC):
 
   # Get ElemRestriction multiplicity
   def get_multiplicity(self):
-    """Get the multiplicity of nodes in a ElemRestriction."""
+    """Get the multiplicity of nodes in an ElemRestriction."""
     # Create mult vector
     [mult, evec] = self.createVector(createEvec = False)
 
