@@ -12,7 +12,7 @@ if __name__ == "__main__":
   n = 10
   x = ceed.Vector(n)
   y = ceed.Vector(n)
-  a = np.zeros(n, dtype="float64")
+  a = np.arange(10, 10 + n, dtype="float64")
   x.set_array(MEM_HOST, USE_POINTER, a)
 
   b = x.get_array_read(MEM_DEVICE)
