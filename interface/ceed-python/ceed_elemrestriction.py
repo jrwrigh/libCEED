@@ -34,7 +34,7 @@ class ElemRestrictionBase(ABC):
 
   # Create restriction vectors
   def create_vector(self, createLvec = True, createEvec = True):
-    """Create CeedVectors associated with a CeedElemRestriction."""
+    """Create CeedVectors associated with a ElemRestriction."""
     # Vector pointers
     lvecPointer = ffi.new("CeedVector *") if createLvec else ffi.NULL
     evecPointer = ffi.new("CeedVector *") if createEvec else ffi.NULL
@@ -52,7 +52,7 @@ class ElemRestrictionBase(ABC):
 
   # Get ElemRestriction multiplicity
   def get_multiplicity(self):
-    """Get the multiplicity of nodes in a CeedElemRestriction."""
+    """Get the multiplicity of nodes in a ElemRestriction."""
     # Create mult vector
     [mult, evec] = self.createVector(createEvec = False)
 
@@ -66,7 +66,7 @@ class ElemRestrictionBase(ABC):
 
 # ------------------------------------------------------------------------------
 class ElemRestriction(_ElemRestrictionBase):
-  """CeedElemRestriction: restriction from vectors to elements."""
+  """Ceed ElemRestriction: restriction from vectors to elements."""
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, nnodes, ncomp, mtype, cmode,
@@ -89,7 +89,7 @@ class ElemRestriction(_ElemRestrictionBase):
 
 # ------------------------------------------------------------------------------
 class IdentityElemRestriction(_ElemRestrictionBase):
-  """CeedIdentityElemRestriction: identity restriction from vectors to elements."""
+  """Ceed IdentityElemRestriction: identity restriction from vectors to elements."""
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, nnodes, ncomp):
@@ -106,7 +106,7 @@ class IdentityElemRestriction(_ElemRestrictionBase):
 
 # ------------------------------------------------------------------------------
 class BlockedElemRestriction(_ElemRestrictionBase):
-  """CeedBlockedElemRestriction: blocked restriction from vectors to elements."""
+  """Ceed BlockedElemRestriction: blocked restriction from vectors to elements."""
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, blksize, nnodes, ncomp, mtype,

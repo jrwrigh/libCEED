@@ -26,7 +26,7 @@ class _QFunctionBase(ABC):
 
   # Apply CeedQFunction
   def apply(self, q, u, v):
-    """Apply the action of a CeedQFunction."""
+    """Apply the action of a QFunction."""
     # libCEED call
     lib.CeedQFunctionApply(self._pointer[0], q, u._pointer[0], v._pointer[0])
 
@@ -37,7 +37,7 @@ class _QFunctionBase(ABC):
 
 # ------------------------------------------------------------------------------
 class QFunction(_QFunctionBase):
-  """CeedQFunction: independent operations at quadrature points."""
+  """Ceed QFunction: independent operations at quadrature points."""
 
   # Constructor
   def __init__(self, ceed, vlength, f, source):
@@ -54,20 +54,20 @@ class QFunction(_QFunctionBase):
 
   # Add fields to CeedQFunction
   def add_input(self, fieldname, size, emode):
-    """Add a CeedQFunction input."""
+    """Add a QFunction input."""
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
     lib.CeedQFunctionAddInput(self._pointer[0], fieldnameAscii, size, emode)
 
   def add_output(self, fieldname, size, emode):
-    """Add a CeedQFunction output."""
+    """Add a QFunction output."""
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
     lib.CeedQFunctionAddOutput(self._pointer[0], fieldnameAscii, size, emode)
 
 # ------------------------------------------------------------------------------
 class QFunctionByName(_QFunctionBase):
-  """CeedQFunctionByName: independent operations at quadrature points from gallery."""
+  """Ceed QFunctionByName: independent operations at quadrature points from gallery."""
 
   # Constructor
   def __init__(self, ceed, name):
@@ -84,7 +84,7 @@ class QFunctionByName(_QFunctionBase):
 
 # ------------------------------------------------------------------------------
 class IdentityQFunction(_QFunctionBase):
-  """CeedIdentityQFunction: identity qfunction operation."""
+  """Ceed IdentityQFunction: identity qfunction operation."""
 
   # Constructor
   def __init__(self, ceed, size):

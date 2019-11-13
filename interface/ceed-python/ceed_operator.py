@@ -26,7 +26,7 @@ class _OperatorBase(ABC):
 
   # Apply CeedOperator
   def apply(self, u, v, request):
-    """Apply CeedOperator to a vector."""
+    """Apply Operator to a vector."""
     # libCEED call
     lib.CeedOperatorApply(self._pointer[0], u._pointer[0], v._pointer[0],
                           request)
@@ -38,7 +38,7 @@ class _OperatorBase(ABC):
 
 # ------------------------------------------------------------------------------
 class Operator(_OperatorBase):
-  """CeedOperator: composed FE-type operations on vectors."""
+  """Ceed Operator: composed FE-type operations on vectors."""
 
   # Constructor
   def __init__(self, ceed, qf, dqf = None, qdfT = None):
@@ -56,7 +56,7 @@ class Operator(_OperatorBase):
 
   # Add field to CeedOperator
   def set_field(self, fieldname, restriction, lmode, basis, vector):
-    """Provide a field to a CeedOperator for use by its CeedQFunction."""
+    """Provide a field to a Operator for use by its QFunction."""
 
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
@@ -66,7 +66,7 @@ class Operator(_OperatorBase):
 
 # ------------------------------------------------------------------------------
 class CompositeOperator(_OperatorBase):
-  """CompositeCeedOperator: composition of multiple CeedOperators."""
+  """Ceed Composite Operator: composition of multiple Operators."""
 
   # Constructor
   def __init__(self, ceed):

@@ -20,7 +20,7 @@ import numpy as np
 
 # ------------------------------------------------------------------------------
 class Vector:
-  """CeedVector: storing and manipulating vectors."""
+  """Ceed Vector: storing and manipulating vectors."""
 
   # Attributes
   _ceed = ffi.NULL
@@ -39,7 +39,7 @@ class Vector:
 
   # Set Vector's data array
   def set_array(self, mtype, cmode, array):
-    """Set the array used by a CeedVector, freeing any previously allocated
+    """Set the array used by a Vector, freeing any previously allocated
        array if applicable."""
     # Setup the numpy array for the libCEED call
     array_pointer = ffi.new("CeedScalar *")
@@ -50,7 +50,7 @@ class Vector:
 
   # Get Vector's data array
   def get_array(self, mtype):
-    """Get read/write access to a CeedVector via the specified memory type."""
+    """Get read/write access to a Vector via the specified memory type."""
 
     # Retrieve the length of the array
     length_pointer = ffi.new("CeedInt *")
@@ -69,7 +69,7 @@ class Vector:
 
   # Get Vector's data array in read-only mode
   def get_array_read(self, mtype):
-    """Get read-only access to a CeedVector via the specified memory type."""
+    """Get read-only access to a Vector via the specified memory type."""
 
     # Retrieve the length of the array
     length_pointer = ffi.new("CeedInt *")
@@ -91,7 +91,7 @@ class Vector:
 
   # Restore the Vector's data array
   def restore_array(self):
-    """Restore an array obtained using getArray()."""
+    """Restore an array obtained using get_array()."""
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
@@ -100,7 +100,7 @@ class Vector:
 
   # Restore an array obtained using getArrayRead
   def restore_array_read(self):
-    """Restore an array obtained using getArrayRead()."""
+    """Restore an array obtained using get_array_read()."""
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
@@ -109,7 +109,7 @@ class Vector:
 
   # Get the length of a Vector
   def get_length(self):
-    """Get the length of a CeedVector."""
+    """Get the length of a Vector."""
     length_pointer = ffi.new("CeedInt *")
 
     # libCEED call
@@ -151,7 +151,7 @@ class Vector:
 
 # ------------------------------------------------------------------------------
 class _VectorClone:
-  """Copy a CeedVector """
+  """Copy a Vector."""
 
   # Constructor
   def __init__(self, ceed, pointer):
