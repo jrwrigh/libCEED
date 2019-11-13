@@ -171,9 +171,17 @@ class _VectorActive:
     # CeedVector object
     self._pointer = [lib.CEED_VECTOR_ACTIVE]
 
-    # Reference to Ceed
-    self._ceed = None
-
 CEED_VECTOR_ACTIVE = _VectorActive()
+
+# ------------------------------------------------------------------------------
+class _VectorNone:
+  """Shell to create CEED_VECTOR_NONE."""
+
+  # Constructor
+  def __init__(self):
+    # CeedVector object
+    self._pointer = [lib.CEED_VECTOR_NONE]
+
+CEED_VECTOR_NONE = _VectorNone()
 
 # ------------------------------------------------------------------------------
