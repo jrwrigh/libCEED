@@ -15,10 +15,10 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed import ffi, lib
-from ceed_vector import _Vector
-from ceed_elemrestriction import _ElemRestriction, _IdentityElemRestriction, _BlockedElemRestriction
-from ceed_qfunction import _QFunction, _QFunctionByName, _IdentityQFunction
-from ceed_operator import _Operator, _CompositeOperator
+from ceed_vector import Vector
+from ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
+from ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
+from ceed_operator import Operator, CompositeOperator
 
 # ------------------------------------------------------------------------------
 # Ceed Enums
@@ -109,25 +109,25 @@ class Ceed():
   # CeedVector
   def Vector(self, size):
     """CeedVector: storing and manipulating vectors."""
-    return _Vector(self, size)
+    return Vector(self, size)
 
   # CeedElemRestriction
   def ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype, cmode,
                       indices):
     """CeedElemRestriction: restriction from vectors to elements."""
-    return _ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
+    return ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
                             cmode, indices)
 
   def IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
                               cmode):
     """CeedElemRestriction: identity restriction from vectors to elements."""
-    return _IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
+    return IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
                                     cmode)
 
   def BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes, ncomp,
                              mtype, cmode, indices):
     """CeedElemRestriction: blocked restriction from vectors to elements."""
-    return _BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes,
+    return BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes,
                                    ncomp, mtype, cmode, indices)
 
   # CeedBasis
@@ -135,24 +135,24 @@ class Ceed():
   # CeedQFunction
   def QFunction(self, vlength, f, source):
     """CeedQFunction: independent operations at quadrature points."""
-    return _QFunction(self, vlength, f, source)
+    return QFunction(self, vlength, f, source)
 
   def QFunctionByName(self, name):
     """CeedQFunctionByName: independent operations at quadrature points from gallery."""
-    return _QFunctionByName(self, name)
+    return QFunctionByName(self, name)
 
   def IdentityQFunction(self, size):
     """CeedIdenityQFunction: identity qfunction operation."""
-    return _IdentityQFunction(self, size)
+    return IdentityQFunction(self, size)
 
   # CeedOperator
   def Operator(self, qf, dqf, qdfT):
     """CeedOperator: composed FE-type operations on vectors."""
-    return _Operator(self, qf, dqf, qdfT)
+    return Operator(self, qf, dqf, qdfT)
 
   def CompositeOperator(self):
     """CompositeCeedOperator: composition of multiple CeedOperators."""
-    return _CompositeOperator(self)
+    return CompositeOperator(self)
 
   # Destructor
   def __del__(self):

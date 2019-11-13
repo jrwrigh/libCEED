@@ -36,7 +36,7 @@ class _QFunctionBase(ABC):
     lib.CeedQFunctionDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class _QFunction(_QFunctionBase):
+class QFunction(_QFunctionBase):
   """CeedQFunction: independent operations at quadrature points."""
 
   # Constructor
@@ -66,7 +66,7 @@ class _QFunction(_QFunctionBase):
     lib.CeedQFunctionAddOutput(self._pointer[0], fieldnameAscii, size, emode)
 
 # ------------------------------------------------------------------------------
-class _QFunctionByName(_QFunctionBase):
+class QFunctionByName(_QFunctionBase):
   """CeedQFunctionByName: independent operations at quadrature points from gallery."""
 
   # Constructor
@@ -83,7 +83,7 @@ class _QFunctionByName(_QFunctionBase):
                                   self._pointer)
 
 # ------------------------------------------------------------------------------
-class _IdentityQFunction(_QFunctionBase):
+class IdentityQFunction(_QFunctionBase):
   """CeedIdentityQFunction: identity qfunction operation."""
 
   # Constructor

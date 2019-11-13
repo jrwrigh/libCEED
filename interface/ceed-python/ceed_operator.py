@@ -37,7 +37,7 @@ class _OperatorBase(ABC):
     lib.CeedOperatorDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class _Operator(_OperatorBase):
+class Operator(_OperatorBase):
   """CeedOperator: composed FE-type operations on vectors."""
 
   # Constructor
@@ -65,7 +65,7 @@ class _Operator(_OperatorBase):
                              vector._pointer[0])
 
 # ------------------------------------------------------------------------------
-class _CompositeOperator(_OperatorBase):
+class CompositeOperator(_OperatorBase):
   """CompositeCeedOperator: composition of multiple CeedOperators."""
 
   # Constructor

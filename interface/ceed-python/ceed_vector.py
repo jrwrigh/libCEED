@@ -19,7 +19,7 @@ import sys
 import numpy as np
 
 # ------------------------------------------------------------------------------
-class _Vector:
+class Vector:
   """CeedVector: storing and manipulating vectors."""
 
   # Attributes
