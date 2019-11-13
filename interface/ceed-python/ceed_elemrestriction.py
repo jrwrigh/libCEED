@@ -65,7 +65,7 @@ class ElemRestrictionBase(ABC):
     lib.CeedElemRestrictionDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class ElemRestriction(_ElemRestrictionBase):
+class ElemRestriction(ElemRestrictionBase):
   """Ceed ElemRestriction: restriction from vectors to elements."""
 
   # Constructor
@@ -88,7 +88,7 @@ class ElemRestriction(_ElemRestrictionBase):
                                   self._pointer)
 
 # ------------------------------------------------------------------------------
-class IdentityElemRestriction(_ElemRestrictionBase):
+class IdentityElemRestriction(ElemRestrictionBase):
   """Ceed IdentityElemRestriction: identity restriction from vectors to elements."""
 
   # Constructor
@@ -105,7 +105,7 @@ class IdentityElemRestriction(_ElemRestrictionBase):
                                           self._pointer)
 
 # ------------------------------------------------------------------------------
-class BlockedElemRestriction(_ElemRestrictionBase):
+class BlockedElemRestriction(ElemRestrictionBase):
   """Ceed BlockedElemRestriction: blocked restriction from vectors to elements."""
 
   # Constructor
