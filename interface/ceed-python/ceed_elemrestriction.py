@@ -19,7 +19,7 @@ import numpy as np
 from abc import ABC
 
 # ------------------------------------------------------------------------------
-class ElemRestrictionBase(ABC):
+class _ElemRestrictionBase(ABC):
 
   # Attributes
   _ceed = ffi.NULL
@@ -65,7 +65,7 @@ class ElemRestrictionBase(ABC):
     lib.CeedElemRestrictionDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class ElemRestriction(ElemRestrictionBase):
+class ElemRestriction(_ElemRestrictionBase):
   """Ceed ElemRestriction: restriction from vectors to elements."""
 
   # Constructor
@@ -88,7 +88,7 @@ class ElemRestriction(ElemRestrictionBase):
                                   self._pointer)
 
 # ------------------------------------------------------------------------------
-class IdentityElemRestriction(ElemRestrictionBase):
+class IdentityElemRestriction(_ElemRestrictionBase):
   """Ceed IdentityElemRestriction: identity restriction from vectors to elements."""
 
   # Constructor
@@ -105,7 +105,7 @@ class IdentityElemRestriction(ElemRestrictionBase):
                                           self._pointer)
 
 # ------------------------------------------------------------------------------
-class BlockedElemRestriction(ElemRestrictionBase):
+class BlockedElemRestriction(_ElemRestrictionBase):
   """Ceed BlockedElemRestriction: blocked restriction from vectors to elements."""
 
   # Constructor
