@@ -15,4 +15,4 @@ if __name__ == "__main__":
   a = np.arange(10, 10 + n, dtype="float64")
   x.set_array(MEM_HOST, USE_POINTER, a)
 
-  x.view()
+  print(x)
