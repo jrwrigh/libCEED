@@ -2,7 +2,7 @@
 # Test getArray to modify array
 
 import sys
-from ceed import mem_host, use_pointer, ceed
+from libceed import MEM_HOST, USE_POINTER, ceed
 import libceed
 import numpy as np
 
