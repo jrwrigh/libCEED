@@ -16,6 +16,7 @@
 
 from _ceed import ffi, lib
 import sys
+import io
 import numpy as np
 
 # ------------------------------------------------------------------------------
@@ -36,6 +37,18 @@ class Vector:
 
     # libCEED call
     lib.CeedVectorCreate(self._ceed._pointer[0], size, self._pointer)
+
+  # Representation
+  def __repr__(self):
+    return "<CeedVector instance at " + hex(id(self)) + ">"
+
+  # String conversion for print() to stdout
+  def __str__(self):
+    """View a Vector via print()."""
+
+    # libCEED call
+    lib.CeedVectorView(self._pointer[0], ffi.NULL, sys.stdout)
+    return ""
 
   # Set Vector's data array
   def set_array(self, mtype, cmode, array):
@@ -130,19 +143,6 @@ class Vector:
 
     # libCEED call
     lib.CeedVectorSyncArray(self._pointer[0], mtype)
-
-  # View a Vector
-  def view(self, format = ffi.NULL, file = sys.stdout):
-    """View a Vector."""
-
-    # Check if format is a string before encoding it
-    if type(format) == "str":
-      fstr = format.encode("ascii", "strict")
-    else:
-      fstr = format
-
-    # libCEED call
-    lib.CeedVectorView(self._pointer[0], fstr, file)
 
   # Destructor
   def __del__(self):
