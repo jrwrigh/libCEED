@@ -50,29 +50,46 @@ class _Vector:
   # Get Vector's data array
   def getArray(self, mtype, array):
     """Get read/write access to a CeedVector via the specified memory type."""
+
+    # Retrieve the length of the array
+    length_pointer = ffi.new("CeedInt *")
+    lib.CeedVectorGetLength(self._pointer[0], length_pointer)
+
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
     # libCEED call
     lib.CeedVectorGetArray(self._pointer[0], mtype, array_pointer)
-    array.__array_interface__['data'] = array_pointer
+
+    # Create buffer object from returned pointer
+    buff = ffi.buffer(array_pointer[0], ffi.sizeof("CeedScalar") * length_pointer[0])
+    # Return numpy array created from buffer
+    return np.frombuffer(buff, dtype="float64")
 
   # Get Vector's data array in read-only mode
   def getArrayRead(self, mtype):
     """Get read-only access to a CeedVector via the specified memory type."""
+
+    # Retrieve the length of the array
+    length_pointer = ffi.new("CeedInt *")
+    lib.CeedVectorGetLength(self._pointer[0], length_pointer)
+
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
     # libCEED call
     lib.CeedVectorGetArrayRead(self._pointer[0], mtype, array_pointer)
-    length_pointer = ffi.new("CeedInt *")
-    lib.CeedVectorGetLength(self._pointer[0], length_pointer)
-    ret = np.ctypeslib.as_array(array_pointer[0], length_pointer[0])
-    return np.ctypeslib.as_array(array_pointer[0], length_pointer[0])
-#    array.__array_interface__['data'] = array_pointer
+
+    # Create buffer object from returned pointer
+    buff = ffi.buffer(array_pointer[0], ffi.sizeof("CeedScalar") * length_pointer[0])
+    # Create numpy array created from buffer
+    ret = np.frombuffer(buff, dtype="float64")
+    # Make the numpy array read-only
+    ret.flags['WRITEABLE'] = False
+    return ret
 
   # Restore the Vector's data array
-  def restoreArray(self, array):
+  def restoreArray(self):
     """Restore an array obtained using getArray()."""
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
@@ -81,7 +98,7 @@ class _Vector:
     lib.CeedVectorRestoreArray(self._pointer[0], array_pointer)
 
   # Restore an array obtained using getArrayRead
-  def restoreArrayRead(self, array):
+  def restoreArrayRead(self):
     """Restore an array obtained using getArrayRead()."""
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
