@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
   r.apply(CEED_NOTRANSPOSE, CEED_NOTRANSPOSE, x, y, CEED_REQUEST_IMMEDIATE)
 
-  y_array = y.get_array(MEM_HOST)
+  y_array = y.get_array(CEED_MEM_HOST)
   for i in range(2*ne):
     if (10+(i+1)/2 != y_array[i]):
       # LCOV_EXCL_START
