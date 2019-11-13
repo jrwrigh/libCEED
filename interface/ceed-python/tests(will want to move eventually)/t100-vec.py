@@ -13,7 +13,7 @@ if __name__ == "__main__":
   n = 10
   vector = ceed.vector(n)
 
-  a = np.arange(10, n, dtype="float64")
+  a = np.arange(10, 10 + n, dtype="float64")
   vector.setArray(mem_host, use_pointer, a)
 
   #b = np.empty(n, dtype="float64")
@@ -24,9 +24,4 @@ if __name__ == "__main__":
       print("Error reading array b[%d] = %4.2f" %(i, b[i]))
       # LCOV_EXCL_STOP
 
-  vector.restoreArray(b)
-
-  del vector
-
-
-
+  vector.restoreArrayRead()
