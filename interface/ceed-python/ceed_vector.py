@@ -106,6 +106,23 @@ class _Vector:
     # libCEED call
     lib.CeedVectorRestoreArrayRead(self._pointer[0], array_pointer)
 
+  # Get the length of a Vector
+  def getLength(self):
+    """Get the length of a CeedVector."""
+    length_pointer = ffi.new("CeedInt *")
+
+    # libCEED call
+    lib.CeedVectorGetLength(self._pointer[0], length_pointer)
+
+    return length_pointer[0]
+
+  # Set the Vector to a given constant value
+  def setValue(self, value):
+    """Set the Vector to a constant value."""
+
+    # libCEED call
+    lib.CeedVectorSetValue(self._pointer[0], value)
+
   # Destructor
   def __del__(self):
     # libCEED call
