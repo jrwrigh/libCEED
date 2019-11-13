@@ -13,8 +13,8 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
 
   # Two read accesses should not generate an error
-  a = x.GetArrayRead(CEED_MEM_HOST)
-  b = x.GetArrayRead(CEED_MEM_HOST)
+  a = x.get_array_read(CEED_MEM_HOST)
+  b = x.get_array_read(CEED_MEM_HOST)
 
-  x.RestoreArrayRead()
-  x.RestoreArrayRead()
+  x.restore_array_read()
+  x.restore_array_read()

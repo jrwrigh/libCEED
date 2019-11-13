@@ -43,7 +43,7 @@ class _ElemRestrictionBase(ABC):
   def apply(self, tmode, lmode, u, v, request):
     """Restrict an L-vector to an E-vector or apply its transpose."""
     # libCEED call
-    lib.CeedElemRestrictionApply(self._pointer, tmode, lmode, u._pointer[0],
+    lib.CeedElemRestrictionApply(self._pointer[0], tmode, lmode, u._pointer[0],
                                  v._pointer[0], request)
 
   # Create restriction vectors

@@ -47,7 +47,8 @@ class Vector:
     """View a Vector via print()."""
 
     # libCEED call
-    lib.CeedVectorView(self._pointer[0], ffi.NULL, sys.stdout)
+    fmt = ffi.new("char[]", "%f".encode('ascii'))
+    lib.CeedVectorView(self._pointer[0], fmt, sys.stdout)
     return ""
 
   # Set Vector's data array

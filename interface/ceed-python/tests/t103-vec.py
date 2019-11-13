@@ -15,9 +15,9 @@ if __name__ == "__main__":
   y = ceed.Vector(n)
 
   a = np.arange(10, 10 + n, dtype="float64")
-  x.set_array(MEM_HOST, CEED_USE_POINTER, a)
+  x.set_array(CEED_MEM_HOST, CEED_USE_POINTER, a)
 
-  x_array = x.GetArray(CEED_MEM_HOST)
+  x_array = x.get_array(CEED_MEM_HOST)
   y.set_array(CEED_MEM_HOST, CEED_USE_POINTER, x_array)
   x.restore_array()
 
