@@ -26,16 +26,16 @@ from ceed_operator import Operator, CompositeOperator
 # CeedMemType
 MEM_HOST       = lib.CEED_MEM_HOST
 MEM_DEVICE     = lib.CEED_MEM_DEVICE
-ceed_memtypes  = {mem_host:    "ceed_mem_host",
-                  mem_device:  "ceed_mem_device"}
+ceed_memtypes  = {MEM_HOST:    "ceed_mem_host",
+                  MEM_DEVICE:  "ceed_mem_device"}
 
 # CeedCopyMode
 COPY_VALUES    = lib.CEED_COPY_VALUES
 USE_POINTER    = lib.CEED_USE_POINTER
 OWN_POINTER    = lib.CEED_OWN_POINTER
-ceed_copymodes = {copy_values: "ceed_copy_values",
-                  use_pointer: "ceed_use_pointer",
-                  own_pointer: "ceed_own_pointer"}
+ceed_copymodes = {COPY_VALUES: "ceed_copy_values",
+                  USE_POINTER: "ceed_use_pointer",
+                  OWN_POINTER: "ceed_own_pointer"}
 
 # CeedEvalMode
 EVAL_NONE      = lib.CEED_EVAL_NONE
@@ -44,18 +44,18 @@ EVAL_GRAD      = lib.CEED_EVAL_GRAD
 EVAL_DIV       = lib.CEED_EVAL_DIV
 EVAL_CURL      = lib.CEED_EVAL_CURL
 EVAL_WEIGHT    = lib.CEED_EVAL_WEIGHT
-ceed_evalmodes = {eval_none:   "ceed_eval_none",
-                  eval_interp: "ceed_eval_interp",
-                  eval_grad:   "ceed_eval_grad",
-                  eval_div:    "ceed_eval_div",
-                  eval_curl:   "ceed_eval_curl",
-                  eval_weight: "ceed_eval_weight"}
+ceed_evalmodes = {EVAL_NONE:   "ceed_eval_none",
+                  EVAL_INTERP: "ceed_eval_interp",
+                  EVAL_GRAD:   "ceed_eval_grad",
+                  EVAL_DIV:    "ceed_eval_div",
+                  EVAL_CURL:   "ceed_eval_curl",
+                  EVAL_WEIGHT: "ceed_eval_weight"}
 
 # CeedTransposeMode
 TRANSPOSE           = lib.CEED_TRANSPOSE
 NOTRANSPOSE         = lib.CEED_NOTRANSPOSE
-ceed_transposemodes = {transpose:     "ceed_transpose",
-                       notranspose:   "ceed_notranspose"}
+ceed_transposemodes = {TRANSPOSE:     "ceed_transpose",
+                       NOTRANSPOSE:   "ceed_notranspose"}
 
 # CeedElemTopology
 SHAPE_LINE          = lib.CEED_LINE
@@ -65,13 +65,13 @@ SHAPE_TET           = lib.CEED_TET
 SHAPE_PYRAMID       = lib.CEED_PYRAMID
 SHAPE_PRISM         = lib.CEED_PRISM
 SHAPE_HEX           = lib.CEED_HEX
-ceed_elemtopologies = {shape_line:     "ceed_line",
-                       shape_triangle: "ceed_triangle",
-                       shape_quad:     "ceed_quad",
-                       shape_tet:      "ceed_tet",
-                       shape_pyramid:  "ceed_pyramid",
-                       shape_prism:    "ceed_prism",
-                       shape_hex:      "ceed_hex"}
+ceed_elemtopologies = {SHAPE_LINE:     "ceed_line",
+                       SHAPE_TRIANGLE: "ceed_triangle",
+                       SHAPE_QUAD:     "ceed_quad",
+                       SHAPE_TET:      "ceed_tet",
+                       SHAPE_PYRAMID:  "ceed_pyramid",
+                       SHAPE_PRISM:    "ceed_prism",
+                       SHAPE_HEX:      "ceed_hex"}
 
 # ------------------------------------------------------------------------------
 class Ceed():
