@@ -15,6 +15,8 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed import ffi, lib
+import sys
+import io
 from abc import ABC
 
 # ------------------------------------------------------------------------------
@@ -23,6 +25,10 @@ class _OperatorBase(ABC):
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
+
+  # Representation
+  def __repr__(self):
+    return "<CeedOperator instance at " + hex(id(self)) + ">"
 
   # Apply CeedOperator
   def apply(self, u, v, request):

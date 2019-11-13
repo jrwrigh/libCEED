@@ -16,6 +16,8 @@
 
 from _ceed import ffi, lib
 import numpy as np
+import sys
+import io
 from abc import ABC
 
 # ------------------------------------------------------------------------------
@@ -24,6 +26,18 @@ class _ElemRestrictionBase(ABC):
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
+
+  # Representation
+  def __repr__(self):
+    return "<CeedElemRestriction instance at " + hex(id(self)) + ">"
+
+  # String conversion for print() to stdout
+  def __str__(self):
+    """View an ElemRestriction via print()."""
+
+    # libCEED call
+    lib.CeedElemRestrictionView(self._pointer[0], sys.stdout)
+    return ""
 
   # Apply CeedElemRestriction
   def apply(self, tmode, lmode, u, v, request):

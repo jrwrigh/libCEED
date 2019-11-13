@@ -15,6 +15,8 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed import ffi, lib
+import sys
+import io
 from abc import ABC
 
 # ------------------------------------------------------------------------------
@@ -23,6 +25,10 @@ class _QFunctionBase(ABC):
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
+
+  # Representation
+  def __repr__(self):
+    return "<CeedQFunction instance at " + hex(id(self)) + ">"
 
   # Apply CeedQFunction
   def apply(self, q, u, v):
