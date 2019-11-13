@@ -15,15 +15,15 @@ if __name__ == "__main__":
   a = np.arange(10, 10 + n, dtype="float64")
   x.set_array(MEM_HOST, USE_POINTER, a)
 
-  b = x.get_array_read(MEM_DEVICE)
-  y.set_array(MEM_DEVICE, COPY_VALUES, b)
+  b = np.zeros(n)
+  y.set_array(MEM_HOST, USE_POINTER, b)
+
+  c = x.get_array_read(MEM_DEVICE)
+  y.set_array(MEM_DEVICE, COPY_VALUES, c)
 
   y.sync_array(MEM_HOST)
-  c = y.get_array_read(MEM_HOST)
   for i in range(n):
-    if c[i] != 10+i:
+    if b[i] != 10+i:
       # LCOV_EXCL_START
-      print("Error reading array c[%d] = %f"%(i, c[i]))
+      print("Error reading array b[%d] = %f"%(i, b[i]))
   # LCOV_EXCL_STOP
-
-  y.restore_array_read()
