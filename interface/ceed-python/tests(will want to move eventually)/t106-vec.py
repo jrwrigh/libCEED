@@ -2,7 +2,7 @@
 # Test sync
 
 import sys
-from libceed import MEM_HOST, MEM_DEVICE, USE_POINTER, COPY_VALUES
+from libceed import CEED_MEM_HOST, CEED_MEM_DEVICE, CEED_USE_POINTER, CEED_COPY_VALUES
 import libceed
 import numpy as np
 
@@ -13,15 +13,15 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
   y = ceed.Vector(n)
   a = np.arange(10, 10 + n, dtype="float64")
-  x.set_array(MEM_HOST, USE_POINTER, a)
+  x.set_array(CEED_MEM_HOST, CEED_USE_POINTER, a)
 
   b = np.zeros(n)
-  y.set_array(MEM_HOST, USE_POINTER, b)
+  y.set_array(CEED_MEM_HOST, CEED_USE_POINTER, b)
 
-  c = x.get_array_read(MEM_DEVICE)
-  y.set_array(MEM_DEVICE, COPY_VALUES, c)
+  c = x.get_array_read(CEED_MEM_DEVICE)
+  y.set_array(CEED_MEM_DEVICE, CEED_COPY_VALUES, c)
 
-  y.sync_array(MEM_HOST)
+  y.sync_array(CEED_MEM_HOST)
   for i in range(n):
     if b[i] != 10+i:
       # LCOV_EXCL_START

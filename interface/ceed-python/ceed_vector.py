@@ -162,3 +162,17 @@ class _VectorClone:
     self._ceed = ceed
 
 # ------------------------------------------------------------------------------
+class _VectorActive:
+  """Shell to create CEED_VECTOR_ACTIVE."""
+
+  # Constructor
+  def __init__(self):
+    # CeedVector object
+    self._pointer = [lib.CEED_VECTOR_ACTIVE]
+
+    # Reference to Ceed
+    self._ceed = None
+
+CEED_VECTOR_ACTIVE = _VectorActive()
+
+# ------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 # Test getArray to modify array
 
 import sys
-from libceed import MEM_HOST, USE_POINTER, NOTRANSPOSE, ceed
+from libceed import CEED_MEM_HOST, CEED_USE_POINTER, vNOTRANSPOSE
 import libceed
 import numpy as np
 
@@ -13,18 +13,18 @@ if __name__ == "__main__":
 
   x = ceed.Vector(ne+1)
   a = np.arange(10, 10 + n, dtype="float64")
-  x.set_array(MEM_HOST, USE_POINTER, a)
+  x.set_array(CEED_MEM_HOST, USE_POINTER, a)
 
   ind = np.zeros(2*ne)
   for i in range(n):
     ind[2*i+0] = i
     ind[2*i+1] = i+1
-  r = ceed.ElemRestrictionCreate(ne, 2, ne+1, 1, MEM_HOST, USE_POINTER, ind)
+  r = ceed.ElemRestrictionCreate(ne, 2, ne+1, 1, CEED_MEM_HOST, CEED_USE_POINTER, ind)
 
   y = ceed.Vector(2*ne)
   y.set_value(0)
 
-  r.apply(NOTRANSPOSE, NOTRASPOSE, x, y, REQUEST_IMMEDIATE)
+  r.apply(CEED_NOTRANSPOSE, CEED_NOTRASPOSE, x, y, CEED_REQUEST_IMMEDIATE)
 
   y_array = y.get_array(MEM_HOST)
   for i in range(2*ne):

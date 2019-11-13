@@ -26,26 +26,26 @@ from ceed_operator import Operator, CompositeOperator
 # Ceed Enums
 # ------------------------------------------------------------------------------
 # CeedMemType
-MEM_HOST       = lib.CEED_MEM_HOST
-MEM_DEVICE     = lib.CEED_MEM_DEVICE
+CEED_MEM_HOST       = lib.CEED_MEM_HOST
+CEED_MEM_DEVICE     = lib.CEED_MEM_DEVICE
 ceed_memtypes  = {MEM_HOST:    "ceed_mem_host",
                   MEM_DEVICE:  "ceed_mem_device"}
 
 # CeedCopyMode
-COPY_VALUES    = lib.CEED_COPY_VALUES
-USE_POINTER    = lib.CEED_USE_POINTER
-OWN_POINTER    = lib.CEED_OWN_POINTER
+CEED_COPY_VALUES    = lib.CEED_COPY_VALUES
+CEED_USE_POINTER    = lib.CEED_USE_POINTER
+CEED_OWN_POINTER    = lib.CEED_OWN_POINTER
 ceed_copymodes = {COPY_VALUES: "ceed_copy_values",
                   USE_POINTER: "ceed_use_pointer",
                   OWN_POINTER: "ceed_own_pointer"}
 
 # CeedEvalMode
-EVAL_NONE      = lib.CEED_EVAL_NONE
-EVAL_INTERP    = lib.CEED_EVAL_INTERP
-EVAL_GRAD      = lib.CEED_EVAL_GRAD
-EVAL_DIV       = lib.CEED_EVAL_DIV
-EVAL_CURL      = lib.CEED_EVAL_CURL
-EVAL_WEIGHT    = lib.CEED_EVAL_WEIGHT
+CEED_EVAL_NONE      = lib.CEED_EVAL_NONE
+CEED_EVAL_INTERP    = lib.CEED_EVAL_INTERP
+CEED_EVAL_GRAD      = lib.CEED_EVAL_GRAD
+CEED_EVAL_DIV       = lib.CEED_EVAL_DIV
+CEED_EVAL_CURL      = lib.CEED_EVAL_CURL
+CEED_EVAL_WEIGHT    = lib.CEED_EVAL_WEIGHT
 ceed_evalmodes = {EVAL_NONE:   "ceed_eval_none",
                   EVAL_INTERP: "ceed_eval_interp",
                   EVAL_GRAD:   "ceed_eval_grad",
@@ -54,19 +54,19 @@ ceed_evalmodes = {EVAL_NONE:   "ceed_eval_none",
                   EVAL_WEIGHT: "ceed_eval_weight"}
 
 # CeedTransposeMode
-TRANSPOSE           = lib.CEED_TRANSPOSE
-NOTRANSPOSE         = lib.CEED_NOTRANSPOSE
+CEED_TRANSPOSE      = lib.CEED_TRANSPOSE
+CEED_NOTRANSPOSE    = lib.CEED_NOTRANSPOSE
 ceed_transposemodes = {TRANSPOSE:     "ceed_transpose",
                        NOTRANSPOSE:   "ceed_notranspose"}
 
 # CeedElemTopology
-SHAPE_LINE          = lib.CEED_LINE
-SHAPE_TRIANGLE      = lib.CEED_TRIANGLE
-SHAPE_QUAD          = lib.CEED_QUAD
-SHAPE_TET           = lib.CEED_TET
-SHAPE_PYRAMID       = lib.CEED_PYRAMID
-SHAPE_PRISM         = lib.CEED_PRISM
-SHAPE_HEX           = lib.CEED_HEX
+CEED_LINE           = lib.CEED_LINE
+CEED_TRIANGLE       = lib.CEED_TRIANGLE
+CEED_QUAD           = lib.CEED_QUAD
+CEED_TET            = lib.CEED_TET
+CEED_PYRAMID        = lib.CEED_PYRAMID
+CEED_PRISM          = lib.CEED_PRISM
+CEED_HEX            = lib.CEED_HEX
 ceed_elemtopologies = {SHAPE_LINE:     "ceed_line",
                        SHAPE_TRIANGLE: "ceed_triangle",
                        SHAPE_QUAD:     "ceed_quad",
@@ -78,6 +78,9 @@ ceed_elemtopologies = {SHAPE_LINE:     "ceed_line",
 # ------------------------------------------------------------------------------
 # Ceed Constants
 # ------------------------------------------------------------------------------
+# Requests
+CEED_REQUEST_IMMEDIATE = lib.CEED_REQUEST_IMMEDIATE
+CEED_REQUEST_ORDERED = lib.CEED_REQUEST_ORDERED
 
 # ------------------------------------------------------------------------------
 class Ceed():

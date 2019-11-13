@@ -2,7 +2,7 @@
 # Test getArrayRead state counter
 
 import sys
-from libceed import MEM_HOST
+from libceed import CEED_MEM_HOST
 import libceed
 import numpy as np
 
@@ -13,8 +13,8 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
 
   # Two read accesses should not generate an error
-  a = x.GetArrayRead(MEM_HOST)
-  b = x.GetArrayRead(MEM_HOST)
+  a = x.GetArrayRead(CEED_MEM_HOST)
+  b = x.GetArrayRead(CEED_MEM_HOST)
 
   x.RestoreArrayRead()
   x.RestoreArrayRead()

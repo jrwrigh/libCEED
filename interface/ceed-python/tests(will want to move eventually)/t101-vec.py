@@ -2,12 +2,12 @@
 # Test setValue
 
 import sys
-from libceed import MEM_HOST, USE_POINTER
+from libceed import CEED_MEM_HOST, CEED_USE_POINTER
 import libceed
 import numpy as np
 
 def check_values(ceed, x, value):
-  b = x.get_array_read(mem_host)
+  b = x.get_array_read(CEED_MEM_HOST)
   for i in range(len(b)):
     if b[i] != value:
       # LCOV_EXCL_START
@@ -21,9 +21,9 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
   value = 1
   a = np.arange(10, 10 + n, dtype="float64")
-  x.set_array(MEM_HOST, USE_POINTER, a)
+  x.set_array(CEED_MEM_HOST, CEED_USE_POINTER, a)
 
-  b = x.get_array_read(MEM_HOST)
+  b = x.get_array_read(CEED_MEM_HOST)
   for i in range(len(b)):
     if b[i] != 10+i:
       # LCOV_EXCL_START

@@ -2,7 +2,7 @@
 # Test getArray to modify array
 
 import sys
-from libceed import MEM_HOST, USE_POINTER, ceed
+from libceed import CEED_MEM_HOST, CEED_USE_POINTER
 import libceed
 import numpy as np
 
@@ -13,9 +13,9 @@ if __name__ == "__main__":
 
   x = ceed.Vector(n)
   a = np.zeros(n, dtype="float64")
-  x.set_array(MEM_HOST, USE_POINTER, a)
+  x.set_array(CEED_MEM_HOST, CEED_USE_POINTER, a)
 
-  b = x.get_array(MEM_HOST)
+  b = x.get_array(CEED_MEM_HOST)
   b[3] = -3.14;
   x.restore_array()
 
