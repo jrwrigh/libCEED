@@ -5,4 +5,4 @@ import sys
 import libceed
 
 if __name__ == "__main__":
-  ceed = libceed.ceed(sys.argv[1])
+  ceed = libceed.Ceed(sys.argv[1])

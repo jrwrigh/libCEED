@@ -7,14 +7,14 @@ import libceed
 import numpy as np
 
 if __name__ == "__main__":
-  ceed = libceed.ceed(sys.argv[1])
+  ceed = libceed.Ceed(sys.argv[1])
 
   n = 10
-  x = ceed.vector(n)
+  x = ceed.Vector(n)
 
   # Two read accesses should not generate an error
-  a = x.getArrayRead(mem_host)
-  b = x.getArrayRead(mem_host)
+  a = x.GetArrayRead(mem_host)
+  b = x.GetArrayRead(mem_host)
 
-  x.restoreArrayRead()
-  x.restoreArrayRead()
+  x.RestoreArrayRead()
+  x.RestoreArrayRead()

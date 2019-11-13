@@ -26,14 +26,14 @@ class _ElemRestrictionBase(ABC):
   _pointer = ffi.NULL
 
   # Apply CeedElemRestriction
-  def apply(self, tmode, lmode, u, v, request):
+  def Apply(self, tmode, lmode, u, v, request):
     """Restrict an L-vector to an E-vector or apply its transpose."""
     # libCEED call
     lib.CeedElemRestrictionApply(self._pointer, tmode, lmode, u._pointer[0],
                                  v._pointer[0], request)
 
   # Create restriction vectors
-  def createVector(self, createLvec = True, createEvec = True):
+  def CreateVector(self, createLvec = True, createEvec = True):
     """Create CeedVectors associated with a CeedElemRestriction."""
     # Vector pointers
     lvecPointer = ffi.new("CeedVector *") if createLvec else ffi.NULL
@@ -51,7 +51,7 @@ class _ElemRestrictionBase(ABC):
     return [lvec, evec]
 
   # Get ElemRestriction multiplicity
-  def getmultiplicity(self):
+  def GetMultiplicity(self):
     """Get the multiplicity of nodes in a CeedElemRestriction."""
     # Create mult vector
     [mult, evec] = self.createVector(createEvec = False)
@@ -129,7 +129,7 @@ class _BlockedElemRestriction(_ElemRestrictionBase):
                                          self._pointer)
 
   # Apply CeedElemRestriction to single block
-  def apply(self, block, tmode, lmode, u, v, request):
+  def ApplyBlock(self, block, tmode, lmode, u, v, request):
     """Restrict an L-vector to a block of an E-vector or apply its transpose."""
     # libCEED call
     lib.CeedElemRestrictionApplyBlock(self._pointer, block, tmode, lmode,

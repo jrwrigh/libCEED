@@ -7,16 +7,16 @@ import libceed
 import numpy as np
 
 if __name__ == "__main__":
-  ceed = libceed.ceed(sys.argv[1])
+  ceed = libceed.Ceed(sys.argv[1])
 
   n = 10
-  x = ceed.vector(n)
+  x = ceed.Vector(n)
 
   # Two write accesses should generate an error
-  a = x.getArray(mem_host)
-  b = x.getArray(mem_host)
+  a = x.GetArray(mem_host)
+  b = x.GetArray(mem_host)
 
   # LCOV_EXCL_START
-  x.restoreArray()
-  x.restoreArray()
+  x.RestoreArray()
+  x.RestoreArray()
   # LCOV_EXCL_STOP

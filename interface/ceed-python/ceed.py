@@ -24,26 +24,26 @@ from ceed_operator import _Operator, _CompositeOperator
 # Ceed Enums
 # ------------------------------------------------------------------------------
 # CeedMemType
-mem_host       = lib.CEED_MEM_HOST
-mem_device     = lib.CEED_MEM_DEVICE
+MEM_HOST       = lib.CEED_MEM_HOST
+MEM_DEVICE     = lib.CEED_MEM_DEVICE
 ceed_memtypes  = {mem_host:    "ceed_mem_host",
                   mem_device:  "ceed_mem_device"}
 
 # CeedCopyMode
-copy_values    = lib.CEED_COPY_VALUES
-use_pointer    = lib.CEED_USE_POINTER
-own_pointer    = lib.CEED_OWN_POINTER
+COPY_VALUES    = lib.CEED_COPY_VALUES
+USE_POINTER    = lib.CEED_USE_POINTER
+OWN_POINTER    = lib.CEED_OWN_POINTER
 ceed_copymodes = {copy_values: "ceed_copy_values",
                   use_pointer: "ceed_use_pointer",
                   own_pointer: "ceed_own_pointer"}
 
 # CeedEvalMode
-eval_none      = lib.CEED_EVAL_NONE
-eval_interp    = lib.CEED_EVAL_INTERP
-eval_grad      = lib.CEED_EVAL_GRAD
-eval_div       = lib.CEED_EVAL_DIV
-eval_curl      = lib.CEED_EVAL_CURL
-eval_weight    = lib.CEED_EVAL_WEIGHT
+EVAL_NONE      = lib.CEED_EVAL_NONE
+EVAL_INTERP    = lib.CEED_EVAL_INTERP
+EVAL_GRAD      = lib.CEED_EVAL_GRAD
+EVAL_DIV       = lib.CEED_EVAL_DIV
+EVAL_CURL      = lib.CEED_EVAL_CURL
+EVAL_WEIGHT    = lib.CEED_EVAL_WEIGHT
 ceed_evalmodes = {eval_none:   "ceed_eval_none",
                   eval_interp: "ceed_eval_interp",
                   eval_grad:   "ceed_eval_grad",
@@ -52,19 +52,19 @@ ceed_evalmodes = {eval_none:   "ceed_eval_none",
                   eval_weight: "ceed_eval_weight"}
 
 # CeedTransposeMode
-transpose           = lib.CEED_TRANSPOSE
-notranspose         = lib.CEED_NOTRANSPOSE
+TRANSPOSE           = lib.CEED_TRANSPOSE
+NOTRANSPOSE         = lib.CEED_NOTRANSPOSE
 ceed_transposemodes = {transpose:     "ceed_transpose",
                        notranspose:   "ceed_notranspose"}
 
 # CeedElemTopology
-shape_line          = lib.CEED_LINE
-shape_triangle      = lib.CEED_TRIANGLE
-shape_quad          = lib.CEED_QUAD
-shape_tet           = lib.CEED_TET
-shape_pyramid       = lib.CEED_PYRAMID
-shape_prism         = lib.CEED_PRISM
-shape_hex           = lib.CEED_HEX
+SHAPE_LINE          = lib.CEED_LINE
+SHAPE_TRIANGLE      = lib.CEED_TRIANGLE
+SHAPE_QUAD          = lib.CEED_QUAD
+SHAPE_TET           = lib.CEED_TET
+SHAPE_PYRAMID       = lib.CEED_PYRAMID
+SHAPE_PRISM         = lib.CEED_PRISM
+SHAPE_HEX           = lib.CEED_HEX
 ceed_elemtopologies = {shape_line:     "ceed_line",
                        shape_triangle: "ceed_triangle",
                        shape_quad:     "ceed_quad",
@@ -74,7 +74,7 @@ ceed_elemtopologies = {shape_line:     "ceed_line",
                        shape_hex:      "ceed_hex"}
 
 # ------------------------------------------------------------------------------
-class ceed():
+class Ceed():
   """Ceed: core components."""
   # Attributes
   _pointer = ffi.NULL
@@ -89,7 +89,7 @@ class ceed():
     lib.CeedInit(resourceAscii, self._pointer)
 
   # Get Resource
-  def getResource(self):
+  def GetResource(self):
     """Get the full resource name for a Ceed context."""
     # libCEED call
     resource = ffi.new("char **")
@@ -98,7 +98,7 @@ class ceed():
     return ffi.string(resource[0]).decode("UTF-8")
 
   # Preferred MemType
-  def getPreferredMemType(self):
+  def GetPreferredMemType(self):
     """Return Ceed preferred memory type."""
     # libCEED call
     memtype = ffi.new("CeedMemType *", ceed_mem_host)
@@ -107,24 +107,24 @@ class ceed():
     return memtype[0]
 
   # CeedVector
-  def vector(self, size):
+  def Vector(self, size):
     """CeedVector: storing and manipulating vectors."""
     return _Vector(self, size)
 
   # CeedElemRestriction
-  def elemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype, cmode,
+  def ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype, cmode,
                       indices):
     """CeedElemRestriction: restriction from vectors to elements."""
     return _ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
                             cmode, indices)
 
-  def identityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
+  def IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
                               cmode):
     """CeedElemRestriction: identity restriction from vectors to elements."""
     return _IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
                                     cmode)
 
-  def blockedElemRestriction(self, nelem, elemsize, blksize, nnodes, ncomp,
+  def BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes, ncomp,
                              mtype, cmode, indices):
     """CeedElemRestriction: blocked restriction from vectors to elements."""
     return _BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes,
@@ -133,24 +133,24 @@ class ceed():
   # CeedBasis
 
   # CeedQFunction
-  def qFunction(self, vlength, f, source):
+  def QFunction(self, vlength, f, source):
     """CeedQFunction: independent operations at quadrature points."""
     return _QFunction(self, vlength, f, source)
 
-  def qFunctionByName(self, name):
+  def QFunctionByName(self, name):
     """CeedQFunctionByName: independent operations at quadrature points from gallery."""
     return _QFunctionByName(self, name)
 
-  def identityQFunction(self, size):
+  def IdentityQFunction(self, size):
     """CeedIdenityQFunction: identity qfunction operation."""
     return _IdentityQFunction(self, size)
 
   # CeedOperator
-  def operator(self, qf, dqf, qdfT):
+  def Operator(self, qf, dqf, qdfT):
     """CeedOperator: composed FE-type operations on vectors."""
     return _Operator(self, qf, dqf, qdfT)
 
-  def compositeOperator(self):
+  def CompositeOperator(self):
     """CompositeCeedOperator: composition of multiple CeedOperators."""
     return _CompositeOperator(self)
 

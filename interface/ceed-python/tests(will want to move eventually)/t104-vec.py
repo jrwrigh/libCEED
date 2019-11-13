@@ -7,17 +7,17 @@ import libceed
 import numpy as np
 
 if __name__ == "__main__":
-  ceed = libceed.ceed(sys.argv[1])
+  ceed = libceed.Ceed(sys.argv[1])
 
   n = 10
 
-  x = ceed.vector(n)
+  x = ceed.Vector(n)
   a = np.zeros(n, dtype="float64")
-  x.setArray(mem_host, use_pointer, a)
+  x.SetArray(mem_host, use_pointer, a)
 
-  b = x.getArray(mem_host)
+  b = x.GetArray(mem_host)
   b[3] = -3.14;
-  x.restoreArray()
+  x.RestoreArray()
 
   if a[3] != -3.14:
     # LCOV_EXCL_START

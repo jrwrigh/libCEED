@@ -5,9 +5,9 @@ import sys
 import libceed
 
 if __name__ == "__main__":
-  ceed = libceed.ceed(sys.argv[1])
+  ceed = libceed.Ceed(sys.argv[1])
 
-  resource = ceed.getResource()
+  resource = ceed.GetResource()
 
   if (resource != sys.argv[1]):
     # LCOV_EXCL_START

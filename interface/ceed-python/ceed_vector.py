@@ -38,7 +38,7 @@ class _Vector:
     lib.CeedVectorCreate(self._ceed._pointer[0], size, self._pointer)
 
   # Set Vector's data array
-  def setArray(self, mtype, cmode, array):
+  def SetArray(self, mtype, cmode, array):
     """Set the array used by a CeedVector, freeing any previously allocated
        array if applicable."""
     # Setup the numpy array for the libCEED call
@@ -49,7 +49,7 @@ class _Vector:
     lib.CeedVectorSetArray(self._pointer[0], mtype, cmode, array_pointer)
 
   # Get Vector's data array
-  def getArray(self, mtype):
+  def GetArray(self, mtype):
     """Get read/write access to a CeedVector via the specified memory type."""
 
     # Retrieve the length of the array
@@ -68,7 +68,7 @@ class _Vector:
     return np.frombuffer(buff, dtype="float64")
 
   # Get Vector's data array in read-only mode
-  def getArrayRead(self, mtype):
+  def GetArrayRead(self, mtype):
     """Get read-only access to a CeedVector via the specified memory type."""
 
     # Retrieve the length of the array
@@ -90,7 +90,7 @@ class _Vector:
     return ret
 
   # Restore the Vector's data array
-  def restoreArray(self):
+  def RestoreArray(self):
     """Restore an array obtained using getArray()."""
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
@@ -99,7 +99,7 @@ class _Vector:
     lib.CeedVectorRestoreArray(self._pointer[0], array_pointer)
 
   # Restore an array obtained using getArrayRead
-  def restoreArrayRead(self):
+  def RestoreArrayRead(self):
     """Restore an array obtained using getArrayRead()."""
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
@@ -108,7 +108,7 @@ class _Vector:
     lib.CeedVectorRestoreArrayRead(self._pointer[0], array_pointer)
 
   # Get the length of a Vector
-  def getLength(self):
+  def GetLength(self):
     """Get the length of a CeedVector."""
     length_pointer = ffi.new("CeedInt *")
 
@@ -118,21 +118,21 @@ class _Vector:
     return length_pointer[0]
 
   # Set the Vector to a given constant value
-  def setValue(self, value):
+  def SetValue(self, value):
     """Set the Vector to a constant value."""
 
     # libCEED call
     lib.CeedVectorSetValue(self._pointer[0], value)
 
   # Sync the Vector to a specified memtype
-  def syncArray(self, mtype):
+  def SyncArray(self, mtype):
     """Sync the Vector to a specified memtype."""
 
     # libCEED call
     lib.CeedVectorSyncArray(self._pointer[0], mtype)
 
   # View a Vector
-  def view(self, format = ffi.NULL, file = sys.stdout):
+  def View(self, format = ffi.NULL, file = sys.stdout):
     """View a Vector."""
 
     # Check if format is a string before encoding it
