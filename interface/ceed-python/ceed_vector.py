@@ -82,7 +82,7 @@ class _Vector:
 
     # Create buffer object from returned pointer
     buff = ffi.buffer(array_pointer[0], ffi.sizeof("CeedScalar") * length_pointer[0])
-    # Create numpy array created from buffer
+    # Create numpy array from buffer
     ret = np.frombuffer(buff, dtype="float64")
     # Make the numpy array read-only
     ret.flags['WRITEABLE'] = False
