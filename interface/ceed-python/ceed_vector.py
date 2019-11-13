@@ -48,7 +48,7 @@ class _Vector:
     lib.CeedVectorSetArray(self._pointer[0], mtype, cmode, array_pointer)
 
   # Get Vector's data array
-  def getArray(self, mtype, array):
+  def getArray(self, mtype):
     """Get read/write access to a CeedVector via the specified memory type."""
 
     # Retrieve the length of the array
