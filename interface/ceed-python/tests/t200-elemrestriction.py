@@ -15,7 +15,7 @@ if __name__ == "__main__":
   a = np.arange(10, 10 + ne+1, dtype="float64")
   x.set_array(CEED_MEM_HOST, CEED_USE_POINTER, a)
 
-  ind = np.zeros(2*ne)
+  ind = np.zeros(2*ne, dtype="int32")
   for i in range(ne):
     ind[2*i+0] = i
     ind[2*i+1] = i+1
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
   y_array = y.get_array(CEED_MEM_HOST)
   for i in range(2*ne):
-    if (10+(i+1)/2 != y_array[i]):
+    if (10+(i+1)//2 != y_array[i]):
       # LCOV_EXCL_START
       print("Error in restricted array y[%d] = %f"%(i, y_array[i]))
   # LCOV_EXCL_STOP
