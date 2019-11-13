@@ -2,7 +2,7 @@
 # Test creation, setting, reading, restoring, and destroying of a vector using mem_device
 
 import sys
-from ceed import mem_host, mem_device, use_pointer, copy_values, ceed
+from libceed import MEM_HOST, MEM_DEVICE, USE_POINTER, COPY_VALUES
 import libceed
 import numpy as np
 
@@ -13,16 +13,16 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
   y = ceed.Vector(n)
   a = np.zeros(n, dtype="float64")
-  x.SetArray(mem_host, use_pointer, a)
+  x.set_array(MEM_HOST, USE_POINTER, a)
 
-  b = x.GetArrayRead(mem_device)
-  y.SetArray(mem_device, copy_values, b)
+  b = x.get_array_read(MEM_DEVICE)
+  y.set_array(MEM_DEVICE, COPY_VALUES, b)
 
-  c = y.GetArrayRead(mem_host)
+  c = y.get_array_read(MEM_HOST)
   for i in range(n):
     if c[i] != 10+i:
       # LCOV_EXCL_START
       print("Error reading array c[%d] = %f"%(i, c[i]))
   # LCOV_EXCL_STOP
 
-  y.RestoreArrayRead()
+  y.restore_array_read()

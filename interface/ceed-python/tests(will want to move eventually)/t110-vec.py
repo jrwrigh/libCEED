@@ -2,7 +2,7 @@
 # Test CeedVectorGetArray state counter
 
 import sys
-from ceed import mem_host, ceed
+from libceed import MEM_HOST
 import libceed
 import numpy as np
 
@@ -13,10 +13,10 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
 
   # Two write accesses should generate an error
-  a = x.GetArray(mem_host)
-  b = x.GetArray(mem_host)
+  a = x.get_array(MEM_HOST)
+  b = x.get_array(MEM_HOST)
 
   # LCOV_EXCL_START
-  x.RestoreArray()
-  x.RestoreArray()
+  x.restore_array()
+  x.restore_array()
   # LCOV_EXCL_STOP

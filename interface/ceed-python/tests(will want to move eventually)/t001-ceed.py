@@ -7,7 +7,7 @@ import libceed
 if __name__ == "__main__":
   ceed = libceed.Ceed(sys.argv[1])
 
-  memtype = ceed.GetPreferredMemType()
+  memtype = ceed.get_preferred_memtype()
 
   if (memtype == "error"):
     # LCOV_EXCL_START

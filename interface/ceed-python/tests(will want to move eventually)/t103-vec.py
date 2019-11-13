@@ -2,7 +2,7 @@
 # Test setting one vector from array of another vector
 
 import sys
-from ceed import mem_host, use_pointer, ceed
+from libceed import MEM_HOST, USE_POINTER
 import libceed
 import numpy as np
 
@@ -15,17 +15,17 @@ if __name__ == "__main__":
   y = ceed.Vector(n)
 
   a = np.arange(10, 10 + n, dtype="float64")
-  x.SetArray(mem_host, use_pointer, a)
+  x.set_array(MEM_HOST, USE_POINTER, a)
 
-  x_array = x.GetArray(mem_host)
-  y.SetArray(mem_host, use_pointer, x_array)
-  x.RestoreArray()
+  x_array = x.GetArray(MEM_HOST)
+  y.set_array(MEM_HOST, USE_POINTER, x_array)
+  x.restore_array()
 
-  y_array = y.GetArrayRead(mem_host)
+  y_array = y.get_array_read(MEM_HOST)
   for i in range(n):
     if y_array[i] != 10+i:
       # LCOV_EXCL_START
       print("Error reading array y[%d] = %f"%(i, y_array[i]))
   # LCOV_EXCL_STOP
 
-  y.RestoreArrayRead()
+  y.restore_array_read()

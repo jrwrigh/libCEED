@@ -2,7 +2,7 @@
 # Test view
 
 import sys
-from ceed import mem_host, use_pointer, ceed
+from libceed import MEM_HOST, USE_POINTER
 import libceed
 import numpy as np
 
@@ -13,6 +13,6 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
 
   a = np.arange(10, 10 + n, dtype="float64")
-  x.SetArray(mem_host, use_pointer, a)
+  x.set_array(MEM_HOST, USE_POINTER, a)
 
-  x.View()
+  x.view()

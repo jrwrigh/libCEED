@@ -13,11 +13,11 @@ if __name__ == "__main__":
 
   x = ceed.Vector(n)
   a = np.zeros(n, dtype="float64")
-  x.SetArray(mem_host, use_pointer, a)
+  x.set_array(MEM_HOST, USE_POINTER, a)
 
-  b = x.GetArray(mem_host)
+  b = x.get_array(MEM_HOST)
   b[3] = -3.14;
-  x.RestoreArray()
+  x.restore_array()
 
   if a[3] != -3.14:
     # LCOV_EXCL_START

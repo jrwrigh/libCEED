@@ -89,7 +89,7 @@ class Ceed():
     lib.CeedInit(resourceAscii, self._pointer)
 
   # Get Resource
-  def GetResource(self):
+  def get_resource(self):
     """Get the full resource name for a Ceed context."""
     # libCEED call
     resource = ffi.new("char **")
@@ -98,7 +98,7 @@ class Ceed():
     return ffi.string(resource[0]).decode("UTF-8")
 
   # Preferred MemType
-  def GetPreferredMemType(self):
+  def get_preferred_memtype(self):
     """Return Ceed preferred memory type."""
     # libCEED call
     memtype = ffi.new("CeedMemType *", ceed_mem_host)

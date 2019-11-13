@@ -25,7 +25,7 @@ class _QFunctionBase(ABC):
   _pointer = ffi.NULL
 
   # Apply CeedQFunction
-  def Apply(self, q, u, v):
+  def apply(self, q, u, v):
     """Apply the action of a CeedQFunction."""
     # libCEED call
     lib.CeedQFunctionApply(self._pointer[0], q, u._pointer[0], v._pointer[0])
@@ -53,13 +53,13 @@ class _QFunction(_QFunctionBase):
                                     sourceAscii, self._pointer)
 
   # Add fields to CeedQFunction
-  def AddInput(self, fieldname, size, emode):
+  def add_input(self, fieldname, size, emode):
     """Add a CeedQFunction input."""
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
     lib.CeedQFunctionAddInput(self._pointer[0], fieldnameAscii, size, emode)
 
-  def AddOutput(self, fieldname, size, emode):
+  def add_output(self, fieldname, size, emode):
     """Add a CeedQFunction output."""
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
