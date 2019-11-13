@@ -16,7 +16,6 @@ if __name__ == "__main__":
   a = np.arange(10, 10 + n, dtype="float64")
   vector.setArray(mem_host, use_pointer, a)
 
-  #b = np.empty(n, dtype="float64")
   b = vector.getArrayRead(mem_host)
   for i in range(n):
     if b[i] != 10 + i:
