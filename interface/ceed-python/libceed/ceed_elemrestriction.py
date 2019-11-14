@@ -20,6 +20,7 @@ import sys
 import io
 from abc import ABC
 from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED
+from ceed_vector import _VectorWrap
 
 # ------------------------------------------------------------------------------
 class _ElemRestrictionBase(ABC):
@@ -59,8 +60,8 @@ class _ElemRestrictionBase(ABC):
                                         evecPointer)
 
     # Return vectors
-    lvec = _VectorClone(self._ceed[0], lvecPointer) if createLvec else None
-    evec = _VectorClone(self._ceed[0], evecPointer) if createEvec else None
+    lvec = _VectorWrap(self._ceed._pointer, lvecPointer) if createLvec else None
+    evec = _VectorWrap(self._ceed._pointer, evecPointer) if createEvec else None
 
     # Return
     return [lvec, evec]
@@ -69,10 +70,14 @@ class _ElemRestrictionBase(ABC):
   def get_multiplicity(self):
     """Get the multiplicity of nodes in an ElemRestriction."""
     # Create mult vector
-    [mult, evec] = self.createVector(createEvec = False)
+    [mult, evec] = self.create_vector(createEvec = False)
+    mult.set_value(0)
 
     # libCEED call
-    lib.CeedElemRestrictionApply(self._pointer[0], mult._pointer[0])
+    lib.CeedElemRestrictionGetMultiplicity(self._pointer[0], mult._pointer[0])
+
+    # Return
+    return mult
 
   # Destructor
   def __del__(self):
@@ -147,7 +152,7 @@ class BlockedElemRestriction(_ElemRestrictionBase):
   def apply_block(self, block, tmode, lmode, u, v, request=REQUEST_IMMEDIATE):
     """Restrict an L-vector to a block of an E-vector or apply its transpose."""
     # libCEED call
-    lib.CeedElemRestrictionApplyBlock(self._pointer, block, tmode, lmode,
+    lib.CeedElemRestrictionApplyBlock(self._pointer[0], block, tmode, lmode,
                                       u._pointer[0], v._pointer[0], request)
 
 
