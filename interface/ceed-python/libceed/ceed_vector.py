@@ -17,15 +17,19 @@
 from _ceed import ffi, lib
 import sys
 import io
+from abc import ABC
 import numpy as np
 
 # ------------------------------------------------------------------------------
-class Vector:
-  """Ceed Vector: storing and manipulating vectors."""
+class _VectorBase(ABC):
 
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
+
+# ------------------------------------------------------------------------------
+class Vector(_VectorBase):
+  """Ceed Vector: storing and manipulating vectors."""
 
   # Constructor
   def __init__(self, ceed, size):
@@ -163,7 +167,7 @@ class _VectorClone(Vector):
     self._ceed = ceed
 
 # ------------------------------------------------------------------------------
-class _VectorActive(Vector):
+class _VectorActive(_VectorBase):
   """Shell to create CEED_VECTOR_ACTIVE."""
 
   # Constructor
@@ -171,21 +175,13 @@ class _VectorActive(Vector):
     # CeedVector object
     self._pointer = [lib.CEED_VECTOR_ACTIVE]
 
-  # Destructor
-  def __del__(self):
-    self._pointer = ffi.NULL
-
 # ------------------------------------------------------------------------------
-class _VectorNone(Vector):
+class _VectorNone(_VectorBase):
   """Shell to create CEED_VECTOR_NONE."""
 
   # Constructor
   def __init__(self):
     # CeedVector object
     self._pointer = [lib.CEED_VECTOR_NONE]
-
-  # Destructor
-  def __del__(self):
-    self._pointer = ffi.NULL
 
 # ------------------------------------------------------------------------------
