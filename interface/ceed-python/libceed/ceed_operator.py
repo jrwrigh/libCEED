@@ -18,6 +18,7 @@ from _ceed import ffi, lib
 import sys
 import io
 from abc import ABC
+from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED
 
 # ------------------------------------------------------------------------------
 class _OperatorBase(ABC):
@@ -31,7 +32,7 @@ class _OperatorBase(ABC):
     return "<CeedOperator instance at " + hex(id(self)) + ">"
 
   # Apply CeedOperator
-  def apply(self, u, v, request):
+  def apply(self, u, v, request=REQUEST_IMMEDIATE):
     """Apply Operator to a vector."""
     # libCEED call
     lib.CeedOperatorApply(self._pointer[0], u._pointer[0], v._pointer[0],

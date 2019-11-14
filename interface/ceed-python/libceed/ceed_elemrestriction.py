@@ -19,6 +19,7 @@ import numpy as np
 import sys
 import io
 from abc import ABC
+from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED
 
 # ------------------------------------------------------------------------------
 class _ElemRestrictionBase(ABC):
@@ -40,7 +41,7 @@ class _ElemRestrictionBase(ABC):
     return ""
 
   # Apply CeedElemRestriction
-  def apply(self, tmode, lmode, u, v, request):
+  def apply(self, tmode, lmode, u, v, request=REQUEST_IMMEDIATE):
     """Restrict an L-vector to an E-vector or apply its transpose."""
     # libCEED call
     lib.CeedElemRestrictionApply(self._pointer[0], tmode, lmode, u._pointer[0],
@@ -143,7 +144,7 @@ class BlockedElemRestriction(_ElemRestrictionBase):
                                          self._pointer)
 
   # Apply CeedElemRestriction to single block
-  def apply_block(self, block, tmode, lmode, u, v, request):
+  def apply_block(self, block, tmode, lmode, u, v, request=REQUEST_IMMEDIATE):
     """Restrict an L-vector to a block of an E-vector or apply its transpose."""
     # libCEED call
     lib.CeedElemRestrictionApplyBlock(self._pointer, block, tmode, lmode,
