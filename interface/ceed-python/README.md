@@ -31,3 +31,14 @@ The tests need to be moved up to this level to run.
 libceed.py is a shell that just pulls in the separate class files.
 
 ceed_qfunction.py and ceed_operator.py are WIP.
+
+# Two folder setup
+
+I split into two packages. We build first `ceed_cffi` and then `libceed` with the commands
+
+
+```
+python setup.py build_ext
+python setup.py develop
+
+```
