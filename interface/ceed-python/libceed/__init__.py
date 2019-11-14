@@ -21,6 +21,9 @@ from ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
 from ceed_operator import Operator, CompositeOperator
 from ceed_constants import *
 
+# ------------------------------------------------------------------------------
+# All contents of module
+# ------------------------------------------------------------------------------
 __all__ = ["Ceed",
            "Vector",
            "ElemRestriction", "IdentityElemRestriction", "BlockedElemRestriction",
@@ -33,3 +36,5 @@ __all__ = ["Ceed",
            "LINE", "TRIANGLE", "QUAD", "TET", "PYRAMID", "PRISM", "HEX", "elem_topologies",
            "REQUEST_IMMEDIATE", "REQUEST_ORDERED",
            "VECTOR_ACTIVE", "VECTOR_NONE"]
+
+# ------------------------------------------------------------------------------
