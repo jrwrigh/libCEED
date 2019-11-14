@@ -54,6 +54,12 @@ eval_modes      = {EVAL_NONE:     "ceed_eval_none",
                    EVAL_CURL:     "ceed_eval_curl",
                    EVAL_WEIGHT:   "ceed_eval_weight"}
 
+# CeedQuadMode
+GAUSS           = lib.CEED_GAUSS
+GAUSS_LOBATTO   = lib.GAUSS_LOBATTO
+quad_modes      = {GAUSS:         "ceed_gauss",
+                   GAUSS_LOBATTO: "ceed_gauss_lobatto"}
+
 # CeedElemTopology
 LINE            = lib.CEED_LINE
 TRIANGLE        = lib.CEED_TRIANGLE
@@ -69,12 +75,6 @@ elem_topologies = {LINE:          "ceed_line",
                    PYRAMID:       "ceed_pyramid",
                    PRISM:         "ceed_prism",
                    HEX:           "ceed_hex"}
-
-# CeedQuadMode
-GAUSS           = lib.CEED_GAUSS
-GAUSS_LOBATTO   = lib.GAUSS_LOBATTO
-quad_mode       = {GAUSS:         "ceed_gauss",
-                   GAUSS_LOBATTO: "ceed_gauss_lobatto"}
 
 # ------------------------------------------------------------------------------
 # Ceed Constants

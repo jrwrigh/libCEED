@@ -33,6 +33,7 @@ __all__ = ["Ceed",
            "COPY_VALUES", "USE_POINTER", "OWN_POINTER", "copy_modes",
            "TRANSPOSE", "NOTRANSPOSE", "transpose_modes",
            "EVAL_NONE", "EVAL_INTERP", "EVAL_GRAD", "EVAL_DIV", "EVAL_CURL", "EVAL_WEIGHT", "eval_modes",
+            "GAUSS", "GAUSS_LOBATTO", "quad_modes",
            "LINE", "TRIANGLE", "QUAD", "TET", "PYRAMID", "PRISM", "HEX", "elem_topologies",
            "REQUEST_IMMEDIATE", "REQUEST_ORDERED",
            "VECTOR_ACTIVE", "VECTOR_NONE"]
