@@ -1,8 +1,0 @@
-README.md
-libceed.py
-setup.py
-libceed.egg-info/PKG-INFO
-libceed.egg-info/SOURCES.txt
-libceed.egg-info/dependency_links.txt
-libceed.egg-info/requires.txt
-libceed.egg-info/top_level.txt
