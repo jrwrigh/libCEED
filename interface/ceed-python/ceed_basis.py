@@ -41,7 +41,7 @@ class _BasisBase(ABC):
 
   # Apply Basis
   def apply(self, nelem, tmode, emode, u, v):
-    """Apply basis evaluation from nodes to quadrature points or viceversa"""
+    """Apply basis evaluation from nodes to quadrature points or viceversa."""
     # libCEED call
     CeedBasisApply(self._pointer[0], nelem, tmode, emode,
                    u._pointer[0], v._pointer[0])
@@ -49,7 +49,7 @@ class _BasisBase(ABC):
   # Gauss quadrature
   @staticmethod
   def gauss_quadrature(Q):
-    """Construct a Gauss-Legendre quadrature"""
+    """Construct a Gauss-Legendre quadrature."""
 
     # Setup numpy arrays
     qref1d = np.empty(Q, dtype="float64")
@@ -69,7 +69,7 @@ class _BasisBase(ABC):
   # Lobatto quadrature
   @staticmethod
   def lobatto_quadrature(Q):
-    """Construct a Gauss-Legendre-Lobatto quadrature"""
+    """Construct a Gauss-Legendre-Lobatto quadrature."""
 
     # Setup arguments
     qref1d = np.empty(Q, dtype="float64")
@@ -87,7 +87,7 @@ class _BasisBase(ABC):
   # Scalar view
   @staticmethod
   def scalar_view(name, m, n, array, format = ffi.NUL, file = sys.stdout):
-    """View an array stored in a CeedBasis"""
+    """View an array stored in a CeedBasis."""
 
     # Check if format is a string before encoding it
     if type(format) == "str":
@@ -103,59 +103,10 @@ class _BasisBase(ABC):
     # libCEED call
     CeedScalarView(namestr, fstr, m, n, a_pointer, file)
 
-  # Householder reflection
-  @staticmethod
-  def householder_reflect(A, v, b, m, n, row, col):
-    """Compute Householder reflection"""
-
-    # Setup arguments
-    A_pointer = ffi.new("CeedScalar *")
-    A_pointer = ffi.cast("CeedScalar *", A.__array_interface__['data'][0])
-    v_pointer = ffi.new("CeedScalar *")
-    v_pointer = ffi.cast("CeedScalar *", v.__array_interface__['data'][0])
-
-    # libCEED call
-    lib.CeedHouseholderReflect(A_pointer, v_pointer, b, m, n, row, col)
-
-    return A
-
-  # Apply Householder Q matrix
-  @staticmethod
-  def householder_apply_q(A, Q, tau, tmode, m, n, k, row, col):
-    """Apply Householder Q matrix"""
-
-    # Setup arguments
-    A_pointer = ffi.new("CeedScalar *")
-    A_pointer = ffi.cast("CeedScalar *", A.__array_interface__['data'][0])
-    Q_pointer = ffi.new("CeedScalar *")
-    Q_pointer = ffi.cast("CeedScalar *", Q.__array_interface__['data'][0])
-    tau_pointer = ffi.new("CeedScalar *")
-    tau_pointer = ffi.cast("CeedScalar *", tau.__array_interface__['data'][0])
-
-    # libCEED call
-    lib.CeedHouseholderApplyQ(A_pointer, Q_pointer, tau_pointer, tmode, m, n,
-                              k, row, col)
-
-    return A
-
-  # Compute Givens rotation
-  @staticmethod
-  def givens_rotation(A, c, s, tmode, i, k, m, n):
-    """Compute Givens rotation"""
-
-    # Setup arguments
-    A_pointer = ffi.new("CeedScalar *")
-    A_pointer = ffi.cast("CeedScalar *", A.__array_interface__['data'][0])
-
-    # libCEED call
-    lib.CeedGivensRotation(A_pointer, c, s, tmode, i, k, m, n)
-
-    return A
-
   # QR factorization
   @staticmethod
   def qr_factorization(ceed, mat, tau, m, n):
-    """Return QR Factorization of matrix"""
+    """Return QR Factorization of matrix."""
 
     # Setup arguments
     mat_pointer = ffi.new("CeedScalar *")
@@ -171,7 +122,7 @@ class _BasisBase(ABC):
   # Symmetric Schur decomposition
   @staticmethod
   def symmetric_schur_decomposition(ceed, mat, n):
-    """Return symmetric Schur decomposition of a symmetric matrix mat"""
+    """Return symmetric Schur decomposition of a symmetric matrix mat."""
 
     # Setup arguments
     mat_pointer = ffi.new("CeedScalar *")
@@ -185,4 +136,26 @@ class _BasisBase(ABC):
 
     return l
 
+  # Simultaneous Diagonalization
+  @staticmethod
+  def simultaneous_diagonalization(ceed, matA, matB, n):
+    """Return Simultaneous Diagonalization of two matrices."""
 
+    # Setup arguments
+    # Setup arguments
+    matA_pointer = ffi.new("CeedScalar *")
+    matA_pointer = ffi.cast("CeedScalar *", matA.__array_interface__['data'][0])
+    # Setup arguments
+    matB_pointer = ffi.new("CeedScalar *")
+    matB_pointer = ffi.cast("CeedScalar *", matB.__array_interface__['data'][0])
+    l = np.empty(n, dtype="float64")
+    l_pointer = ffi.new("CeedScalar *")
+    l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
+    x = np.empty(n, dtype="float64")
+    x_pointer = ffi.new("CeedScalar *")
+    x_pointer = ffi.cast("CeedScalar *", x.__array_interface__['data'][0])
+
+    # libCEED call
+    lib.CeedSimultaneousDiagonalization(ceed, matA, matB, x, l, n)
+
+    return x, l
