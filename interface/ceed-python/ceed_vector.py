@@ -175,8 +175,6 @@ class _VectorActive(Vector):
   def __del__(self):
     self._pointer = ffi.NULL
 
-CEED_VECTOR_ACTIVE = _VectorActive()
-
 # ------------------------------------------------------------------------------
 class _VectorNone(Vector):
   """Shell to create CEED_VECTOR_NONE."""
@@ -189,7 +187,5 @@ class _VectorNone(Vector):
   # Destructor
   def __del__(self):
     self._pointer = ffi.NULL
-
-CEED_VECTOR_NONE = _VectorNone()
 
 # ------------------------------------------------------------------------------
