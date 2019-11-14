@@ -171,6 +171,10 @@ class _VectorActive(Vector):
     # CeedVector object
     self._pointer = [lib.CEED_VECTOR_ACTIVE]
 
+  # Destructor
+  def __del__(self):
+    self._pointer = ffi.NULL
+
 CEED_VECTOR_ACTIVE = _VectorActive()
 
 # ------------------------------------------------------------------------------
@@ -181,6 +185,10 @@ class _VectorNone(Vector):
   def __init__(self):
     # CeedVector object
     self._pointer = [lib.CEED_VECTOR_NONE]
+
+  # Destructor
+  def __del__(self):
+    self._pointer = ffi.NULL
 
 CEED_VECTOR_NONE = _VectorNone()
 

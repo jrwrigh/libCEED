@@ -1,0 +1,7 @@
+README.md
+setup.py
+ceed.egg-info/PKG-INFO
+ceed.egg-info/SOURCES.txt
+ceed.egg-info/dependency_links.txt
+ceed.egg-info/requires.txt
+ceed.egg-info/top_level.txt
