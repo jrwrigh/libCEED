@@ -56,7 +56,7 @@ eval_modes      = {EVAL_NONE:     "ceed_eval_none",
 
 # CeedQuadMode
 GAUSS           = lib.CEED_GAUSS
-GAUSS_LOBATTO   = lib.GAUSS_LOBATTO
+GAUSS_LOBATTO   = lib.CEED_GAUSS_LOBATTO
 quad_modes      = {GAUSS:         "ceed_gauss",
                    GAUSS_LOBATTO: "ceed_gauss_lobatto"}
 
