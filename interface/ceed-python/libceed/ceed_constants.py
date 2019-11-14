@@ -23,22 +23,22 @@ from ceed_vector import _VectorActive, _VectorNone
 # CeedMemType
 MEM_HOST       = lib.CEED_MEM_HOST
 MEM_DEVICE     = lib.CEED_MEM_DEVICE
-memtypes       = {MEM_HOST:     "ceed_mem_host",
-                  MEM_DEVICE:   "ceed_mem_device"}
+memtypes       = {MEM_HOST:      "ceed_mem_host",
+                  MEM_DEVICE:    "ceed_mem_device"}
 
 # CeedCopyMode
 COPY_VALUES    = lib.CEED_COPY_VALUES
 USE_POINTER    = lib.CEED_USE_POINTER
 OWN_POINTER    = lib.CEED_OWN_POINTER
-copymodes      = {COPY_VALUES:  "ceed_copy_values",
-                  USE_POINTER:  "ceed_use_pointer",
-                  OWN_POINTER:  "ceed_own_pointer"}
+copymodes      = {COPY_VALUES:   "ceed_copy_values",
+                  USE_POINTER:   "ceed_use_pointer",
+                  OWN_POINTER:   "ceed_own_pointer"}
 
 # CeedTransposeMode
 TRANSPOSE      = lib.CEED_TRANSPOSE
 NOTRANSPOSE    = lib.CEED_NOTRANSPOSE
-transposemodes = {TRANSPOSE:   "ceed_transpose",
-                  NOTRANSPOSE: "ceed_notranspose"}
+transposemodes = {TRANSPOSE:    "ceed_transpose",
+                  NOTRANSPOSE:  "ceed_notranspose"}
 
 # CeedEvalMode
 EVAL_NONE      = lib.CEED_EVAL_NONE
@@ -62,13 +62,13 @@ TET            = lib.CEED_TET
 PYRAMID        = lib.CEED_PYRAMID
 PRISM          = lib.CEED_PRISM
 HEX            = lib.CEED_HEX
-elemtopologies = {LINE:     "ceed_line",
-                  TRIANGLE: "ceed_triangle",
-                  QUAD:     "ceed_quad",
-                  TET:      "ceed_tet",
-                  PYRAMID:  "ceed_pyramid",
-                  PRISM:    "ceed_prism",
-                  HEX:      "ceed_hex"}
+elemtopologies = {LINE:         "ceed_line",
+                  TRIANGLE:     "ceed_triangle",
+                  QUAD:         "ceed_quad",
+                  TET:          "ceed_tet",
+                  PYRAMID:      "ceed_pyramid",
+                  PRISM:        "ceed_prism",
+                  HEX:          "ceed_hex"}
 
 # ------------------------------------------------------------------------------
 # Ceed Constants
