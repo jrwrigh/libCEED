@@ -155,8 +155,8 @@ class Vector(_VectorBase):
     lib.CeedVectorDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class _VectorClone(Vector):
-  """Copy a Vector."""
+class _VectorWrap(Vector):
+  """Wrap a CeedVector pointer in a Vector object."""
 
   # Constructor
   def __init__(self, ceed, pointer):
