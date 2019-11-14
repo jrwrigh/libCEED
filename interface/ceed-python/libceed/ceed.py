@@ -70,26 +70,26 @@ class Ceed():
                       indices):
     """CeedElemRestriction: restriction from vectors to elements."""
     return ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
-                            cmode, indices)
+                           cmode, indices)
 
   def IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
                               cmode):
     """CeedElemRestriction: identity restriction from vectors to elements."""
     return IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
-                                    cmode)
+                                   cmode)
 
   def BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes, ncomp,
                              mtype, cmode, indices):
     """CeedElemRestriction: blocked restriction from vectors to elements."""
     return BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes,
-                                   ncomp, mtype, cmode, indices)
+                                  ncomp, mtype, cmode, indices)
 
   # CeedBasis
   def BasisTensorH1(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
                       qref1d, qweight1d):
     """Tensor product basis class for H^1 discretizations."""
-    return BasisTensorH1()(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
-                           qref1d, qweight1d)
+    return BasisTensorH1(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
+                         qref1d, qweight1d)
 
   def BasisTensorH1Lagrange(self, ceed, dim, ncomp, P, Q, qmode):
     """Tensor product Lagrange basis class."""

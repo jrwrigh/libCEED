@@ -21,6 +21,7 @@ from abc import ABC
 
 # ------------------------------------------------------------------------------
 class _BasisBase(ABC):
+  """Base class for manipulating finite element bases."""
 
   # Attributes
   _ceed = ffi.NULL
@@ -167,7 +168,7 @@ class _BasisBase(ABC):
 
 # ------------------------------------------------------------------------------
 class BasisTensorH1(_BasisBase):
-  """Ceed Basis: class for creating and manipulating finite element bases."""
+  """Tensor product basis class for H^1 discretizations."""
 
   # Constructor
   def __init__(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
@@ -194,3 +195,48 @@ class BasisTensorH1(_BasisBase):
     lib.CeedBasisCreateTensorH1(self._ceed._pointer[0], dim, ncomp, P1d, Q1d,
                                 interp1d_pointer, grad1d_pointer, qref1d_pointer,
                                 qweight1d_pointer, self._pointer)
+
+# ------------------------------------------------------------------------------
+class BasisTensorH1Lagrange(_BasisBase):
+  """Tensor product Lagrange basis class."""
+
+  # Constructor
+  def __init__(self, ceed, dim, ncomp, P, Q, qmode):
+
+    # Setup arguments
+    self._pointer = ffi.new("CeedBasis *")
+
+    self._ceed = ceed
+
+    # libCEED call
+    lib.CeedBasisCreateTensorH1(self._ceed._pointer[0], dim, ncomp, P, Q, qmode,
+                                self._pointer)
+
+# ------------------------------------------------------------------------------
+class BasisH1(_BasisBase):
+  """Non tensor product basis class for H^1 discretizations."""
+
+  # Constructor
+  def __init__(self, topo, ncomp, nnodes, nqpts, interp, grad, qref, qweight):
+
+    # Setup arguments
+    self._pointer = ffi.new("CeedBasis *")
+
+    self._ceed = ceed
+
+    interp_pointer = ffi.new("CeedScalar *")
+    interp_pointer = ffi.cast("CeedScalar *", interp.__array_interface__['data'][0])
+
+    grad_pointer = ffi.new("CeedScalar *")
+    grad_pointer = ffi.cast("CeedScalar *", grad.__array_interface__['data'][0])
+
+    qref_pointer = ffi.new("CeedScalar *")
+    qref_pointer = ffi.cast("CeedScalar *", qref.__array_interface__['data'][0])
+
+    qweight_pointer = ffi.new("CeedScalar *")
+    qweight_pointer = ffi.cast("CeedScalar *", qweight.__array_interface__['data'][0])
+
+    # libCEED call
+    lib.CeedBasisCreateH1(self._ceed._pointer[0], topo, ncomp, nnodes, nqpts,
+                          interp_pointer, grad_pointer, qref_pointer, qweight_pointer,
+                          self._pointer)
