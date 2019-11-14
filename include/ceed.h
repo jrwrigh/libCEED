@@ -21,7 +21,7 @@
 
 /// @defgroup Ceed Ceed: core components
 /// @defgroup CeedVector CeedVector: storing and manipulating vectors
-/// @defgroup CeedElemRestriction CeedElemRestriction: restriction from vectors to elements
+/// @defgroup CeedElemRestriction CeedElemRestriction: restriction from local vectors to elements
 /// @defgroup CeedBasis CeedBasis: fully discrete finite element-like objects
 /// @defgroup CeedQFunction CeedQFunction: independent operations at quadrature points
 /// @defgroup CeedOperator CeedOperator: composed FE-type operations on vectors

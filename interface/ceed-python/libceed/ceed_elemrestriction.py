@@ -50,7 +50,7 @@ class _ElemRestrictionBase(ABC):
 
   # Create restriction vectors
   def create_vector(self, createLvec = True, createEvec = True):
-    """Create CeedVectors associated with an ElemRestriction."""
+    """Create Vectors associated with an ElemRestriction."""
     # Vector pointers
     lvecPointer = ffi.new("CeedVector *") if createLvec else ffi.NULL
     evecPointer = ffi.new("CeedVector *") if createEvec else ffi.NULL
@@ -86,7 +86,7 @@ class _ElemRestrictionBase(ABC):
 
 # ------------------------------------------------------------------------------
 class ElemRestriction(_ElemRestrictionBase):
-  """Ceed ElemRestriction: restriction from vectors to elements."""
+  """Ceed ElemRestriction: restriction from local vectors to elements."""
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, nnodes, ncomp, mtype, cmode,
