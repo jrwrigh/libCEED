@@ -17,7 +17,7 @@ if __name__ == "__main__":
   b = np.zeros(n)
   y.set_array(libceed.MEM_HOST, libceed.USE_POINTER, b)
 
-  c = x.get_array_read(CEED_MEM_DEVICE)
+  c = x.get_array_read(libceed.MEM_DEVICE)
   y.set_array(libceed.MEM_DEVICE, libceed.COPY_VALUES, c)
 
   y.sync_array(libceed.MEM_HOST)
