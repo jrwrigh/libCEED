@@ -21,7 +21,6 @@ from abc import ABC
 
 # ------------------------------------------------------------------------------
 class _BasisBase(ABC):
-  """Ceed Basis: class for creating and manipulating finite element bases."""
 
   # Attributes
   _ceed = ffi.NULL
@@ -51,13 +50,13 @@ class _BasisBase(ABC):
   def gauss_quadrature(Q):
     """Construct a Gauss-Legendre quadrature."""
 
-    # Setup numpy arrays
+    # Setup arguments
     qref1d = np.empty(Q, dtype="float64")
     qweight1d = np.empy(Q, dtype="float64")
 
-    # Setup pointers
     qref1d_pointer = ffi.new("CeedScalar *")
     qref1d_pointer = ffi.cast("CeedScalar *", qref1d.__array_interface__['data'][0])
+
     qweight1d_pointer = ffi.new("CeedScalar *")
     qweight1d_pointer = ffi.cast("CeedScalar *", qweight1d.__array_interface__['data'][0])
 
@@ -75,6 +74,7 @@ class _BasisBase(ABC):
     qref1d = np.empty(Q, dtype="float64")
     qref1d_pointer = ffi.new("CeedScalar *")
     qref1d_pointer = ffi.cast("CeedScalar *", qref1d.__array_interface__['data'][0])
+
     qweight1d = np.empy(Q, dtype="float64")
     qweight1d_pointer = ffi.new("CeedScalar *")
     qweight1d_pointer = ffi.cast("CeedScalar *", qweight1d.__array_interface__['data'][0])
@@ -98,6 +98,7 @@ class _BasisBase(ABC):
     # Setup arguments
     a_pointer = ffi.new("CeedScalar *")
     a_pointer = ffi.cast("CeedScalar *", array.__array_interface__['data'][0])
+
     namestr = name.encode("ascii", "strict")
 
     # libCEED call
@@ -111,6 +112,7 @@ class _BasisBase(ABC):
     # Setup arguments
     mat_pointer = ffi.new("CeedScalar *")
     mat_pointer = ffi.cast("CeedScalar *", mat.__array_interface__['data'][0])
+
     tau_pointer = ffi.new("CeedScalar *")
     tau_pointer = ffi.cast("CeedScalar *", tau.__array_interface__['data'][0])
 
@@ -127,6 +129,7 @@ class _BasisBase(ABC):
     # Setup arguments
     mat_pointer = ffi.new("CeedScalar *")
     mat_pointer = ffi.cast("CeedScalar *", mat.__array_interface__['data'][0])
+
     l = np.empty(n, dtype="float64")
     l_pointer = ffi.new("CeedScalar *")
     l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
@@ -142,20 +145,52 @@ class _BasisBase(ABC):
     """Return Simultaneous Diagonalization of two matrices."""
 
     # Setup arguments
-    # Setup arguments
     matA_pointer = ffi.new("CeedScalar *")
     matA_pointer = ffi.cast("CeedScalar *", matA.__array_interface__['data'][0])
-    # Setup arguments
+
     matB_pointer = ffi.new("CeedScalar *")
     matB_pointer = ffi.cast("CeedScalar *", matB.__array_interface__['data'][0])
+
     l = np.empty(n, dtype="float64")
     l_pointer = ffi.new("CeedScalar *")
     l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
+
     x = np.empty(n, dtype="float64")
     x_pointer = ffi.new("CeedScalar *")
     x_pointer = ffi.cast("CeedScalar *", x.__array_interface__['data'][0])
 
     # libCEED call
-    lib.CeedSimultaneousDiagonalization(ceed, matA, matB, x, l, n)
+    lib.CeedSimultaneousDiagonalization(ceed, matA_pointer, matB_pointer,
+                                        x_pointer, l_pointer, n)
 
     return x, l
+
+# ------------------------------------------------------------------------------
+class BasisTensorH1(_BasisBase):
+  """Ceed Basis: class for creating and manipulating finite element bases."""
+
+  # Constructor
+  def __init__(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
+               qref1d, qweight1d):
+
+    # Setup arguments
+    self._pointer = ffi.new("CeedBasis *")
+
+    self._ceed = ceed
+
+    interp1d_pointer = ffi.new("CeedScalar *")
+    interp1d_pointer = ffi.cast("CeedScalar *", interp1d.__array_interface__['data'][0])
+
+    grad1d_pointer = ffi.new("CeedScalar *")
+    grad1d_pointer = ffi.cast("CeedScalar *", grad1d.__array_interface__['data'][0])
+
+    qref1d_pointer = ffi.new("CeedScalar *")
+    qref1d_pointer = ffi.cast("CeedScalar *", qref1d.__array_interface__['data'][0])
+
+    qweight1d_pointer = ffi.new("CeedScalar *")
+    qweight1d_pointer = ffi.cast("CeedScalar *", qweight1d.__array_interface__['data'][0])
+
+    # libCEED call
+    lib.CeedBasisCreateTensorH1(self._ceed._pointer[0], dim, ncomp, P1d, Q1d,
+                                interp1d_pointer, grad1d_pointer, qref1d_pointer,
+                                qweight1d_pointer, self._pointer)
