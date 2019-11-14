@@ -1,5 +1,5 @@
 # @file
-# Test getArray to modify array
+# Test creation, use, and destruction of a blocked element restriction
 
 import sys
 import libceed
@@ -8,7 +8,8 @@ import numpy as np
 if __name__ == "__main__":
   ceed = libceed.Ceed(sys.argv[1])
 
-  ne = 3
+  ne = 8
+  blksize = 5
 
   x = ceed.Vector(ne+1)
   a = np.arange(10, 10 + ne+1, dtype="float64")
@@ -18,17 +19,15 @@ if __name__ == "__main__":
   for i in range(ne):
     ind[2*i+0] = i
     ind[2*i+1] = i+1
-  r = ceed.ElemRestriction(ne, 2, ne+1, 1, libceed.MEM_HOST, libceed.USE_POINTER, ind)
+  r = ceed.BlockedElemRestriction(ne, 2, blksize, ne+1, 1, libceed.MEM_HOST, libceed.USE_POINTER, ind)
 
-  y = ceed.Vector(2*ne)
+  y = ceed.Vector(2*blksize*2)
   y.set_value(0)
 
   r.apply(libceed.NOTRANSPOSE, libceed.NOTRANSPOSE, x, y, libceed.REQUEST_IMMEDIATE)
 
-  y_array = y.get_array(libceed.MEM_HOST)
-  for i in range(2*ne):
-    if (10+(i+1)//2 != y_array[i]):
-      # LCOV_EXCL_START
-      print("Error in restricted array y[%d] = %f"%(i, y_array[i]))
-  # LCOV_EXCL_STOP
-  y.restore_array()
+  print(y)
+
+  x.set_value(0)
+  r.apply(libceed.TRANSPOSE, libceed.NOTRANSPOSE, y, x, libceed.REQUEST_IMMEDIATE)
+  print(x)
