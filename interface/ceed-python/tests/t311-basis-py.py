@@ -18,6 +18,7 @@ if __name__ == "__main__":
   Q = 6
   p = [1, 2, 3, 4, 5, 6] # 1 + 2x + 3x^2 + ...
   uq = np.empty(Q, dtype="float64")
+  x = np.empty(2, dtype="float64")
 
   X = ceed.Vector(2)
   Xq = ceed.Vector(Q)
@@ -26,11 +27,10 @@ if __name__ == "__main__":
   U.set_value(0)
   Uq = ceed.Vector(Q)
 
-  bxl = ceed.BasisTensorH1Lagrange(1,  1, 2, Q, libceed.GAUSS_LOBATTO)
+  bxl = ceed.BasisTensorH1Lagrange(1, 1, 2, Q, libceed.GAUSS_LOBATTO)
   bul = ceed.BasisTensorH1Lagrange(1, 1, Q, Q, libceed.GAUSS_LOBATTO)
 
-  x = np.empty(2, dtype="float64")
-  for i in range(2):
+  for i in range(len(x)):
     x[i] = (-1)**(i+1)
 
   X.set_array(x, cmode=libceed.USE_POINTER)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
   # This operation is the identity because the quadrature is collocated
   bul.apply(1, libceed.TRANSPOSE, libceed.EVAL_INTERP, Uq, U)
 
-  bxg = ceed.BasisTensorH1Lagrange(1,  1, 2, Q, libceed.GAUSS)
+  bxg = ceed.BasisTensorH1Lagrange(1, 1, 2, Q, libceed.GAUSS)
   bug = ceed.BasisTensorH1Lagrange(1, 1, Q, Q, libceed.GAUSS)
 
   bxg.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, X, Xq)
