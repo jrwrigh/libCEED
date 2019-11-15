@@ -15,8 +15,7 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed import ffi, lib
-from ceed_vector import _VectorActive, _VectorNone
-from ceed_basis import _BasisCollocated
+from abc import ABC
 
 # ------------------------------------------------------------------------------
 # Ceed Enums
@@ -80,15 +79,23 @@ elem_topologies = {LINE:          "ceed_line",
 # ------------------------------------------------------------------------------
 # Ceed Constants
 # ------------------------------------------------------------------------------
+
 # Requests
 REQUEST_IMMEDIATE = lib.CEED_REQUEST_IMMEDIATE
 REQUEST_ORDERED = lib.CEED_REQUEST_ORDERED
 
+# Object shell
+class _CeedConstantObject(ABC):
+  """Shell for holding constant Vector and Basis constants."""
+
+  def __init__(self, constant):
+    self._pointer = [constant]
+
 # Vectors
-VECTOR_ACTIVE = _VectorActive()
-VECTOR_NONE = _VectorNone()
+VECTOR_ACTIVE = _CeedConstantObject(lib.CEED_VECTOR_ACTIVE)
+VECTOR_NONE = _CeedConstantObject(lib.CEED_VECTOR_NONE)
 
 # Basis
-BASIS_COLLOCATED = _BasisCollocated()
+BASIS_COLLOCATED = _CeedConstantObject(lib.CEED_BASIS_COLLOCATED)
 
 # ------------------------------------------------------------------------------

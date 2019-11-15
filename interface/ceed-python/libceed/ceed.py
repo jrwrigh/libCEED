@@ -17,6 +17,7 @@
 from _ceed import ffi, lib
 import sys
 import io
+from abc import ABC
 from ceed_vector import Vector
 from ceed_basis import BasisTensorH1, BasisTensorH1Lagrange, BasisH1
 from ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
