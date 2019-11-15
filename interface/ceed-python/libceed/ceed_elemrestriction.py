@@ -19,7 +19,7 @@ import numpy as np
 import sys
 import io
 from abc import ABC
-from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED
+from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, MEM_HOST, COPY_VALUES
 from ceed_vector import _VectorWrap
 
 # ------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ class ElemRestriction(_ElemRestrictionBase):
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, nnodes, ncomp, indices,
-               memtype=lib.CEED_MEM_HOST, cmode=lib.CEED_COPY_VALUES):
+               memtype=MEM_HOST, cmode=COPY_VALUES):
     # CeedVector object
     self._pointer = ffi.new("CeedElemRestriction *")
 
@@ -130,7 +130,7 @@ class BlockedElemRestriction(_ElemRestrictionBase):
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, blksize, nnodes, ncomp, indices,
-               memtype=lib.CEED_MEM_HOST, cmode=lib.CEED_COPY_VALUES):
+               memtype=MEM_HOST, cmode=COPY_VALUES):
     # CeedVector object
     self._pointer = ffi.new("CeedElemRestriction *")
 

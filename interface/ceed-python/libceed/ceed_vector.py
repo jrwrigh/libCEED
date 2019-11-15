@@ -18,6 +18,7 @@ from _ceed import ffi, lib
 import sys
 import io
 import numpy as np
+from ceed_constants import MEM_HOST, COPY_VALUES
 
 # ------------------------------------------------------------------------------
 class Vector():
@@ -57,7 +58,7 @@ class Vector():
     return ""
 
   # Set Vector's data array
-  def set_array(self, array, memtype=lib.CEED_MEM_HOST, cmode=lib.CEED_COPY_VALUES):
+  def set_array(self, array, memtype=MEM_HOST, cmode=COPY_VALUES):
     """Set the array used by a Vector, freeing any previously allocated
        array if applicable."""
     # Setup the numpy array for the libCEED call
@@ -68,7 +69,7 @@ class Vector():
     lib.CeedVectorSetArray(self._pointer[0], memtype, cmode, array_pointer)
 
   # Get Vector's data array
-  def get_array(self, memtype=lib.CEED_MEM_HOST):
+  def get_array(self, memtype=MEM_HOST):
     """Get read/write access to a Vector via the specified memory type."""
 
     # Retrieve the length of the array
@@ -87,7 +88,7 @@ class Vector():
     return np.frombuffer(buff, dtype="float64")
 
   # Get Vector's data array in read-only mode
-  def get_array_read(self, memtype=lib.CEED_MEM_HOST):
+  def get_array_read(self, memtype=MEM_HOST):
     """Get read-only access to a Vector via the specified memory type."""
 
     # Retrieve the length of the array
