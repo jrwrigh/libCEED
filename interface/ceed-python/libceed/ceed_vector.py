@@ -17,11 +17,10 @@
 from _ceed import ffi, lib
 import sys
 import io
-from abc import ABC
 import numpy as np
 
 # ------------------------------------------------------------------------------
-class Vector(ABC):
+class Vector():
   """Ceed Vector: storing and manipulating vectors."""
 
   # Attributes
