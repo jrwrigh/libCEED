@@ -12,8 +12,8 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
 
   # Two write accesses should generate an error
-  a = x.get_array(libceed.MEM_HOST)
-  b = x.get_array(libceed.MEM_HOST)
+  a = x.get_array()
+  b = x.get_array()
 
   # LCOV_EXCL_START
   x.restore_array()

@@ -6,7 +6,7 @@ import libceed
 import numpy as np
 
 def check_values(ceed, x, value):
-  b = x.get_array_read(libceed.MEM_HOST)
+  b = x.get_array_read()
   for i in range(len(b)):
     if b[i] != value:
       # LCOV_EXCL_START
@@ -20,9 +20,9 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
   value = 1
   a = np.arange(10, 10 + n, dtype="float64")
-  x.set_array(libceed.MEM_HOST, libceed.USE_POINTER, a)
+  x.set_array(a, cmode=libceed.USE_POINTER)
 
-  b = x.get_array_read(libceed.MEM_HOST)
+  b = x.get_array_read()
   for i in range(len(b)):
     if b[i] != 10+i:
       # LCOV_EXCL_START

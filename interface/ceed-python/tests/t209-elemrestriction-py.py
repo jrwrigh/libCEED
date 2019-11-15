@@ -16,11 +16,11 @@ if __name__ == "__main__":
     ind[4*i+1] = i*3+1
     ind[4*i+2] = i*3+2
     ind[4*i+3] = i*3+3
-  r = ceed.ElemRestriction(ne, 4, 3*ne+1, 1, libceed.MEM_HOST, libceed.USE_POINTER, ind)
+  r = ceed.ElemRestriction(ne, 4, 3*ne+1, 1, ind, cmode=libceed.USE_POINTER)
 
   mult = r.get_multiplicity()
 
-  mult_array = mult.get_array(libceed.MEM_HOST)
+  mult_array = mult.get_array()
   for i in range(3*ne+1):
     val = 1 + (1 if (i > 0 and i < 3*ne and i%3 == 0) else 0)
     if (val != mult_array[i]):
