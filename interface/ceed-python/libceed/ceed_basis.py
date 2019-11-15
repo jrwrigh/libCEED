@@ -71,6 +71,11 @@ class _BasisBase(ABC):
 
     return q_pointer[0]
 
+# ------------------------------------------------------------------------------
+
+class Basis(_BasisBase):
+  """Class for Basis static methods"""
+
   # Gauss quadrature
   @staticmethod
   def gauss_quadrature(Q):
@@ -192,7 +197,7 @@ class _BasisBase(ABC):
     return x, l
 
 # ------------------------------------------------------------------------------
-class BasisTensorH1(_BasisBase):
+class BasisTensorH1(Basis):
   """Tensor product basis class for H^1 discretizations."""
 
   # Constructor
@@ -227,7 +232,7 @@ class BasisTensorH1(_BasisBase):
     lib.CeedBasisDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisTensorH1Lagrange(_BasisBase):
+class BasisTensorH1Lagrange(Basis):
   """Tensor product Lagrange basis class."""
 
   # Constructor
@@ -248,7 +253,7 @@ class BasisTensorH1Lagrange(_BasisBase):
     lib.CeedBasisDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisH1(_BasisBase):
+class BasisH1(Basis):
   """Non tensor product basis class for H^1 discretizations."""
 
   # Constructor

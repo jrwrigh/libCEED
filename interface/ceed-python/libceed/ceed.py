@@ -18,7 +18,7 @@ from _ceed import ffi, lib
 import sys
 import io
 from ceed_vector import Vector
-from ceed_basis import BasisTensorH1, BasisTensorH1Lagrange, BasisH1
+from ceed_basis import Basis, BasisTensorH1, BasisTensorH1Lagrange, BasisH1
 from ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
 from ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
 from ceed_operator import Operator, CompositeOperator
