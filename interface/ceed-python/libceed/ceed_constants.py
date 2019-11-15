@@ -87,4 +87,7 @@ REQUEST_ORDERED = lib.CEED_REQUEST_ORDERED
 VECTOR_ACTIVE = _VectorActive()
 VECTOR_NONE = _VectorNone()
 
+# Basis
+BASIS_COLLOCATED = _BasisCollocated()
+
 # ------------------------------------------------------------------------------

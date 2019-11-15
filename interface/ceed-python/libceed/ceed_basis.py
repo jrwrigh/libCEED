@@ -117,7 +117,7 @@ class _BasisBase(ABC):
 
   # Scalar view
   @staticmethod
-  def scalar_view(name, m, n, array, format = ffi.NUL, file = sys.stdout):
+  def scalar_view(name, m, n, array, format = ffi.NULL, file = sys.stdout):
     """View an array stored in a CeedBasis."""
 
     # Check if format is a string before encoding it
@@ -270,3 +270,14 @@ class BasisH1(_BasisBase):
     lib.CeedBasisCreateH1(self._ceed._pointer[0], topo, ncomp, nnodes, nqpts,
                           interp_pointer, grad_pointer, qref_pointer, qweight_pointer,
                           self._pointer)
+
+# ------------------------------------------------------------------------------
+class _BasisCollocated(_BasisBase):
+  """Shell to create CEED_BASIS_COLLOCATED."""
+
+  # Constructor
+  def __init__(self):
+    # CeedBasis object
+    self._pointer = [lib.CEED_BASIS_COLLOCATED]
+
+# ------------------------------------------------------------------------------
