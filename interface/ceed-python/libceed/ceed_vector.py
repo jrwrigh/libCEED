@@ -42,6 +42,11 @@ class Vector(_VectorBase):
     # libCEED call
     lib.CeedVectorCreate(self._ceed._pointer[0], size, self._pointer)
 
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedVectorDestroy(self._pointer)
+
   # Representation
   def __repr__(self):
     return "<CeedVector instance at " + hex(id(self)) + ">"
@@ -148,11 +153,6 @@ class Vector(_VectorBase):
 
     # libCEED call
     lib.CeedVectorSyncArray(self._pointer[0], mtype)
-
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedVectorDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
 class _VectorWrap(Vector):

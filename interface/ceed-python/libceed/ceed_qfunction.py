@@ -26,6 +26,11 @@ class _QFunctionBase(ABC):
   _ceed = ffi.NULL
   _pointer = ffi.NULL
 
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedQFunctionDestroy(self._pointer)
+
   # Representation
   def __repr__(self):
     return "<CeedQFunction instance at " + hex(id(self)) + ">"
@@ -35,11 +40,6 @@ class _QFunctionBase(ABC):
     """Apply the action of a QFunction."""
     # libCEED call
     lib.CeedQFunctionApply(self._pointer[0], q, u._pointer[0], v._pointer[0])
-
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedQFunctionDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
 class QFunction(_QFunctionBase):

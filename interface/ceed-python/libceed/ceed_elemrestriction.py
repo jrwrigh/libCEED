@@ -29,6 +29,11 @@ class _ElemRestrictionBase(ABC):
   _ceed = ffi.NULL
   _pointer = ffi.NULL
 
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedElemRestrictionDestroy(self._pointer)
+
   # Representation
   def __repr__(self):
     return "<CeedElemRestriction instance at " + hex(id(self)) + ">"
@@ -78,11 +83,6 @@ class _ElemRestrictionBase(ABC):
 
     # Return
     return mult
-
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedElemRestrictionDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
 class ElemRestriction(_ElemRestrictionBase):

@@ -27,6 +27,11 @@ class _OperatorBase(ABC):
   _ceed = ffi.NULL
   _pointer = ffi.NULL
 
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedOperatorDestroy(self._pointer)
+
   # Representation
   def __repr__(self):
     return "<CeedOperator instance at " + hex(id(self)) + ">"
@@ -37,11 +42,6 @@ class _OperatorBase(ABC):
     # libCEED call
     lib.CeedOperatorApply(self._pointer[0], u._pointer[0], v._pointer[0],
                           request)
-
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedOperatorDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
 class Operator(_OperatorBase):
