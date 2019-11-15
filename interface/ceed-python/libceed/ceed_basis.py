@@ -44,8 +44,8 @@ class _BasisBase(ABC):
     """Apply basis evaluation from nodes to quadrature points or viceversa."""
 
     # libCEED call
-    CeedBasisApply(self._pointer[0], nelem, tmode, emode,
-                   u._pointer[0], v._pointer[0])
+    lib.CeedBasisApply(self._pointer[0], nelem, tmode, emode,
+                       u._pointer[0], v._pointer[0])
 
   # Get number of nodes
   def get_num_nodes(self):
