@@ -27,6 +27,11 @@ class _BasisBase(ABC):
   _ceed = ffi.NULL
   _pointer = ffi.NULL
 
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedVectorDestroy(self._pointer)
+
   # Representation
   def __repr__(self):
     return "<CeedBasis instance at " + hex(id(self)) + ">"
@@ -70,7 +75,6 @@ class _BasisBase(ABC):
     lib.CeedBasisGetNumQuadraturePoints(self._pointer[0], q_pointer)
 
     return q_pointer[0]
-
 
   # Gauss quadrature
   @staticmethod

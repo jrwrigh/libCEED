@@ -86,7 +86,7 @@ class Ceed():
 
   # CeedBasis
   def BasisTensorH1(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
-                      qref1d, qweight1d):
+                    qref1d, qweight1d):
     """Tensor product basis class for H^1 discretizations."""
     return BasisTensorH1(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
                          qref1d, qweight1d)
