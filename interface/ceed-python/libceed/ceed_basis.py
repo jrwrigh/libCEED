@@ -42,9 +42,35 @@ class _BasisBase(ABC):
   # Apply Basis
   def apply(self, nelem, tmode, emode, u, v):
     """Apply basis evaluation from nodes to quadrature points or viceversa."""
+
     # libCEED call
     CeedBasisApply(self._pointer[0], nelem, tmode, emode,
                    u._pointer[0], v._pointer[0])
+
+  # Get number of nodes
+  def get_num_nodes(self):
+    """Get total number of nodes (in dim dimensions) of a Basis."""
+
+    # Setup argument
+    p_pointer = ffi.new("CeedInt *")
+
+    # libCEED call
+    lib.CeedBasisGetNumNodes(self._pointer[0], p_pointer)
+
+    return p_pointer[0]
+
+  # Get number of quadrature points
+  def get_num_quadrature_points(self):
+    """Get total number of quadrature points (in dim dimensions) of a Basis"""
+
+    # Setup argument
+    q_pointer = ffi.new("CeedInt *")
+
+    # libCEED call
+    lib.CeedBasisGetNumQuadraturePoints(self._pointer[0], q_pointer)
+
+    return q_pointer[0]
+
 
   # Gauss quadrature
   @staticmethod
