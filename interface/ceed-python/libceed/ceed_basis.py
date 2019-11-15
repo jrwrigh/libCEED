@@ -186,12 +186,12 @@ class Basis(_BasisBase):
     l_pointer = ffi.new("CeedScalar *")
     l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
 
-    x = np.empty(n, dtype="float64")
+    x = np.empty(n*n, dtype="float64")
     x_pointer = ffi.new("CeedScalar *")
     x_pointer = ffi.cast("CeedScalar *", x.__array_interface__['data'][0])
 
     # libCEED call
-    lib.CeedSimultaneousDiagonalization(ceed, matA_pointer, matB_pointer,
+    lib.CeedSimultaneousDiagonalization(ceed._pointer[0], matA_pointer, matB_pointer,
                                         x_pointer, l_pointer, n)
 
     return x, l
