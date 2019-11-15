@@ -86,15 +86,15 @@ class Ceed():
                                   cmode=cmode)
 
   # CeedBasis
-  def BasisTensorH1(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
+  def BasisTensorH1(self, dim, ncomp, P1d, Q1d, interp1d, grad1d,
                     qref1d, qweight1d):
     """Tensor product basis class for H^1 discretizations."""
-    return BasisTensorH1(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
+    return BasisTensorH1(self, dim, ncomp, P1d, Q1d, interp1d, grad1d,
                          qref1d, qweight1d)
 
-  def BasisTensorH1Lagrange(self, ceed, dim, ncomp, P, Q, qmode):
+  def BasisTensorH1Lagrange(self, dim, ncomp, P, Q, qmode):
     """Tensor product Lagrange basis class."""
-    return BasisTensorH1Lagrange(self, ceed, dim, ncomp, P, Q, qmode)
+    return BasisTensorH1Lagrange(self, dim, ncomp, P, Q, qmode)
 
   def BasisH1(self, topo, ncomp, nnodes, nqpts, interp, grad, qref, qweight):
     """Non tensor product basis class for H^1 discretizations."""

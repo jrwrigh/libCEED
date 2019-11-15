@@ -27,11 +27,6 @@ class _BasisBase(ABC):
   _ceed = ffi.NULL
   _pointer = ffi.NULL
 
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedVectorDestroy(self._pointer)
-
   # Representation
   def __repr__(self):
     return "<CeedBasis instance at " + hex(id(self)) + ">"
@@ -226,6 +221,11 @@ class BasisTensorH1(_BasisBase):
                                 interp1d_pointer, grad1d_pointer, qref1d_pointer,
                                 qweight1d_pointer, self._pointer)
 
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedBasisDestroy(self._pointer)
+
 # ------------------------------------------------------------------------------
 class BasisTensorH1Lagrange(_BasisBase):
   """Tensor product Lagrange basis class."""
@@ -239,8 +239,13 @@ class BasisTensorH1Lagrange(_BasisBase):
     self._ceed = ceed
 
     # libCEED call
-    lib.CeedBasisCreateTensorH1(self._ceed._pointer[0], dim, ncomp, P, Q, qmode,
-                                self._pointer)
+    lib.CeedBasisCreateTensorH1Lagrange(self._ceed._pointer[0], dim, ncomp, P, Q, qmode,
+                                        self._pointer)
+
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedBasisDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
 class BasisH1(_BasisBase):
@@ -270,6 +275,11 @@ class BasisH1(_BasisBase):
     lib.CeedBasisCreateH1(self._ceed._pointer[0], topo, ncomp, nnodes, nqpts,
                           interp_pointer, grad_pointer, qref_pointer, qweight_pointer,
                           self._pointer)
+
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedBasisDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
 class _BasisCollocated(_BasisBase):

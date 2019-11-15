@@ -16,6 +16,7 @@
 
 from _ceed import ffi, lib
 from ceed_vector import _VectorActive, _VectorNone
+from ceed_basis import _BasisCollocated
 
 # ------------------------------------------------------------------------------
 # Ceed Enums
