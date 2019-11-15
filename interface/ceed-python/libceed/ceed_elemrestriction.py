@@ -89,8 +89,8 @@ class ElemRestriction(_ElemRestrictionBase):
   """Ceed ElemRestriction: restriction from local vectors to elements."""
 
   # Constructor
-  def __init__(self, ceed, nelem, elemsize, nnodes, ncomp, mtype, cmode,
-               indices):
+  def __init__(self, ceed, nelem, elemsize, nnodes, ncomp, indices,
+               memtype=lib.CEED_MEM_HOST, cmode=lib.CEED_COPY_VALUES):
     # CeedVector object
     self._pointer = ffi.new("CeedElemRestriction *")
 
@@ -104,7 +104,7 @@ class ElemRestriction(_ElemRestrictionBase):
 
     # libCEED call
     lib.CeedElemRestrictionCreate(self._ceed._pointer[0], nelem, elemsize,
-                                  nnodes, ncomp, mtype, cmode, indices_pointer,
+                                  nnodes, ncomp, memtype, cmode, indices_pointer,
                                   self._pointer)
 
 # ------------------------------------------------------------------------------
@@ -129,8 +129,8 @@ class BlockedElemRestriction(_ElemRestrictionBase):
   """Ceed BlockedElemRestriction: blocked restriction from vectors to elements."""
 
   # Constructor
-  def __init__(self, ceed, nelem, elemsize, blksize, nnodes, ncomp, mtype,
-               cmode, indices):
+  def __init__(self, ceed, nelem, elemsize, blksize, nnodes, ncomp, indices,
+               memtype=lib.CEED_MEM_HOST, cmode=lib.CEED_COPY_VALUES):
     # CeedVector object
     self._pointer = ffi.new("CeedElemRestriction *")
 
@@ -145,7 +145,7 @@ class BlockedElemRestriction(_ElemRestrictionBase):
     # libCEED call
     lib.CeedElemRestrictionCreateBlocked(self._ceed._pointer[0], nelem,
                                          elemsize, blksize, nnodes, ncomp,
-                                         mtype, cmode, indices_pointer,
+                                         memtype, cmode, indices_pointer,
                                          self._pointer)
 
   # Apply CeedElemRestriction to single block

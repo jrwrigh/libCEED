@@ -12,6 +12,6 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
 
   a = np.arange(10, 10 + n, dtype="float64")
-  x.set_array(libceed.MEM_HOST, libceed.USE_POINTER, a)
+  x.set_array(a, cmode=libceed.USE_POINTER)
 
   print(x)

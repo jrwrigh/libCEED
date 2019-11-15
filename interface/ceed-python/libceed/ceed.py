@@ -66,23 +66,23 @@ class Ceed():
     return Vector(self, size)
 
   # CeedElemRestriction
-  def ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype, cmode,
-                      indices):
+  def ElemRestriction(self, nelem, elemsize, nnodes, ncomp,indices,
+                      memtype=lib.CEED_MEM_HOST, cmode=lib.CEED_COPY_VALUES):
     """CeedElemRestriction: restriction from vectors to elements."""
-    return ElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
-                           cmode, indices)
+    return ElemRestriction(self, nelem, elemsize, nnodes, ncomp, indices,
+                           memtype=memtype, cmode=cmode)
 
-  def IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
-                              cmode):
+  def IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp):
     """CeedElemRestriction: identity restriction from vectors to elements."""
-    return IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp, mtype,
-                                   cmode)
+    return IdentityElemRestriction(self, nelem, elemsize, nnodes, ncomp)
 
   def BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes, ncomp,
-                             mtype, cmode, indices):
+                             indices, memtype=lib.CEED_MEM_HOST,
+                             cmode=lib.CEED_COPY_VALUES):
     """CeedElemRestriction: blocked restriction from vectors to elements."""
     return BlockedElemRestriction(self, nelem, elemsize, blksize, nnodes,
-                                  ncomp, mtype, cmode, indices)
+                                  ncomp, indices, memtype=memtype,
+                                  cmode=cmode)
 
   # CeedBasis
   def BasisTensorH1(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,

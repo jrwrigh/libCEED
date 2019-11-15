@@ -61,7 +61,7 @@ class Vector(_VectorBase):
     return ""
 
   # Set Vector's data array
-  def set_array(self, mtype, cmode, array):
+  def set_array(self, array, memtype=lib.CEED_MEM_HOST, cmode=lib.CEED_COPY_VALUES):
     """Set the array used by a Vector, freeing any previously allocated
        array if applicable."""
     # Setup the numpy array for the libCEED call
@@ -69,10 +69,10 @@ class Vector(_VectorBase):
     array_pointer = ffi.cast("CeedScalar *", array.__array_interface__['data'][0])
 
     # libCEED call
-    lib.CeedVectorSetArray(self._pointer[0], mtype, cmode, array_pointer)
+    lib.CeedVectorSetArray(self._pointer[0], memtype, cmode, array_pointer)
 
   # Get Vector's data array
-  def get_array(self, mtype):
+  def get_array(self, memtype=lib.CEED_MEM_HOST):
     """Get read/write access to a Vector via the specified memory type."""
 
     # Retrieve the length of the array
@@ -83,7 +83,7 @@ class Vector(_VectorBase):
     array_pointer = ffi.new("CeedScalar **")
 
     # libCEED call
-    lib.CeedVectorGetArray(self._pointer[0], mtype, array_pointer)
+    lib.CeedVectorGetArray(self._pointer[0], memtype, array_pointer)
 
     # Create buffer object from returned pointer
     buff = ffi.buffer(array_pointer[0], ffi.sizeof("CeedScalar") * length_pointer[0])
@@ -91,7 +91,7 @@ class Vector(_VectorBase):
     return np.frombuffer(buff, dtype="float64")
 
   # Get Vector's data array in read-only mode
-  def get_array_read(self, mtype):
+  def get_array_read(self, memtype=lib.CEED_MEM_HOST):
     """Get read-only access to a Vector via the specified memory type."""
 
     # Retrieve the length of the array
@@ -102,7 +102,7 @@ class Vector(_VectorBase):
     array_pointer = ffi.new("CeedScalar **")
 
     # libCEED call
-    lib.CeedVectorGetArrayRead(self._pointer[0], mtype, array_pointer)
+    lib.CeedVectorGetArrayRead(self._pointer[0], memtype, array_pointer)
 
     # Create buffer object from returned pointer
     buff = ffi.buffer(array_pointer[0], ffi.sizeof("CeedScalar") * length_pointer[0])
@@ -148,11 +148,11 @@ class Vector(_VectorBase):
     lib.CeedVectorSetValue(self._pointer[0], value)
 
   # Sync the Vector to a specified memtype
-  def sync_array(self, mtype):
+  def sync_array(self, memtype):
     """Sync the Vector to a specified memtype."""
 
     # libCEED call
-    lib.CeedVectorSyncArray(self._pointer[0], mtype)
+    lib.CeedVectorSyncArray(self._pointer[0], memtype)
 
 # ------------------------------------------------------------------------------
 class _VectorWrap(Vector):

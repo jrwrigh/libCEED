@@ -12,13 +12,13 @@ if __name__ == "__main__":
   x = ceed.Vector(n)
   y = ceed.Vector(n)
   a = np.arange(10, 10 + n, dtype="float64")
-  x.set_array(libceed.MEM_HOST, libceed.USE_POINTER, a)
+  x.set_array(a, cmode=libceed.USE_POINTER)
 
   b = np.zeros(n)
-  y.set_array(libceed.MEM_HOST, libceed.USE_POINTER, b)
+  y.set_array(b, cmode=libceed.USE_POINTER)
 
-  c = x.get_array_read(libceed.MEM_DEVICE)
-  y.set_array(libceed.MEM_DEVICE, libceed.COPY_VALUES, c)
+  c = x.get_array_read(memtype=libceed.MEM_DEVICE)
+  y.set_array(c, memtype=libceed.MEM_DEVICE, cmode=libceed.COPY_VALUES)
 
   y.sync_array(libceed.MEM_HOST)
   for i in range(n):

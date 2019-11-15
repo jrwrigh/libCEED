@@ -13,21 +13,22 @@ if __name__ == "__main__":
 
   x = ceed.Vector(ne+1)
   a = np.arange(10, 10 + ne+1, dtype="float64")
-  x.set_array(libceed.MEM_HOST, libceed.USE_POINTER, a)
+  x.set_array(a, cmode=libceed.USE_POINTER)
 
   ind = np.zeros(2*ne, dtype="int32")
   for i in range(ne):
     ind[2*i+0] = i
     ind[2*i+1] = i+1
-  r = ceed.BlockedElemRestriction(ne, 2, blksize, ne+1, 1, libceed.MEM_HOST, libceed.USE_POINTER, ind)
+  r = ceed.BlockedElemRestriction(ne, 2, blksize, ne+1, 1, ind,
+                                  cmode=libceed.USE_POINTER)
 
   y = ceed.Vector(blksize*2)
   y.set_value(0)
 
-  r.apply_block(1, libceed.NOTRANSPOSE, libceed.NOTRANSPOSE, x, y, libceed.REQUEST_IMMEDIATE)
+  r.apply_block(1, libceed.NOTRANSPOSE, libceed.NOTRANSPOSE, x, y)
 
   print(y)
 
   x.set_value(0)
-  r.apply_block(1, libceed.TRANSPOSE, libceed.NOTRANSPOSE, y, x, libceed.REQUEST_IMMEDIATE)
+  r.apply_block(1, libceed.TRANSPOSE, libceed.NOTRANSPOSE, y, x)
   print(x)

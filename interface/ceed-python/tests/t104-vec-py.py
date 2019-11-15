@@ -12,9 +12,9 @@ if __name__ == "__main__":
 
   x = ceed.Vector(n)
   a = np.zeros(n, dtype="float64")
-  x.set_array(libceed.MEM_HOST, libceed.USE_POINTER, a)
+  x.set_array(a, cmode=libceed.USE_POINTER)
 
-  b = x.get_array(libceed.MEM_HOST)
+  b = x.get_array()
   b[3] = -3.14;
   x.restore_array()
 
