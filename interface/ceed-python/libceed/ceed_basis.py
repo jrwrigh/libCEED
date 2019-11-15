@@ -196,6 +196,11 @@ class Basis(_BasisBase):
 
     return x, l
 
+  # Destructor
+  def __del__(self):
+    # libCEED call
+    lib.CeedBasisDestroy(self._pointer)
+
 # ------------------------------------------------------------------------------
 class BasisTensorH1(Basis):
   """Tensor product basis class for H^1 discretizations."""
@@ -226,11 +231,6 @@ class BasisTensorH1(Basis):
                                 interp1d_pointer, grad1d_pointer, qref1d_pointer,
                                 qweight1d_pointer, self._pointer)
 
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedBasisDestroy(self._pointer)
-
 # ------------------------------------------------------------------------------
 class BasisTensorH1Lagrange(Basis):
   """Tensor product Lagrange basis class."""
@@ -244,13 +244,8 @@ class BasisTensorH1Lagrange(Basis):
     self._ceed = ceed
 
     # libCEED call
-    lib.CeedBasisCreateTensorH1Lagrange(self._ceed._pointer[0], dim, ncomp, P, Q, qmode,
-                                        self._pointer)
-
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedBasisDestroy(self._pointer)
+    lib.CeedBasisCreateTensorH1Lagrange(self._ceed._pointer[0], dim, ncomp, P,
+                                        Q, qmode, self._pointer)
 
 # ------------------------------------------------------------------------------
 class BasisH1(Basis):
@@ -278,21 +273,7 @@ class BasisH1(Basis):
 
     # libCEED call
     lib.CeedBasisCreateH1(self._ceed._pointer[0], topo, ncomp, nnodes, nqpts,
-                          interp_pointer, grad_pointer, qref_pointer, qweight_pointer,
-                          self._pointer)
-
-  # Destructor
-  def __del__(self):
-    # libCEED call
-    lib.CeedBasisDestroy(self._pointer)
-
-# ------------------------------------------------------------------------------
-class _BasisCollocated(_BasisBase):
-  """Shell to create CEED_BASIS_COLLOCATED."""
-
-  # Constructor
-  def __init__(self):
-    # CeedBasis object
-    self._pointer = [lib.CEED_BASIS_COLLOCATED]
+                          interp_pointer, grad_pointer, qref_pointer,
+                          qweight_pointer, self._pointer)
 
 # ------------------------------------------------------------------------------

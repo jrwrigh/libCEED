@@ -17,19 +17,15 @@
 from _ceed import ffi, lib
 import sys
 import io
-from abc import ABC
 import numpy as np
 
 # ------------------------------------------------------------------------------
-class _VectorBase(ABC):
+class Vector():
+  """Ceed Vector: storing and manipulating vectors."""
 
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
-
-# ------------------------------------------------------------------------------
-class Vector(_VectorBase):
-  """Ceed Vector: storing and manipulating vectors."""
 
   # Constructor
   def __init__(self, ceed, size):
@@ -165,23 +161,5 @@ class _VectorWrap(Vector):
 
     # Reference to Ceed
     self._ceed = ceed
-
-# ------------------------------------------------------------------------------
-class _VectorActive(_VectorBase):
-  """Shell to create CEED_VECTOR_ACTIVE."""
-
-  # Constructor
-  def __init__(self):
-    # CeedVector object
-    self._pointer = [lib.CEED_VECTOR_ACTIVE]
-
-# ------------------------------------------------------------------------------
-class _VectorNone(_VectorBase):
-  """Shell to create CEED_VECTOR_NONE."""
-
-  # Constructor
-  def __init__(self):
-    # CeedVector object
-    self._pointer = [lib.CEED_VECTOR_NONE]
 
 # ------------------------------------------------------------------------------
