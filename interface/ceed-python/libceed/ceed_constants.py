@@ -94,6 +94,7 @@ class _CeedConstantObject(ABC):
 # Vectors
 VECTOR_ACTIVE = _CeedConstantObject(lib.CEED_VECTOR_ACTIVE)
 VECTOR_NONE = _CeedConstantObject(lib.CEED_VECTOR_NONE)
+VECTOR_NULL = _CeedConstantObject(ffi.NULL)
 
 # Basis
 BASIS_COLLOCATED = _CeedConstantObject(lib.CEED_BASIS_COLLOCATED)
