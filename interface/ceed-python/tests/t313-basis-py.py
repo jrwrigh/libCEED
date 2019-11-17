@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     for d in range(dim):
       for i in range(Xdim):
-        x[d*Xdim + i] = (i % 2**(dim-d)) / (1 if 2**(dim-d-1) else -1)
+        x[d*Xdim + i] = 1 if (i % (2**(dim-d))) // (2**(dim-d-1)) else -1
 
     X = ceed.Vector(Xdim*dim)
     X.set_array(x, cmode=libceed.USE_POINTER)
