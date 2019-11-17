@@ -66,6 +66,14 @@ class _ElemRestrictionBase(ABC):
     self._tmode = TRANSPOSE
     return self
 
+  # Transpose an ElemRestriction
+  @property
+  def transpose(self):
+    """Transpose an ElemRestriction."""
+
+    self._tmode = TRANSPOSE
+    return self
+
   # Create restriction vectors
   def create_vector(self, createLvec = True, createEvec = True):
     """Create Vectors associated with an ElemRestriction."""
