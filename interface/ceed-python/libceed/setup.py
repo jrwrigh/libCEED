@@ -24,7 +24,6 @@ setup(name="libceed",
       license="BSD 2",
       url="https://github.com/CEED/libCEED",
       description="libceed python bindings",
-      py_modules=["libceed"],
       requires=["ceed", "numpy"],
 )
 

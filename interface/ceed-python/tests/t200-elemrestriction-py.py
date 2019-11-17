@@ -23,7 +23,7 @@ if __name__ == "__main__":
   y = ceed.Vector(2*ne)
   y.set_value(0)
 
-  r.apply(libceed.NOTRANSPOSE, libceed.NOTRANSPOSE, x, y)
+  r.apply(x, y)
 
   y_array = y.get_array()
   for i in range(2*ne):

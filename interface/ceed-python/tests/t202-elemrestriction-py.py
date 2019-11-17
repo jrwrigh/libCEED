@@ -25,10 +25,10 @@ if __name__ == "__main__":
   y = ceed.Vector(2*blksize*2)
   y.set_value(0)
 
-  r.apply(libceed.NOTRANSPOSE, libceed.NOTRANSPOSE, x, y)
+  r.apply(x, y)
 
   print(y)
 
   x.set_value(0)
-  r.apply(libceed.TRANSPOSE, libceed.NOTRANSPOSE, y, x)
+  r.T.apply(y, x)
   print(x)
