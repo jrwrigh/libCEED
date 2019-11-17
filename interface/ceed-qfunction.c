@@ -20,6 +20,10 @@
 #include <limits.h>
 
 /// @cond DOXYGEN_SKIP
+static struct CeedQFunction_private ceed_qfunction_none;
+/// @endcond
+
+/// @cond DOXYGEN_SKIP
 static struct {
   char name[CEED_MAX_RESOURCE_LEN];
   char source[CEED_MAX_RESOURCE_LEN];
@@ -182,19 +186,30 @@ int CeedQFunctionCreateInteriorByName(Ceed ceed,  const char *name,
            the copy of input data to output fields by using the same memory
            location for both.
 
-  @param ceed       A Ceed object where the CeedQFunction will be created
-  @param size       Size of the qfunction fields
-  @param[out] qf    Address of the variable where the newly created
-                      CeedQFunction will be stored
+  @param ceed        A Ceed object where the CeedQFunction will be created
+  @param[in] size    Size of the qfunction fields
+  @param[in] inmode  CeedEvalMode for input to CeedQFunction
+  @param[in] outmode CeedEvalMode for output to CeedQFunction
+  @param[out] qf     Address of the variable where the newly created
+                       CeedQFunction will be stored
 
   @return An error code: 0 - success, otherwise - failure
 
   @ref Basic
 **/
-int CeedQFunctionCreateIdentity(Ceed ceed, CeedInt size, CeedQFunction *qf) {
+int CeedQFunctionCreateIdentity(Ceed ceed, CeedInt size, CeedEvalMode inmode,
+                                CeedEvalMode outmode, CeedQFunction *qf) {
   int ierr;
 
+  if (inmode == CEED_EVAL_NONE && outmode == CEED_EVAL_NONE)
+    // LCOV_EXCL_START
+    return CeedError(ceed, 1, "CEED_EVAL_NONE for a both the input and "
+                     "output does not make sense with an identity QFunction");
+  // LCOV_EXCL_STOP
+
   ierr = CeedQFunctionCreateInteriorByName(ceed, "Identity", qf); CeedChk(ierr);
+  ierr = CeedQFunctionAddInput(*qf, "input", 1, inmode); CeedChk(ierr);
+  ierr = CeedQFunctionAddOutput(*qf, "output", 1, outmode); CeedChk(ierr);
 
   (*qf)->identity = 1;
   if (size > 1) {
@@ -371,8 +386,8 @@ int CeedQFunctionGetSourcePath(CeedQFunction qf, char **source) {
   @ref Advanced
 **/
 
-int CeedQFunctionGetUserFunction(CeedQFunction qf, int (**f)()) {
-  *f = (int (*)())qf->function;
+int CeedQFunctionGetUserFunction(CeedQFunction qf, CeedQFunctionUser *f) {
+  *f = qf->function;
   return 0;
 }
 
@@ -655,4 +670,8 @@ int CeedQFunctionDestroy(CeedQFunction *qf) {
   return 0;
 }
 
+/// @cond DOXYGEN_SKIP
+// Indicate that no QFunction is provided by the user
+CeedQFunction CEED_QFUNCTION_NONE = &ceed_qfunction_none;
+/// @endcond
 /// @}

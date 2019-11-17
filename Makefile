@@ -299,9 +299,9 @@ ifneq ($(wildcard $(XSMM_DIR)/lib/libxsmm.*),)
     BLAS_LIB = -lblas
   else
     ifneq ($(MKLROOT),)
-      MKL_LINK = -L$(MKLROOT)/lib/intel64 -Wl,-rpath,$(MKLROOT)/lib/intel64 -Wl,--no-as-needed
+      MKL_LINK = -L$(MKLROOT)/lib/intel64 -Wl,-rpath,$(MKLROOT)/lib/intel64
     endif
-    BLAS_LIB = $(MKL_LINK) -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+    BLAS_LIB = $(MKL_LINK) -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
   endif
   $(libceeds) : LDLIBS += $(BLAS_LIB)
   libceed.c += $(xsmm.c)
@@ -519,13 +519,13 @@ doc :
 
 style :
 	@astyle --options=.astylerc \
-          $(filter-out include/ceedf.h tests/t310-basis-f.h, \
+          $(filter-out include/ceedf.h tests/t320-basis-f.h, \
             $(wildcard include/*.h interface/*.[ch] tests/*.[ch] backends/*/*.[ch] \
               examples/*/*.[ch] examples/*/*.[ch]pp gallery/*/*.[ch]))
 
 CLANG_TIDY ?= clang-tidy
 %.c.tidy : %.c
-	$(CLANG_TIDY) $^ -- $(CPPFLAGS)
+	$(CLANG_TIDY) $^ -- $(CPPFLAGS) --std=c99
 
 tidy : $(libceed.c:%=%.tidy)
 
