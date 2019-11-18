@@ -20,9 +20,9 @@ if __name__ == "__main__":
 
   qf_mass = ceed.QFunction(1, qfs.mass,
                            os.path.join(file_dir, "t400-qfunction.h:mass"))
-  qf_setup.add_input("qdata", 1, libceed.EVAL_NONE)
-  qf_setup.add_input("u", 1, libceed.EVAL_INTERP)
-  qf_setup.add_output("v", 1, libceed.EVAL_INTERP)
+  qf_mass.add_input("qdata", 1, libceed.EVAL_NONE)
+  qf_mass.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass.add_output("v", 1, libceed.EVAL_INTERP)
 
   q = 8
 
