@@ -115,7 +115,7 @@ class Ceed():
     return IdentityQFunction(self, size, inmode, outmode)
 
   # CeedOperator
-  def Operator(self, qf, dqf, qdfT):
+  def Operator(self, qf, dqf=None, qdfT=None):
     """CeedOperator: composed FE-type operations on vectors."""
     return Operator(self, qf, dqf, qdfT)
 

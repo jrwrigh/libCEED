@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
   qf_setup = ceed.QFunction(1, qfs.setup,
                             os.path.join(file_dir, "t400-qfunction.h:setup"))
-  qf_setup.add_input("w", 1, libceed.EVAL_NONE)
+  qf_setup.add_input("w", 1, libceed.EVAL_WEIGHT)
   qf_setup.add_output("qdata", 1, libceed.EVAL_INTERP)
 
   qf_mass = ceed.QFunction(1, qfs.mass,

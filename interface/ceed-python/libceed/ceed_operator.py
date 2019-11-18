@@ -18,7 +18,7 @@ from _ceed import ffi, lib
 import sys
 import io
 from abc import ABC
-from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED
+from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
 class _OperatorBase(ABC):
@@ -56,7 +56,7 @@ class Operator(_OperatorBase):
   """Ceed Operator: composed FE-type operations on vectors."""
 
   # Constructor
-  def __init__(self, ceed, qf, dqf = None, qdfT = None):
+  def __init__(self, ceed, qf, dqf = None, dqfT = None):
     # CeedOperator object
     self._pointer = ffi.new("CeedOperator *")
 
@@ -70,7 +70,7 @@ class Operator(_OperatorBase):
                            self._pointer)
 
   # Add field to CeedOperator
-  def set_field(self, fieldname, restriction, lmode, basis, vector):
+  def set_field(self, fieldname, restriction, basis, vector, lmode=NOTRANSPOSE):
     """Provide a field to a Operator for use by its QFunction."""
 
     # libCEED call
