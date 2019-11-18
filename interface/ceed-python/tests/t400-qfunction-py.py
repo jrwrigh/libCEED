@@ -2,21 +2,27 @@
 # Test creation, evaluation, and destruction for qfunction
 
 import sys
+import os
 import libceed
-import libceed_qfunctions as qfs
+import ctypes
 import numpy as np
 
 if __name__ == "__main__":
   ceed = libceed.Ceed(sys.argv[1])
 
-  qf_setup = ceed.QFunction(1, qfs.setup, qfs.setup_loc)
-  qf_setup.add_input("w", 1, libceed.eval_none)
-  qf_setup.add_output("qdata", 1, libceed.eval_interp)
+  qfs = ctypes.cdll.LoadLibrary("./qfs.so")
+  file_dir = os.path.abspath(__file__)
 
-  qf_mass = ceed.QFunction(1, qfs.mass, qfs.mass_loc)
-  qf_setup.add_input("qdata", 1, libceed.eval_none)
-  qf_setup.add_input("u", 1, libceed.eval_interp)
-  qf_setup.add_output("v", 1, libceed.eval_interp)
+  qf_setup = ceed.QFunction(1, qfs.setup,
+                            os.path.join(file_dir, "t400-qfunction.h:setup"))
+  qf_setup.add_input("w", 1, libceed.EVAL_NONE)
+  qf_setup.add_output("qdata", 1, libceed.EVAL_INTERP)
+
+  qf_mass = ceed.QFunction(1, qfs.mass,
+                           os.path.join(file_dir, "t400-qfunction.h:mass"))
+  qf_setup.add_input("qdata", 1, libceed.EVAL_NONE)
+  qf_setup.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_setup.add_output("v", 1, libceed.EVAL_INTERP)
 
   q = 8
 
@@ -27,12 +33,12 @@ if __name__ == "__main__":
     x = 2.*i/(q-1) - 1
     w_array[i] = 1 - x*x
     u_array[i] = 2 + 3*x + 5*x*x
-    v_true[i]  = w[i] * u[i]
+    v_true[i]  = w_array[i] * u_array[i]
 
   w = ceed.Vector(q)
-  w.set_array(w_array, cmode=libceed.use_pointer)
+  w.set_array(w_array, cmode=libceed.USE_POINTER)
   u = ceed.Vector(q)
-  u.set_array(u_array, cmode=libceed.use_pointer)
+  u.set_array(u_array, cmode=libceed.USE_POINTER)
   v = ceed.Vector(q)
   v.set_value(0)
   qdata = ceed.Vector(q)
@@ -42,7 +48,7 @@ if __name__ == "__main__":
   outputs = [ qdata ]
   qf_setup.apply(q, inputs, outputs)
 
-  inputs = [ w, u ]
+  inputs = [ qdata, u ]
   outputs = [ v ]
   qf_mass.apply(q, inputs, outputs)
 

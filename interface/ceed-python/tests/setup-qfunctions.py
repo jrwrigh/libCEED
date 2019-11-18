@@ -17,6 +17,9 @@
 import os
 from distutils.core import setup, Extension
 
+# ------------------------------------------------------------------------------
+# Setup
+# ------------------------------------------------------------------------------
 qf_module = Extension('libceed_qfunctions',
                       include_dirs=[os.path.abspath("../../../include")],
                       libraries=['ceed'],
@@ -27,6 +30,8 @@ qf_module = Extension('libceed_qfunctions',
                                           "-Wno-unused-variable",
                                           "-Wno-unused-function"])
 
-setup (name = 'libceed_qfunctions',
-       description = 'libceed qfunction pointers',
-       ext_modules = [qf_module])
+setup(name = 'libceed_qfunctions',
+      description = 'libceed qfunction pointers',
+      ext_modules = [qf_module])
+
+# ------------------------------------------------------------------------------
