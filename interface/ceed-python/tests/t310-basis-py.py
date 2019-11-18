@@ -18,7 +18,7 @@ if __name__ == "__main__":
   U.set_array(u, cmode=libceed.USE_POINTER)
 
   b = ceed.BasisTensorH1Lagrange(dim, 1, P1d, Q1d, libceed.GAUSS_LOBATTO)
-  b.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, U, V)
+  b.apply(1, libceed.EVAL_INTERP, U, V)
 
   v = V.get_array_read()
   for i in range(length):

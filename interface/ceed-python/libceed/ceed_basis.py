@@ -18,6 +18,7 @@ from _ceed import ffi, lib
 import sys
 import numpy as np
 from abc import ABC
+from ceed_constants import TRANSPOSE, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
 class _BasisBase(ABC):
@@ -26,6 +27,7 @@ class _BasisBase(ABC):
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
+  _tmode = NOTRANSPOSE
 
   # Representation
   def __repr__(self):
@@ -40,12 +42,31 @@ class _BasisBase(ABC):
     return ""
 
   # Apply Basis
-  def apply(self, nelem, tmode, emode, u, v):
+  def apply(self, nelem, emode, u, v):
     """Apply basis evaluation from nodes to quadrature points or viceversa."""
 
     # libCEED call
-    lib.CeedBasisApply(self._pointer[0], nelem, tmode, emode,
+    lib.CeedBasisApply(self._pointer[0], nelem, self._tmode, emode,
                        u._pointer[0], v._pointer[0])
+
+    # Reset tmode
+    self._tmode = NOTRANSPOSE
+
+  # Transpose an ElemRestriction
+  @property
+  def T(self):
+    """Transpose an ElemRestriction."""
+
+    self._tmode = TRANSPOSE
+    return self
+
+  # Transpose an ElemRestriction
+  @property
+  def transpose(self):
+    """Transpose an ElemRestriction."""
+
+    self._tmode = TRANSPOSE
+    return self
 
   # Get number of nodes
   def get_num_nodes(self):

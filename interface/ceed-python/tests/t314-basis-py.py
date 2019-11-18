@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # Get function values at quadrature points
     bxl = ceed.BasisTensorH1Lagrange(dim, dim, 2, P, libceed.GAUSS_LOBATTO)
-    bxl.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, X, Xq)
+    bxl.apply(1, libceed.EVAL_INTERP, X, Xq)
 
     xq = Xq.get_array_read()
     for i in range(Pdim):
@@ -57,8 +57,8 @@ if __name__ == "__main__":
 
     # Calculate G u at quadrature points, G' * 1 at dofs
     bug = ceed.BasisTensorH1Lagrange(dim, 1, P, Q, libceed.GAUSS)
-    bug.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_GRAD, U, Uq)
-    bug.apply(1, libceed.TRANSPOSE, libceed.EVAL_GRAD, Ones, Gtposeones)
+    bug.apply(1, libceed.EVAL_GRAD, U, Uq)
+    bug.T.apply(1, libceed.EVAL_GRAD, Ones, Gtposeones)
 
     # Check if 1' * G * u = u' * (G' * 1)
     gtposeones = Gtposeones.get_array_read()

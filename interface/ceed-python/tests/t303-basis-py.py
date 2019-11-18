@@ -16,4 +16,4 @@ if __name__ == "__main__":
   b = ceed.BasisTensorH1Lagrange(dim, ncomp, P, Q, libceed.GAUSS)
 
   # Basis apply will error because dimensions don't agree
-  b.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, U, V)
+  b.apply(1, libceed.EVAL_INTERP, U, V)

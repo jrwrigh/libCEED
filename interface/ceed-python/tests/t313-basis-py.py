@@ -37,7 +37,7 @@ if __name__ == "__main__":
     bxl = ceed.BasisTensorH1Lagrange(dim, dim, 2, Q, libceed.GAUSS_LOBATTO)
     bul = ceed.BasisTensorH1Lagrange(dim, 1, Q, Q, libceed.GAUSS_LOBATTO)
 
-    bxl.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, X, Xq)
+    bxl.apply(1, libceed.EVAL_INTERP, X, Xq)
 
     xq = Xq.get_array_read()
     for i in range(Qdim):
@@ -50,13 +50,13 @@ if __name__ == "__main__":
     Uq.set_array(uq, cmode=libceed.USE_POINTER)
 
     # This operation is the identity because the quadrature is collocated
-    bul.apply(1, libceed.TRANSPOSE, libceed.EVAL_INTERP, Uq, U)
+    bul.T.apply(1, libceed.EVAL_INTERP, Uq, U)
 
     bxg = ceed.BasisTensorH1Lagrange(dim, dim, 2, Q, libceed.GAUSS)
     bug = ceed.BasisTensorH1Lagrange(dim, 1, Q, Q, libceed.GAUSS)
 
-    bxg.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, X, Xq)
-    bug.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, U, Uq)
+    bxg.apply(1, libceed.EVAL_INTERP, X, Xq)
+    bug.apply(1, libceed.EVAL_INTERP, U, Uq)
 
     xq = Xq.get_array_read()
     u = Uq.get_array_read()

@@ -34,7 +34,7 @@ if __name__ == "__main__":
     x[i] = (-1)**(i+1)
 
   X.set_array(x, cmode=libceed.USE_POINTER)
-  bxl.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, X, Xq)
+  bxl.apply(1, libceed.EVAL_INTERP, X, Xq)
 
   xq = Xq.get_array_read()
   n = len(p)
@@ -44,13 +44,13 @@ if __name__ == "__main__":
   Uq.set_array(uq, cmode=libceed.USE_POINTER)
 
   # This operation is the identity because the quadrature is collocated
-  bul.apply(1, libceed.TRANSPOSE, libceed.EVAL_INTERP, Uq, U)
+  bul.T.apply(1, libceed.EVAL_INTERP, Uq, U)
 
   bxg = ceed.BasisTensorH1Lagrange(1, 1, 2, Q, libceed.GAUSS)
   bug = ceed.BasisTensorH1Lagrange(1, 1, Q, Q, libceed.GAUSS)
 
-  bxg.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, X, Xq)
-  bug.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, U, Uq)
+  bxg.apply(1, libceed.EVAL_INTERP, X, Xq)
+  bug.apply(1, libceed.EVAL_INTERP, U, Uq)
 
   xq = Xq.get_array_read()
   uuq = Uq.get_array_read()
