@@ -17,6 +17,7 @@
 from _ceed import ffi, lib
 import sys
 import io
+import ctypes
 from abc import ABC
 
 # ------------------------------------------------------------------------------
@@ -75,10 +76,23 @@ class QFunction(_QFunctionBase):
     # Reference to Ceed
     self._ceed = ceed
 
+    # Function pointer
+    fpointer = ffi.cast("CeedQFunctionUser", ctypes.cast(f, ctypes.c_void_p).value)
+
     # libCEED call
     sourceAscii = ffi.new("char[]", source.encode('ascii'))
-    lib.CeedQFunctionCreateInterior(self._ceed._pointer[0], vlength, f,
+    lib.CeedQFunctionCreateInterior(self._ceed._pointer[0], vlength, fpointer,
                                     sourceAscii, self._pointer)
+
+  # Set context data
+  def set_context(self, ctx):
+    """Set global context for a QFunction."""
+    # Setup the numpy array for the libCEED call
+    ctx_pointer = ffi.new("CeedScalar *")
+    ctx_pointer = ffi.cast("void *", ctx.__array_interface__['data'][0])
+
+    # libCEED call
+    lib.CeedQFunctionSetContext(self._pointer[0], ctx_pointer, len(ctx))
 
   # Add fields to CeedQFunction
   def add_input(self, fieldname, size, emode):
