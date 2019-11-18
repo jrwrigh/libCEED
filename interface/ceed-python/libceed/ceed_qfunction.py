@@ -35,6 +35,14 @@ class _QFunctionBase(ABC):
   def __repr__(self):
     return "<CeedQFunction instance at " + hex(id(self)) + ">"
 
+  # String conversion for print() to stdout
+  def __str__(self):
+    """View a Basis via print()."""
+
+    # libCEED call
+    lib.CeedQFunctionView(self._pointer[0], sys.stdout)
+    return ""
+
   # Apply CeedQFunction
   def apply(self, q, u, v):
     """Apply the action of a QFunction."""

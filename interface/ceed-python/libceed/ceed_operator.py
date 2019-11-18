@@ -36,6 +36,14 @@ class _OperatorBase(ABC):
   def __repr__(self):
     return "<CeedOperator instance at " + hex(id(self)) + ">"
 
+  # String conversion for print() to stdout
+  def __str__(self):
+    """View a Basis via print()."""
+
+    # libCEED call
+    lib.CeedOperatorView(self._pointer[0], sys.stdout)
+    return ""
+
   # Apply CeedOperator
   def apply(self, u, v, request=REQUEST_IMMEDIATE):
     """Apply Operator to a vector."""
