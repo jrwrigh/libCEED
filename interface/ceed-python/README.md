@@ -42,3 +42,27 @@ python setup.py build_ext
 python setup.py develop
 
 ```
+
+# t500
+
+To Run t500:
+1) Build libCEED
+2) in `interface/ceed-python/ceed_cffi`
+```
+python setup.py build_ext
+python setup.py develop --user
+```
+3) in `interface/ceed-python/libceed`
+
+```
+python setup.py build
+python setup.py develop --user
+```
+4) in `interface/ceed-python/tests`
+
+```
+python setup-qfunctions.py build
+python setup.py install --user
+```
+5) copy `build/lib.*/libceed_qfunctions.cpython*.so` to `qfs.so`
+6) run `python t500-operator-py.py /cpu/self`
