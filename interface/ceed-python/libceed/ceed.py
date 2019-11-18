@@ -110,9 +110,9 @@ class Ceed():
     """CeedQFunctionByName: independent operations at quadrature points from gallery."""
     return QFunctionByName(self, name)
 
-  def IdentityQFunction(self, size):
+  def IdentityQFunction(self, size, inmode, outmode):
     """CeedIdenityQFunction: identity qfunction operation."""
-    return IdentityQFunction(self, size)
+    return IdentityQFunction(self, size, inmode, outmode)
 
   # CeedOperator
   def Operator(self, qf, dqf, qdfT):

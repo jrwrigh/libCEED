@@ -21,10 +21,10 @@ if __name__ == "__main__":
 
   r.apply(x, y)
 
-  y_array = y.get_array()
+  y_array = y.get_array_read()
   for i in range(2*ne):
     if (10+i != y_array[i]):
       # LCOV_EXCL_START
       print("Error in restricted array y[%d] = %f"%(i, y_array[i]))
   # LCOV_EXCL_STOP
-  y.restore_array()
+  y.restore_array_read()

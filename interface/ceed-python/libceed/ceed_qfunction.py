@@ -37,17 +37,31 @@ class _QFunctionBase(ABC):
 
   # String conversion for print() to stdout
   def __str__(self):
-    """View a Basis via print()."""
+    """View a QFunction via print()."""
 
     # libCEED call
     lib.CeedQFunctionView(self._pointer[0], sys.stdout)
     return ""
 
   # Apply CeedQFunction
-  def apply(self, q, u, v):
+  def apply(self, q, inputs, outputs):
     """Apply the action of a QFunction."""
+
+    # Array of vectors
+    invecs = ffi.new("CeedVector[16]")
+    for i in range(min(16, len(inputs))):
+      invecs[i] = inputs[i]._pointer[0]
+    outvecs = ffi.new("CeedVector[16]")
+    for i in range(min(16, len(outputs))):
+      outvecs[i] = outputs[i]._pointer[0]
+
     # libCEED call
-    lib.CeedQFunctionApply(self._pointer[0], q, u._pointer[0], v._pointer[0])
+    lib.CeedQFunctionApply(self._pointer[0], q, invecs, outvecs)
+
+    # Clean-up
+    ffi.release(invecs)
+    ffi.release(outvecs)
+
 
 # ------------------------------------------------------------------------------
 class QFunction(_QFunctionBase):
@@ -86,22 +100,22 @@ class QFunctionByName(_QFunctionBase):
   # Constructor
   def __init__(self, ceed, name):
     # libCEED object
-    self.pointer = ffi.new("CeedQFunction *")
+    self._pointer = ffi.new("CeedQFunction *")
 
     # Reference to Ceed
     self._ceed = ceed
 
     # libCEED call
     nameAscii = ffi.new("char[]", name.encode('ascii'))
-    lib.CeedQFunctionCreateByName(self._ceed._pointer[0], nameAscii,
-                                  self._pointer)
+    lib.CeedQFunctionCreateInteriorByName(self._ceed._pointer[0], nameAscii,
+                                          self._pointer)
 
 # ------------------------------------------------------------------------------
 class IdentityQFunction(_QFunctionBase):
   """Ceed IdentityQFunction: identity qfunction operation."""
 
   # Constructor
-  def __init__(self, ceed, size):
+  def __init__(self, ceed, size, inmode, outmode):
     # libCEED object
     self._pointer = ffi.new("CeedQFunction *")
 
@@ -109,6 +123,7 @@ class IdentityQFunction(_QFunctionBase):
     self._ceed = ceed
 
     # libCEED call
-    lib.CeedQFunctionCreateIdentity(self._ceed._pointer[0], size, self._pointer)
+    lib.CeedQFunctionCreateIdentity(self._ceed._pointer[0], size, inmode,
+                                    outmode, self._pointer)
 
 # ------------------------------------------------------------------------------

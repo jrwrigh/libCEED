@@ -17,13 +17,16 @@
 import os
 from distutils.core import setup, Extension
 
-qfmodule = Extension('libceed-qfunctions',
-                     include_dirs=[os.path.abspath("../../../include")],
-                     libraries=['ceed'],
-                     library_dirs=[os.path.abspath("../../../lib")],
-                     runtime_library_dirs=[os.path.abspath("../../../lib")],
-                     sources=['libceed-qfunctions.c'])
+qf_module = Extension('libceed_qfunctions',
+                      include_dirs=[os.path.abspath("../../../include")],
+                      libraries=['ceed'],
+                      library_dirs=[os.path.abspath("../../../lib")],
+                      runtime_library_dirs=[os.path.abspath("../../../lib")],
+                      sources=['libceed-qfunctions.c'],
+                      extra_compile_args=["-O3", "-std=c99",
+                                          "-Wno-unused-variable",
+                                          "-Wno-unused-function"])
 
 setup (name = 'libceed_qfunctions',
        description = 'libceed qfunction pointers',
-       ext_modules = [qfmodule])
+       ext_modules = [qf_module])

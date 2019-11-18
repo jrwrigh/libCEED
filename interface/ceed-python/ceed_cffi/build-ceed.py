@@ -172,13 +172,14 @@ typedef int (*CeedQFunctionUser)(void *ctx, const CeedInt Q,
   int CeedQFunctionCreateInteriorByName(Ceed ceed, const char *name,
     CeedQFunction *qf);
   int CeedQFunctionCreateIdentity(Ceed ceed, CeedInt size,
-    CeedQFunction *qf);
+    CeedEvalMode inmode, CeedEvalMode outmode, CeedQFunction *qf);
   int CeedQFunctionAddInput(CeedQFunction qf, const char *fieldname,
                                       CeedInt size, CeedEvalMode emode);
   int CeedQFunctionAddOutput(CeedQFunction qf, const char *fieldname,
                                        CeedInt size, CeedEvalMode emode);
   int CeedQFunctionSetContext(CeedQFunction qf, void *ctx,
                                         size_t ctxsize);
+  int CeedQFunctionView(CeedQFunction qf, FILE *stream);
   int CeedQFunctionApply(CeedQFunction qf, CeedInt Q,
                                    CeedVector *u, CeedVector *v);
   int CeedQFunctionDestroy(CeedQFunction *qf);
@@ -199,6 +200,7 @@ typedef int (*CeedQFunctionUser)(void *ctx, const CeedInt Q,
     CeedVector *assembled, CeedElemRestriction *rstr, CeedRequest *request);
   int CeedOperatorAssembleLinearDiagonal(CeedOperator op,
     CeedVector *assembled, CeedRequest *request);
+  int CeedOperatorView(CeedOperator op, FILE *stream);
   int CeedOperatorApply(CeedOperator op, CeedVector in,
                                   CeedVector out, CeedRequest *request);
   int CeedOperatorDestroy(CeedOperator *op);

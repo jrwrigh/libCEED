@@ -20,11 +20,11 @@ if __name__ == "__main__":
 
   mult = r.get_multiplicity()
 
-  mult_array = mult.get_array()
+  mult_array = mult.get_array_read()
   for i in range(3*ne+1):
     val = 1 + (1 if (i > 0 and i < 3*ne and i%3 == 0) else 0)
     if (val != mult_array[i]):
       # LCOV_EXCL_START
       print("Error in multiplicity array mult[%d] = %f"%(i, mult_array[i]))
   # LCOV_EXCL_STOP
-  mult.restore_array()
+  mult.restore_array_read()

@@ -38,7 +38,7 @@ class _OperatorBase(ABC):
 
   # String conversion for print() to stdout
   def __str__(self):
-    """View a Basis via print()."""
+    """View a Operator via print()."""
 
     # libCEED call
     lib.CeedOperatorView(self._pointer[0], sys.stdout)
