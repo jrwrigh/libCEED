@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
   bxg.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, X, Xq)
   bug.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_INTERP, U, Uq)
-  bug.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_WEIGHT, libceed.VECTOR_NULL, W)
+  bug.apply(1, libceed.NOTRANSPOSE, libceed.EVAL_WEIGHT, libceed.VECTOR_NONE, W)
 
   w = W.get_array_read()
   uq = Uq.get_array_read()
