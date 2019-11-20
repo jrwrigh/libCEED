@@ -47,7 +47,15 @@ class _OperatorBase(ABC):
 
   # Apply CeedOperator
   def apply(self, u, v, request=REQUEST_IMMEDIATE):
-    """Apply Operator to a vector."""
+    """Apply Operator to a vector.
+
+       Args:
+         u: Vector containing input state or CEED_VECTOR_NONE if there are no
+              active inputs
+         v: Vector to store result of applying operator (must be distinct from u)
+              or CEED_VECTOR_NONE if there are no active outputs
+         **request: Ceed request, default CEED_REQUEST_IMMEDIATE"""
+
     # libCEED call
     lib.CeedOperatorApply(self._pointer[0], u._pointer[0], v._pointer[0],
                           request)
@@ -72,7 +80,23 @@ class Operator(_OperatorBase):
 
   # Add field to CeedOperator
   def set_field(self, fieldname, restriction, basis, vector, lmode=NOTRANSPOSE):
-    """Provide a field to a Operator for use by its QFunction."""
+    """Provide a field to a Operator for use by its QFunction.
+
+       Args:
+         fieldname: name of the field (to be matched with the same name used
+                      by QFunction
+         restriction: ElemRestriction
+         basis: Basis in which the field resides or CEED_BASIS_COLLOCATED
+                  if collocated with quadrature points
+         vector: Vector to be used by Operator or CEED_VECTOR_ACTIVE
+                   if field is active or CEED_VECTOR_NONE if using
+                   CEED_EVAL_WEIGHT in the QFunction
+         **lmode: CeedTransposeMode which specifies the ordering of the
+                    components of the l-vector used by this CeedOperatorField,
+                    CEED_NOTRANSPOSE indicates the component is the
+                    outermost index and CEED_TRANSPOSE indicates the component
+                    is the innermost index in ordering of the local vector,
+                    default CEED_NOTRANSPOSE"""
 
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
@@ -97,7 +121,10 @@ class CompositeOperator(_OperatorBase):
 
   # Add sub operators
   def add_sub(self, subop):
-    """Add a sub-operator to a composite CeedOperator."""
+    """Add a sub-operator to a composite CeedOperator.
+
+       Args:
+         subop: sub-operator Operator"""
 
     # libCEED call
     lib.CeedOperatorAddSup(self._pointer[0], subop._pointer[0])

@@ -42,7 +42,18 @@ class _BasisBase(ABC):
 
   # Apply Basis
   def apply(self, nelem, emode, u, v, tmode=NOTRANSPOSE):
-    """Apply basis evaluation from nodes to quadrature points or vice-versa."""
+    """Apply basis evaluation from nodes to quadrature points or vice-versa.
+
+       Args:
+         nelem: the number of elements to apply the basis evaluation to;
+                  the backend will specify the ordering in a
+                  Blocked ElemRestriction
+         emode: basis evaluation mode
+         u: input vector
+         v: output vector
+         **tmode: CEED_NOTRANSPOSE to evaluate from nodes to quadrature
+                    points, CEED_TRANSPOSE to apply the transpose, mapping
+                    from quadrature points to nodes, default CEED_NOTRANSPOSE"""
 
     # libCEED call
     lib.CeedBasisApply(self._pointer[0], nelem, tmode, emode,
@@ -64,7 +75,10 @@ class _BasisBase(ABC):
 
   # Get number of nodes
   def get_num_nodes(self):
-    """Get total number of nodes (in dim dimensions) of a Basis."""
+    """Get total number of nodes (in dim dimensions) of a Basis.
+
+       Returns:
+         num_nodes: total number of nodes"""
 
     # Setup argument
     p_pointer = ffi.new("CeedInt *")
@@ -76,7 +90,10 @@ class _BasisBase(ABC):
 
   # Get number of quadrature points
   def get_num_quadrature_points(self):
-    """Get total number of quadrature points (in dim dimensions) of a Basis"""
+    """Get total number of quadrature points (in dim dimensions) of a Basis.
+
+       Returns:
+         num_qpts: total number of quadrature points"""
 
     # Setup argument
     q_pointer = ffi.new("CeedInt *")
@@ -88,12 +105,20 @@ class _BasisBase(ABC):
 
   # Gauss quadrature
   @staticmethod
-  def gauss_quadrature(Q):
-    """Construct a Gauss-Legendre quadrature."""
+  def gauss_quadrature(q):
+    """Construct a Gauss-Legendre quadrature.
+
+       Args:
+         Q: number of quadrature points (integrates polynomials of
+              degree 2*Q-1 exactly)
+
+       Returns:
+         (qref1d, qweight1d): array of length Q to hold the abscissa on [-1, 1]
+                                and array of length Q to hold the weights"""
 
     # Setup arguments
-    qref1d = np.empty(Q, dtype="float64")
-    qweight1d = np.empy(Q, dtype="float64")
+    qref1d = np.empty(q, dtype="float64")
+    qweight1d = np.empy(q, dtype="float64")
 
     qref1d_pointer = ffi.new("CeedScalar *")
     qref1d_pointer = ffi.cast("CeedScalar *", qref1d.__array_interface__['data'][0])
@@ -102,33 +127,48 @@ class _BasisBase(ABC):
     qweight1d_pointer = ffi.cast("CeedScalar *", qweight1d.__array_interface__['data'][0])
 
     # libCEED call
-    lib.CeedGaussQuadrature(Q, qref1d_pointer, qweight1d_pointer)
+    lib.CeedGaussQuadrature(q, qref1d_pointer, qweight1d_pointer)
 
     return qref1d, qweight1d
 
   # Lobatto quadrature
   @staticmethod
-  def lobatto_quadrature(Q):
-    """Construct a Gauss-Legendre-Lobatto quadrature."""
+  def lobatto_quadrature(q):
+    """Construct a Gauss-Legendre-Lobatto quadrature.
+
+       Args:
+         q: number of quadrature points (integrates polynomials of
+              degree 2*Q-3 exactly)
+
+       Returns:
+         (qref1d, qweight1d): array of length Q to hold the abscissa on [-1, 1]
+                                and array of length Q to hold the weights"""
 
     # Setup arguments
-    qref1d = np.empty(Q, dtype="float64")
+    qref1d = np.empty(q, dtype="float64")
     qref1d_pointer = ffi.new("CeedScalar *")
     qref1d_pointer = ffi.cast("CeedScalar *", qref1d.__array_interface__['data'][0])
 
-    qweight1d = np.empy(Q, dtype="float64")
+    qweight1d = np.empy(q, dtype="float64")
     qweight1d_pointer = ffi.new("CeedScalar *")
     qweight1d_pointer = ffi.cast("CeedScalar *", qweight1d.__array_interface__['data'][0])
 
     # libCEED call
-    lib.CeedLobattoQuadrature(Q, qref1d_pointer, qweight1d_pointer)
+    lib.CeedLobattoQuadrature(q, qref1d_pointer, qweight1d_pointer)
 
     return qref1d, qweight1d
 
   # QR factorization
   @staticmethod
   def qr_factorization(ceed, mat, tau, m, n):
-    """Return QR Factorization of matrix."""
+    """Return QR Factorization of matrix.
+
+       Args:
+         ceed: Ceed context currently in use
+         *mat: Numpy array holding row-major matrix to be factorized in place
+         *tau: Numpy array to hold vector of lengt m of scaling factors
+         m: number of rows
+         n: numbef of columns"""
 
     # Setup arguments
     mat_pointer = ffi.new("CeedScalar *")
@@ -145,25 +185,45 @@ class _BasisBase(ABC):
   # Symmetric Schur decomposition
   @staticmethod
   def symmetric_schur_decomposition(ceed, mat, n):
-    """Return symmetric Schur decomposition of a symmetric matrix mat."""
+    """Return symmetric Schur decomposition of a symmetric matrix mat.
+
+       Args:
+         ceed: Ceed context currently in use
+         *mat: Numpy array holding row-major matrix to be factorized in place
+         n: number of rows/columns
+
+       Returns:
+         lbda: Numpy array of length n holding eigenvalues"""
 
     # Setup arguments
     mat_pointer = ffi.new("CeedScalar *")
     mat_pointer = ffi.cast("CeedScalar *", mat.__array_interface__['data'][0])
 
-    l = np.empty(n, dtype="float64")
+    lbda = np.empty(n, dtype="float64")
     l_pointer = ffi.new("CeedScalar *")
     l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
 
     # libCEED call
     lib.CeedSymmetricSchurDecomposition(ceed._pointer[0], mat_pointer, l_pointer, n)
 
-    return l
+    return lbda
 
   # Simultaneous Diagonalization
   @staticmethod
   def simultaneous_diagonalization(ceed, matA, matB, n):
-    """Return Simultaneous Diagonalization of two matrices."""
+    """Return Simultaneous Diagonalization of two matrices.
+
+       Args:
+         ceed: Ceed context currently in use
+         *matA: Numpy array holding row-major matrix to be factorized with
+                  eigenvalues
+         *matB: Numpy array holding row-major matrix to be factorized to identity
+         n: number of rows/columns
+
+       Returns:
+         (x, lbda): Numpy array holding row-major orthogonal matrix and
+                      Numpy array holding vector of length n of generalized
+                      eigenvalues"""
 
     # Setup arguments
     matA_pointer = ffi.new("CeedScalar *")
@@ -172,7 +232,7 @@ class _BasisBase(ABC):
     matB_pointer = ffi.new("CeedScalar *")
     matB_pointer = ffi.cast("CeedScalar *", matB.__array_interface__['data'][0])
 
-    l = np.empty(n, dtype="float64")
+    lbda = np.empty(n, dtype="float64")
     l_pointer = ffi.new("CeedScalar *")
     l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
 
@@ -184,7 +244,7 @@ class _BasisBase(ABC):
     lib.CeedSimultaneousDiagonalization(ceed._pointer[0], matA_pointer, matB_pointer,
                                         x_pointer, l_pointer, n)
 
-    return x, l
+    return x, lbda
 
   # Destructor
   def __del__(self):
@@ -285,7 +345,15 @@ class TransposeBasis():
 
   # Apply Transpose Basis
   def apply(self, nelem, emode, u, v):
-    """Apply basis evaluation from quadrature points to nodes."""
+    """Apply basis evaluation from quadrature points to nodes.
+
+       Args:
+         nelem: the number of elements to apply the basis evaluation to;
+                  the backend will specify the ordering in a
+                  Blocked ElemRestriction
+         emode: basis evaluation mode
+         u: input vector
+         v: output vector"""
 
     # libCEED call
     self._basis.apply(nelem, emode, u, v, tmode=TRANSPOSE)

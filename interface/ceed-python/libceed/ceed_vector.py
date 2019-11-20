@@ -60,7 +60,13 @@ class Vector():
   # Set Vector's data array
   def set_array(self, array, memtype=MEM_HOST, cmode=COPY_VALUES):
     """Set the array used by a Vector, freeing any previously allocated
-       array if applicable."""
+       array if applicable.
+
+       Args:
+         *array: Numpy array to be used
+         **memtype: memory type of the array being passed, default CEED_MEM_HOST
+         **cmode: copy mode for the array, default CEED_COPY_VALUES"""
+
     # Setup the numpy array for the libCEED call
     array_pointer = ffi.new("CeedScalar *")
     array_pointer = ffi.cast("CeedScalar *", array.__array_interface__['data'][0])
@@ -70,7 +76,13 @@ class Vector():
 
   # Get Vector's data array
   def get_array(self, memtype=MEM_HOST):
-    """Get read/write access to a Vector via the specified memory type."""
+    """Get read/write access to a Vector via the specified memory type.
+
+       Args:
+         **memtype: memory type of the array being passed, default CEED_MEM_HOST
+
+       Returns:
+         array: Numpy array"""
 
     # Retrieve the length of the array
     length_pointer = ffi.new("CeedInt *")
@@ -89,7 +101,13 @@ class Vector():
 
   # Get Vector's data array in read-only mode
   def get_array_read(self, memtype=MEM_HOST):
-    """Get read-only access to a Vector via the specified memory type."""
+    """Get read-only access to a Vector via the specified memory type.
+
+       Args:
+         **memtype: memory type of the array being passed, default CEED_MEM_HOST
+
+       Returns:
+         array: Numpy array"""
 
     # Retrieve the length of the array
     length_pointer = ffi.new("CeedInt *")
@@ -112,6 +130,7 @@ class Vector():
   # Restore the Vector's data array
   def restore_array(self):
     """Restore an array obtained using get_array()."""
+
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
@@ -121,6 +140,7 @@ class Vector():
   # Restore an array obtained using getArrayRead
   def restore_array_read(self):
     """Restore an array obtained using get_array_read()."""
+
     # Setup the pointer's pointer
     array_pointer = ffi.new("CeedScalar **")
 
@@ -129,7 +149,25 @@ class Vector():
 
   # Get the length of a Vector
   def get_length(self):
-    """Get the length of a Vector."""
+    """Get the length of a Vector.
+
+       Returns:
+         length: length of the Vector"""
+
+    length_pointer = ffi.new("CeedInt *")
+
+    # libCEED call
+    lib.CeedVectorGetLength(self._pointer[0], length_pointer)
+
+    return length_pointer[0]
+
+  # Get the length of a Vector
+  def __len__(self):
+    """Get the length of a Vector.
+
+       Returns:
+         length: length of the Vector"""
+
     length_pointer = ffi.new("CeedInt *")
 
     # libCEED call
@@ -139,14 +177,20 @@ class Vector():
 
   # Set the Vector to a given constant value
   def set_value(self, value):
-    """Set the Vector to a constant value."""
+    """Set the Vector to a constant value.
+
+       Args:
+         value: value to be used"""
 
     # libCEED call
     lib.CeedVectorSetValue(self._pointer[0], value)
 
   # Sync the Vector to a specified memtype
   def sync_array(self, memtype):
-    """Sync the Vector to a specified memtype."""
+    """Sync the Vector to a specified memtype.
+
+       Args:
+         memtype: memtype to be synced"""
 
     # libCEED call
     lib.CeedVectorSyncArray(self._pointer[0], memtype)

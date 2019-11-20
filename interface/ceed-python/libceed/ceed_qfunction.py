@@ -47,7 +47,12 @@ class _QFunctionBase(ABC):
 
   # Apply CeedQFunction
   def apply(self, q, inputs, outputs):
-    """Apply the action of a QFunction."""
+    """Apply the action of a QFunction.
+
+       Args:
+         q: number of quadrature points
+         *inputs: array of input data vectors
+         *outputs: array of output data vectors"""
 
     # Array of vectors
     invecs = ffi.new("CeedVector[16]")
@@ -87,7 +92,11 @@ class QFunction(_QFunctionBase):
 
   # Set context data
   def set_context(self, ctx):
-    """Set global context for a QFunction."""
+    """Set global context for a QFunction.
+
+       Args:
+         *ctx: Numpy array holding context data to set"""
+
     # Setup the numpy array for the libCEED call
     ctx_pointer = ffi.new("CeedScalar *")
     ctx_pointer = ffi.cast("void *", ctx.__array_interface__['data'][0])
@@ -97,13 +106,31 @@ class QFunction(_QFunctionBase):
 
   # Add fields to CeedQFunction
   def add_input(self, fieldname, size, emode):
-    """Add a QFunction input."""
+    """Add a QFunction input.
+
+       Args:
+         fieldname: name of QFunction field
+         size: size of QFunction field, ncomp * (dim for CEED_EVAL_GRAD or
+                 1 for CEED_EVAL_NONE and CEED_EVAL_INTERP)
+         emode: CEED_EVAL_NONE to use values directly,
+                  CEED_EVAL_INTERP to use interpolated values,
+                  CEED_EVAL_GRAD to use gradients."""
+
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
     lib.CeedQFunctionAddInput(self._pointer[0], fieldnameAscii, size, emode)
 
   def add_output(self, fieldname, size, emode):
-    """Add a QFunction output."""
+    """Add a QFunction output.
+
+       Args:
+         fieldname: name of QFunction field
+         size: size of QFunction field, ncomp * (dim for CEED_EVAL_GRAD or
+                 1 for CEED_EVAL_NONE and CEED_EVAL_INTERP)
+         emode: CEED_EVAL_NONE to use values directly,
+                  CEED_EVAL_INTERP to use interpolated values,
+                  CEED_EVAL_GRAD to use gradients."""
+
     # libCEED call
     fieldnameAscii = ffi.new("char[]", fieldname.encode('ascii'))
     lib.CeedQFunctionAddOutput(self._pointer[0], fieldnameAscii, size, emode)
