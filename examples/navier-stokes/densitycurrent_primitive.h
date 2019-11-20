@@ -395,7 +395,7 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
                              Fu[Fuviscidx[j][2]]*dXdx[k][2]);
     // -- Total Energy Density
     // ---- (E + P) u
-    const CeedScalar E = rho*(cv + ke);
+    const CeedScalar E = rho*(cv * T + ke);
     for (int j=0; j<3; j++)
       dv[j][4][i]  -= wJ * (E + P) * (u[0]*dXdx[j][0] + u[1]*dXdx[j][1] +
                                      u[2]*dXdx[j][2]);
