@@ -271,7 +271,9 @@ class TransposeBasis():
   """Transpose Ceed Basis: fully discrete finite element-like objects."""
 
   # Attributes
-  _basis = None  # Constructor
+  _basis = None
+
+  # Constructor
   def __init__(self, basis):
 
     # Reference basis
@@ -281,7 +283,7 @@ class TransposeBasis():
   def __repr__(self):
     return "<Transpose CeedBasis instance at " + hex(id(self)) + ">"
 
-  # Apply Basis
+  # Apply Transpose Basis
   def apply(self, nelem, emode, u, v):
     """Apply basis evaluation from quadrature points to nodes."""
 

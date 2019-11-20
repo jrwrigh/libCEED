@@ -25,11 +25,11 @@ from ceed_vector import _VectorWrap
 
 # ------------------------------------------------------------------------------
 class _ElemRestrictionBase(ABC):
+  """Ceed ElemRestriction: restriction from local vectors to elements."""
 
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
-  _tmode = NOTRANSPOSE
 
   # Destructor
   def __del__(self):
@@ -38,7 +38,7 @@ class _ElemRestrictionBase(ABC):
 
   # Representation
   def __repr__(self):
-    return "<" + _tmode + " CeedElemRestriction instance at " + hex(id(self)) + ">"
+    return "<CeedElemRestriction instance at " + hex(id(self)) + ">"
 
   # String conversion for print() to stdout
   def __str__(self):
@@ -49,30 +49,26 @@ class _ElemRestrictionBase(ABC):
     return ""
 
   # Apply CeedElemRestriction
-  def apply(self, u, v, request=REQUEST_IMMEDIATE, lmode=NOTRANSPOSE):
+  def apply(self, u, v, request=REQUEST_IMMEDIATE, lmode=NOTRANSPOSE,
+            tmode=NOTRANSPOSE):
     """Restrict an L-vector to an E-vector or apply its transpose."""
     # libCEED call
-    lib.CeedElemRestrictionApply(self._pointer[0], self._tmode, lmode,
+    lib.CeedElemRestrictionApply(self._pointer[0], tmode, lmode,
                                  u._pointer[0], v._pointer[0], request)
-
-    # Reset tmode
-    self._tmode = NOTRANSPOSE
 
   # Transpose an ElemRestriction
   @property
   def T(self):
     """Transpose an ElemRestriction."""
 
-    self._tmode = TRANSPOSE
-    return self
+    return TransposeElemRestriction(self)
 
   # Transpose an ElemRestriction
   @property
   def transpose(self):
     """Transpose an ElemRestriction."""
 
-    self._tmode = TRANSPOSE
-    return self
+    return TransposeElemRestriction(self)
 
   # Create restriction vectors
   def create_vector(self, createLvec = True, createEvec = True):
@@ -147,7 +143,7 @@ class IdentityElemRestriction(_ElemRestrictionBase):
 
 # ------------------------------------------------------------------------------
 class BlockedElemRestriction(_ElemRestrictionBase):
-  """Ceed BlockedElemRestriction: blocked restriction from vectors to elements."""
+  """Ceed Blocked ElemRestriction: blocked restriction from vectors to elements."""
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, blksize, nnodes, ncomp, indices,
@@ -169,16 +165,66 @@ class BlockedElemRestriction(_ElemRestrictionBase):
                                          memtype, cmode, indices_pointer,
                                          self._pointer)
 
+  # Transpose a Blocked ElemRestriction
+  @property
+  def T(self):
+    """Transpose an ElemRestriction."""
+
+    return TransposeBlockedElemRestriction(self)
+
+  # Transpose a Blocked ElemRestriction
+  @property
+  def transpose(self):
+    """Transpose an ElemRestriction."""
+
+    return TransposeBlockedElemRestriction(self)
+
   # Apply CeedElemRestriction to single block
-  def apply_block(self, block, u, v, lmode=NOTRANSPOSE,
+  def apply_block(self, block, u, v, lmode=NOTRANSPOSE, tmode=NOTRANSPOSE,
                   request=REQUEST_IMMEDIATE):
     """Restrict an L-vector to a block of an E-vector or apply its transpose."""
     # libCEED call
-    lib.CeedElemRestrictionApplyBlock(self._pointer[0], block, self._tmode,
+    lib.CeedElemRestrictionApplyBlock(self._pointer[0], block, tmode,
                                       lmode, u._pointer[0], v._pointer[0],
                                       request)
 
-    # Reset tmode
-    self._tmode = NOTRANSPOSE
+# ------------------------------------------------------------------------------
+class TransposeElemRestriction():
+  """Ceed ElemRestriction: restriction from local vectors to elements."""
+
+  # Attributes
+  _elemrestriction = None
+
+  # Constructor
+  def __init__(self, elemrestriction):
+
+    # Reference elemrestriction
+    self._elemrestriction = elemrestriction
+
+  # Representation
+  def __repr__(self):
+    return "<Transpose CeedElemRestriction instance at " + hex(id(self)) + ">"
+
+
+  # Apply Transpose CeedElemRestriction
+  def apply(self, u, v, request=REQUEST_IMMEDIATE, lmode=NOTRANSPOSE):
+    """Restrict an E-vector to an L-vector."""
+
+    # libCEED call
+    self._elemrestriction.apply(u, v, request=request, lmode=lmode,
+                                tmode=TRANSPOSE)
+
+# ------------------------------------------------------------------------------
+class TransposeBlockedElemRestriction(TransposeElemRestriction):
+  """Transpose Ceed Blocked ElemRestriction: blocked restriction from vectors to elements."""
+
+  # Apply Transpose CeedElemRestriction
+  def apply_block(self, block, u, v, request=REQUEST_IMMEDIATE,
+                  lmode=NOTRANSPOSE):
+    """Restrict a block of an E-vector to a L-vector."""
+
+    # libCEED call
+    self._elemrestriction.apply_block(block, u, v, request=request, lmode=lmode,
+                                tmode=TRANSPOSE)
 
 # ------------------------------------------------------------------------------
