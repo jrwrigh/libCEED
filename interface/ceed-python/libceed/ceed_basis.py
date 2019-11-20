@@ -21,7 +21,7 @@ from abc import ABC
 from ceed_constants import TRANSPOSE, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
-class Basis(ABC):
+class _BasisBase(ABC):
   """Ceed Basis: fully discrete finite element-like objects."""
 
   # Attributes
@@ -192,7 +192,7 @@ class Basis(ABC):
     lib.CeedBasisDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisTensorH1(Basis):
+class BasisTensorH1(_BasisBase):
   """Ceed Basis: fully discrete finite element-like objects with a tensor product H^1 descretizations."""
 
   # Constructor
@@ -222,7 +222,7 @@ class BasisTensorH1(Basis):
                                 qweight1d_pointer, self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisTensorH1Lagrange(Basis):
+class BasisTensorH1Lagrange(_BasisBase):
   """Ceed Basis: fully discrete finite element-like objects with a tensor product Lagrange basis."""
 
   # Constructor
@@ -238,7 +238,7 @@ class BasisTensorH1Lagrange(Basis):
                                         Q, qmode, self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisH1(Basis):
+class BasisH1(_BasisBase):
   """Ceed Basis: fully discrete finite element-like objects with a H^1 descretization."""
 
   # Constructor
