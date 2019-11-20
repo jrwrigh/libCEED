@@ -1,18 +1,18 @@
-// Copyright (c) 2017, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-734707. All Rights
-// reserved. See files LICENSE and NOTICE for details.
-//
-// This file is part of CEED, a collection of benchmarks, miniapps, software
-// libraries and APIs for efficient high-order finite element and spectral
-// element discretizations for exascale applications. For more information and
-// source code availability see http://github.com/ceed.
-//
-// The CEED research is supported by the Exascale Computing Project 17-SC-20-SC,
-// a collaborative effort of two U.S. Department of Energy organizations (Office
-// of Science and the National Nuclear Security Administration) responsible for
-// the planning and preparation of a capable exascale ecosystem, including
-// software, applications, hardware, advanced system engineering and early
-// testbed platforms, in support of the nation's exascale computing imperative.
+/// Copyright (c) 2017, Lawrence Livermore National Security, LLC. Produced at
+/// the Lawrence Livermore National Laboratory. LLNL-CODE-734707. All Rights
+/// reserved. See files LICENSE and NOTICE for details.
+///
+/// This file is part of CEED, a collection of benchmarks, miniapps, software
+/// libraries and APIs for efficient high-order finite element and spectral
+/// element discretizations for exascale applications. For more information and
+/// source code availability see http://github.com/ceed.
+///
+/// The CEED research is supported by the Exascale Computing Project 17-SC-20-SC,
+/// a collaborative effort of two U.S. Department of Energy organizations (Office
+/// of Science and the National Nuclear Security Administration) responsible for
+/// the planning and preparation of a capable exascale ecosystem, including
+/// software, applications, hardware, advanced system engineering and early
+/// testbed platforms, in support of the nation's exascale computing imperative.
 
 /// @file
 /// Public header for user and utility components of libCEED
@@ -77,7 +77,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// We can discuss ways to avoid forcing these to be compile-time decisions, but let's leave that for later.
+/// We can discuss ways to avoid forcing these to be compile-time decisions, but let's leave that for later.
 /// Integer type, used for indexing
 /// @ingroup Ceed
 typedef int32_t CeedInt;
@@ -128,8 +128,8 @@ CEED_EXTERN int CeedErrorImpl(Ceed, const char *, int, const char *, int,
 /// @ingroup Ceed
 /// @sa CeedSetErrorHandler()
 #if defined(__clang__)
-// Use nonstandard ternary to convince the compiler/clang-tidy that this
-// function never returns zero.
+/// Use nonstandard ternary to convince the compiler/clang-tidy that this
+/// function never returns zero.
 #  define CeedError(ceed, ecode, ...)                                     \
   (CeedErrorImpl((ceed), __FILE__, __LINE__, __func__, (ecode), __VA_ARGS__) ?: (ecode))
 #else
@@ -247,9 +247,9 @@ CEED_EXTERN int CeedElemRestrictionGetMultiplicity(CeedElemRestriction rstr,
 CEED_EXTERN int CeedElemRestrictionView(CeedElemRestriction rstr, FILE *stream);
 CEED_EXTERN int CeedElemRestrictionDestroy(CeedElemRestriction *rstr);
 
-// The formalism here is that we have the structure
-//   \int_\Omega v^T f_0(u, \nabla u, qdata) + (\nabla v)^T f_1(u, \nabla u, qdata)
-// where gradients are with respect to the reference element.
+/// The formalism here is that we have the structure
+///   \int_\Omega v^T f_0(u, \nabla u, qdata) + (\nabla v)^T f_1(u, \nabla u, qdata)
+/// where gradients are with respect to the reference element.
 
 /// Basis evaluation mode
 ///
