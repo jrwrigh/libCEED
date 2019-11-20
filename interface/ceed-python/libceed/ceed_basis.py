@@ -21,13 +21,12 @@ from abc import ABC
 from ceed_constants import TRANSPOSE, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
-class _BasisBase(ABC):
-  """Base class for manipulating finite element bases."""
+class Basis(ABC):
+  """Ceed Basis: fully discrete finite element-like objects."""
 
   # Attributes
   _ceed = ffi.NULL
   _pointer = ffi.NULL
-  _tmode = NOTRANSPOSE
 
   # Representation
   def __repr__(self):
@@ -42,31 +41,26 @@ class _BasisBase(ABC):
     return ""
 
   # Apply Basis
-  def apply(self, nelem, emode, u, v):
-    """Apply basis evaluation from nodes to quadrature points or viceversa."""
+  def apply(self, nelem, emode, u, v, tmode=NOTRANSPOSE):
+    """Apply basis evaluation from nodes to quadrature points or vice-versa."""
 
     # libCEED call
-    lib.CeedBasisApply(self._pointer[0], nelem, self._tmode, emode,
+    lib.CeedBasisApply(self._pointer[0], nelem, tmode, emode,
                        u._pointer[0], v._pointer[0])
 
-    # Reset tmode
-    self._tmode = NOTRANSPOSE
-
-  # Transpose an ElemRestriction
+  # Transpose a Basis
   @property
   def T(self):
-    """Transpose an ElemRestriction."""
+    """Transpose a Basis."""
 
-    self._tmode = TRANSPOSE
-    return self
+    return TransposeBasis(self)
 
-  # Transpose an ElemRestriction
+  # Transpose a Basis
   @property
   def transpose(self):
-    """Transpose an ElemRestriction."""
+    """Transpose a Basis."""
 
-    self._tmode = TRANSPOSE
-    return self
+    return TransposeBasis(self)
 
   # Get number of nodes
   def get_num_nodes(self):
@@ -91,11 +85,6 @@ class _BasisBase(ABC):
     lib.CeedBasisGetNumQuadraturePoints(self._pointer[0], q_pointer)
 
     return q_pointer[0]
-
-# ------------------------------------------------------------------------------
-
-class Basis(_BasisBase):
-  """Class for Basis static methods"""
 
   # Gauss quadrature
   @staticmethod
@@ -135,26 +124,6 @@ class Basis(_BasisBase):
     lib.CeedLobattoQuadrature(Q, qref1d_pointer, qweight1d_pointer)
 
     return qref1d, qweight1d
-
-  # Scalar view
-  @staticmethod
-  def scalar_view(name, m, n, array, format = ffi.NULL, file = sys.stdout):
-    """View an array stored in a CeedBasis."""
-
-    # Check if format is a string before encoding it
-    if type(format) == "str":
-      fstr = format.encode("ascii", "strict")
-    else:
-      fstr = format
-
-    # Setup arguments
-    a_pointer = ffi.new("CeedScalar *")
-    a_pointer = ffi.cast("CeedScalar *", array.__array_interface__['data'][0])
-
-    namestr = name.encode("ascii", "strict")
-
-    # libCEED call
-    CeedScalarView(namestr, fstr, m, n, a_pointer, file)
 
   # QR factorization
   @staticmethod
@@ -224,7 +193,7 @@ class Basis(_BasisBase):
 
 # ------------------------------------------------------------------------------
 class BasisTensorH1(Basis):
-  """Tensor product basis class for H^1 discretizations."""
+  """Ceed Basis: fully discrete finite element-like objects with a tensor product H^1 descretizations."""
 
   # Constructor
   def __init__(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
@@ -254,7 +223,7 @@ class BasisTensorH1(Basis):
 
 # ------------------------------------------------------------------------------
 class BasisTensorH1Lagrange(Basis):
-  """Tensor product Lagrange basis class."""
+  """Ceed Basis: fully discrete finite element-like objects with a tensor product Lagrange basis."""
 
   # Constructor
   def __init__(self, ceed, dim, ncomp, P, Q, qmode):
@@ -270,7 +239,7 @@ class BasisTensorH1Lagrange(Basis):
 
 # ------------------------------------------------------------------------------
 class BasisH1(Basis):
-  """Non tensor product basis class for H^1 discretizations."""
+  """Ceed Basis: fully discrete finite element-like objects with a H^1 descretization."""
 
   # Constructor
   def __init__(self, topo, ncomp, nnodes, nqpts, interp, grad, qref, qweight):
@@ -296,5 +265,27 @@ class BasisH1(Basis):
     lib.CeedBasisCreateH1(self._ceed._pointer[0], topo, ncomp, nnodes, nqpts,
                           interp_pointer, grad_pointer, qref_pointer,
                           qweight_pointer, self._pointer)
+
+# ------------------------------------------------------------------------------
+class TransposeBasis():
+  """Transpose Ceed Basis: fully discrete finite element-like objects."""
+
+  # Attributes
+  _basis = None  # Constructor
+  def __init__(self, basis):
+
+    # Reference basis
+    self._basis = basis
+
+  # Representation
+  def __repr__(self):
+    return "<Transpose CeedBasis instance at " + hex(id(self)) + ">"
+
+  # Apply Basis
+  def apply(self, nelem, emode, u, v):
+    """Apply basis evaluation from quadrature points to nodes."""
+
+    # libCEED call
+    self._basis.apply(nelem, emode, u, v, tmode=TRANSPOSE)
 
 # ------------------------------------------------------------------------------
