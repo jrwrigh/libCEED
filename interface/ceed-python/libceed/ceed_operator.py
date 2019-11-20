@@ -22,6 +22,7 @@ from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
 class _OperatorBase(ABC):
+  """Ceed Operator: composed FE-type operations on vectors."""
 
   # Attributes
   _ceed = ffi.NULL

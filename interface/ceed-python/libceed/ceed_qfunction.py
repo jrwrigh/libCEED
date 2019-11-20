@@ -22,6 +22,7 @@ from abc import ABC
 
 # ------------------------------------------------------------------------------
 class _QFunctionBase(ABC):
+  """Ceed QFunction: independent operations at quadrature points."""
 
   # Attributes
   _ceed = ffi.NULL
@@ -109,7 +110,7 @@ class QFunction(_QFunctionBase):
 
 # ------------------------------------------------------------------------------
 class QFunctionByName(_QFunctionBase):
-  """Ceed QFunctionByName: independent operations at quadrature points from gallery."""
+  """Ceed QFunction By Name: independent operations at quadrature points from gallery."""
 
   # Constructor
   def __init__(self, ceed, name):
@@ -126,7 +127,7 @@ class QFunctionByName(_QFunctionBase):
 
 # ------------------------------------------------------------------------------
 class IdentityQFunction(_QFunctionBase):
-  """Ceed IdentityQFunction: identity qfunction operation."""
+  """Ceed Identity QFunction: identity qfunction operation."""
 
   # Constructor
   def __init__(self, ceed, size, inmode, outmode):

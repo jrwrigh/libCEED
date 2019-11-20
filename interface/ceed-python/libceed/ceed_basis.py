@@ -193,7 +193,7 @@ class _BasisBase(ABC):
 
 # ------------------------------------------------------------------------------
 class BasisTensorH1(_BasisBase):
-  """Ceed Basis: fully discrete finite element-like objects with a tensor product H^1 descretizations."""
+  """Ceed Tensor H1 Basis: fully discrete finite element-like objects with a tensor product H^1 descretizations."""
 
   # Constructor
   def __init__(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
@@ -223,7 +223,7 @@ class BasisTensorH1(_BasisBase):
 
 # ------------------------------------------------------------------------------
 class BasisTensorH1Lagrange(_BasisBase):
-  """Ceed Basis: fully discrete finite element-like objects with a tensor product Lagrange basis."""
+  """Ceed Tensor H1 Lagrange Basis: fully discrete finite element-like objects with a tensor product Lagrange basis."""
 
   # Constructor
   def __init__(self, ceed, dim, ncomp, P, Q, qmode):
@@ -239,7 +239,7 @@ class BasisTensorH1Lagrange(_BasisBase):
 
 # ------------------------------------------------------------------------------
 class BasisH1(_BasisBase):
-  """Ceed Basis: fully discrete finite element-like objects with a H^1 descretization."""
+  """Ceed H1 Basis: fully discrete finite element-like objects with a H^1 descretization."""
 
   # Constructor
   def __init__(self, topo, ncomp, nnodes, nqpts, interp, grad, qref, qweight):

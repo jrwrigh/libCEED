@@ -126,7 +126,7 @@ class ElemRestriction(_ElemRestrictionBase):
 
 # ------------------------------------------------------------------------------
 class IdentityElemRestriction(_ElemRestrictionBase):
-  """Ceed IdentityElemRestriction: identity restriction from vectors to elements."""
+  """Ceed Identity ElemRestriction: identity restriction from local vectors to elements."""
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, nnodes, ncomp):
@@ -143,7 +143,7 @@ class IdentityElemRestriction(_ElemRestrictionBase):
 
 # ------------------------------------------------------------------------------
 class BlockedElemRestriction(_ElemRestrictionBase):
-  """Ceed Blocked ElemRestriction: blocked restriction from vectors to elements."""
+  """Ceed Blocked ElemRestriction: blocked restriction from local vectors to elements."""
 
   # Constructor
   def __init__(self, ceed, nelem, elemsize, blksize, nnodes, ncomp, indices,
@@ -216,7 +216,7 @@ class TransposeElemRestriction():
 
 # ------------------------------------------------------------------------------
 class TransposeBlockedElemRestriction(TransposeElemRestriction):
-  """Transpose Ceed Blocked ElemRestriction: blocked restriction from vectors to elements."""
+  """Transpose Ceed Blocked ElemRestriction: blocked restriction from elements to local vectors."""
 
   # Apply Transpose CeedElemRestriction
   def apply_block(self, block, u, v, request=REQUEST_IMMEDIATE,
