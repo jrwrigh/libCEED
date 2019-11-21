@@ -13,7 +13,7 @@ python setup.py build
 python setup.py install
 ```
 
-in *both* `interface/ceed-python/ceed-cffi` and `interface/ceed-python/libceed`
+in *both* `interface/ceed-python/ceed-cffi` and `interface/ceed-python/libceed`.
 
 ## Building QFunctions
 
