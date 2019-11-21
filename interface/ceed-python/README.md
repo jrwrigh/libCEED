@@ -4,16 +4,14 @@
 
 To install libCEED for Python, run
 
-    make python
+    make
 
-in the `libCEED` directory, or run
+ To add instillation options, set the environment variable `PYFLAGS`, such as `PYFLAGS=--user`.
 
-```
-python setup.py build
-python setup.py install
-```
+Alternatively, run
 
-in *both* `interface/ceed-python/ceed-cffi` and `interface/ceed-python/libceed`.
+    python setup-ceed-cffi.py build_ext install
+    python setup-libceed.py build install
 
 ## Building QFunctions
 
