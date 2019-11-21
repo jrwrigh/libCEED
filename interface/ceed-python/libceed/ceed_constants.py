@@ -23,22 +23,22 @@ from abc import ABC
 # CeedMemType
 MEM_HOST        = lib.CEED_MEM_HOST
 MEM_DEVICE      = lib.CEED_MEM_DEVICE
-mem_types       = {MEM_HOST:      "ceed_mem_host",
-                   MEM_DEVICE:    "ceed_mem_device"}
+mem_types       = {MEM_HOST:      "host",
+                   MEM_DEVICE:    "device"}
 
 # CeedCopyMode
 COPY_VALUES     = lib.CEED_COPY_VALUES
 USE_POINTER     = lib.CEED_USE_POINTER
 OWN_POINTER     = lib.CEED_OWN_POINTER
-copy_modes      = {COPY_VALUES:   "ceed_copy_values",
-                   USE_POINTER:   "ceed_use_pointer",
-                   OWN_POINTER:   "ceed_own_pointer"}
+copy_modes      = {COPY_VALUES:   "copy values",
+                   USE_POINTER:   "use pointer",
+                   OWN_POINTER:   "own pointer"}
 
 # CeedTransposeMode
 TRANSPOSE       = lib.CEED_TRANSPOSE
 NOTRANSPOSE     = lib.CEED_NOTRANSPOSE
-transpose_modes = {TRANSPOSE:     "ceed_transpose",
-                   NOTRANSPOSE:   "ceed_notranspose"}
+transpose_modes = {TRANSPOSE:     "transpose",
+                   NOTRANSPOSE:   "no transpose"}
 
 # CeedEvalMode
 EVAL_NONE       = lib.CEED_EVAL_NONE
@@ -47,18 +47,18 @@ EVAL_GRAD       = lib.CEED_EVAL_GRAD
 EVAL_DIV        = lib.CEED_EVAL_DIV
 EVAL_CURL       = lib.CEED_EVAL_CURL
 EVAL_WEIGHT     = lib.CEED_EVAL_WEIGHT
-eval_modes      = {EVAL_NONE:     "ceed_eval_none",
-                   EVAL_INTERP:   "ceed_eval_interp",
-                   EVAL_GRAD:     "ceed_eval_grad",
-                   EVAL_DIV:      "ceed_eval_div",
-                   EVAL_CURL:     "ceed_eval_curl",
-                   EVAL_WEIGHT:   "ceed_eval_weight"}
+eval_modes      = {EVAL_NONE:     "none",
+                   EVAL_INTERP:   "interpolation",
+                   EVAL_GRAD:     "gradient",
+                   EVAL_DIV:      "divergence",
+                   EVAL_CURL:     "curl",
+                   EVAL_WEIGHT:   "quadrature weights"}
 
 # CeedQuadMode
 GAUSS           = lib.CEED_GAUSS
 GAUSS_LOBATTO   = lib.CEED_GAUSS_LOBATTO
-quad_modes      = {GAUSS:         "ceed_gauss",
-                   GAUSS_LOBATTO: "ceed_gauss_lobatto"}
+quad_modes      = {GAUSS:         "Gauss",
+                   GAUSS_LOBATTO: "Gauss Lobatto"}
 
 # CeedElemTopology
 LINE            = lib.CEED_LINE
@@ -68,13 +68,13 @@ TET             = lib.CEED_TET
 PYRAMID         = lib.CEED_PYRAMID
 PRISM           = lib.CEED_PRISM
 HEX             = lib.CEED_HEX
-elem_topologies = {LINE:          "ceed_line",
-                   TRIANGLE:      "ceed_triangle",
-                   QUAD:          "ceed_quad",
-                   TET:           "ceed_tet",
-                   PYRAMID:       "ceed_pyramid",
-                   PRISM:         "ceed_prism",
-                   HEX:           "ceed_hex"}
+elem_topologies = {LINE:          "line",
+                   TRIANGLE:      "triangle",
+                   QUAD:          "quadrilateral",
+                   TET:           "tetrahedron",
+                   PYRAMID:       "pyramid",
+                   PRISM:         "prism",
+                   HEX:           "hexahedron"}
 
 # ------------------------------------------------------------------------------
 # Ceed Constants
