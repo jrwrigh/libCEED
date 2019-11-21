@@ -324,7 +324,7 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
       dFconvdq[j][0][0] = u[j]/(Rd*T);
       dFconvdq[j][0][4] -= rho*u[j]/T; 
       dFconvdq[j][4][0] = u[j] * (cv/Rd + ke/(Rd*T) + 1);
-      dFconvdq[j][4][4] = dFconvdq[j][0][4] * ke/T;
+      dFconvdq[j][4][4] = dFconvdq[j][0][4] * ke;
       for (int k=0; k<3; k++){
         dFconvdq[j][k+1][0] = u[j]*u[k]/(Rd*T) + (j==k?1:0);
         dFconvdq[j][k+1][4] = u[k] * dFconvdq[j][0][4];
@@ -438,9 +438,9 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
 
       for (int j=0; j<5; j++)
         for (int k=0; k<3; k++)
-          dv[k][j][i] += stab[j][k] * dXdx[k][0] + 
-                         stab[j][k] * dXdx[k][1] +
-                         stab[j][k] * dXdx[k][2];
+          dv[k][j][i] += wJ*(stab[j][k] * dXdx[k][0] + 
+                             stab[j][k] * dXdx[k][1] +
+                             stab[j][k] * dXdx[k][2]);
       break;
     case 2:        // SUPG
       f1   = rho * sqrt(2./(C1*dt) + uiujgij);
@@ -456,9 +456,9 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
 
       for (int j=0; j<5; j++)
         for (int k=0; k<3; k++)
-          dv[k][j][i] += stab[j][k] * dXdx[k][0] + 
-                         stab[j][k] * dXdx[k][1] +
-                         stab[j][k] * dXdx[k][2];
+          dv[k][j][i] += wJ*(stab[j][k] * dXdx[k][0] + 
+                             stab[j][k] * dXdx[k][1] +
+                             stab[j][k] * dXdx[k][2]);
       break;              
     } 
  

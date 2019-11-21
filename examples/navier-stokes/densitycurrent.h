@@ -689,9 +689,9 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
 
       for (int j=0; j<5; j++)
         for (int k=0; k<3; k++)
-          dv[k][j][i] += stab[j][k] * dXdx[k][0] + 
-                         stab[j][k] * dXdx[k][1] +
-                         stab[j][k] * dXdx[k][2];
+          dv[k][j][i] += wJ*(stab[j][k] * dXdx[k][0] + 
+                             stab[j][k] * dXdx[k][1] +
+                             stab[j][k] * dXdx[k][2]);
       break;
     case 2:        // SUPG
       f1   = rho * sqrt(2./(C1*dt) + uiujgij);
@@ -707,9 +707,9 @@ CEED_QFUNCTION(IFunction_DC)(void *ctx, CeedInt Q,
 
       for (int j=0; j<5; j++)
         for (int k=0; k<3; k++)
-          dv[k][j][i] += stab[j][k] * dXdx[k][0] + 
-                         stab[j][k] * dXdx[k][1] +
-                         stab[j][k] * dXdx[k][2];
+          dv[k][j][i] += wJ*(stab[j][k] * dXdx[k][0] + 
+                             stab[j][k] * dXdx[k][1] +
+                             stab[j][k] * dXdx[k][2]);
       break;              
     } 
  
