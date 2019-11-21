@@ -14,17 +14,21 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
+import os
 from setuptools import setup, find_packages
 
 # ------------------------------------------------------------------------------
 # Setup
 # ------------------------------------------------------------------------------
-setup(name="libceed_cffi",
-      version="0.5",
+with open(os.path.abspath("../../../ceed.pc.template")) as t:
+  ceed_version = [line.split("Version:", 1)[1].strip() for line in t if
+                    line.startswith("Version: ")]
+
+setup(name="ceed_cffi",
+      version=ceed_version[0],
       license="BSD 2",
       url="https://github.com/CEED/libCEED",
       description="libceed cffi python bindings",
-      py_modules=["libceed_cffi"],
       setup_requires=["cffi"],
       cffi_modules=["build-ceed.py:ffibuilder"],
       install_requires=["cffi"],

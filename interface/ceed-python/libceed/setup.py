@@ -14,13 +14,18 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
+import os
 from setuptools import setup, find_packages
 
 # ------------------------------------------------------------------------------
 # Setup
 # ------------------------------------------------------------------------------
+with open(os.path.abspath("../../../ceed.pc.template")) as t:
+  ceed_version = [line.split("Version:", 1)[1].strip() for line in t if
+                    line.startswith("Version: ")]
+
 setup(name="libceed",
-      version="0.5",
+      version=ceed_version[0],
       license="BSD 2",
       url="https://github.com/CEED/libCEED",
       description="libceed python bindings",
