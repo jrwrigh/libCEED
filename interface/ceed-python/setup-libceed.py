@@ -20,18 +20,17 @@ from setuptools import setup, find_packages
 # ------------------------------------------------------------------------------
 # Setup
 # ------------------------------------------------------------------------------
-with open(os.path.abspath("../../../ceed.pc.template")) as t:
+with open(os.path.abspath("../../ceed.pc.template")) as t:
   ceed_version = [line.split("Version:", 1)[1].strip() for line in t if
                     line.startswith("Version: ")]
 
-setup(name="ceed_cffi",
+setup(name="libceed",
       version=ceed_version[0],
       license="BSD 2",
       url="https://github.com/CEED/libCEED",
-      description="libceed cffi python bindings",
-      setup_requires=["cffi"],
-      cffi_modules=["build-ceed.py:ffibuilder"],
-      install_requires=["cffi"],
+      description="libceed python bindings",
+      requires=["ceed", "numpy"],
+      packages=["libceed"],
 )
 
 # ------------------------------------------------------------------------------

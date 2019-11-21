@@ -14,12 +14,17 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
-python: 
-	cd ceed-cffi && python setup.py build && python setup.py install --user
-	cd libceed && python setup.py build && python setup.py install --user
+PYFLAGS ?=
+
+ceed-cffi:
+	python setup-ceed-cffi.py build_ext install $(PYFLAGS)
+
+libceed-python:
+	python setup-libceed.py build install $(PYFLAGS)
+
+all: ceed-cffi libceed-python
 
 clean:
-	cd ceed-cffi && rm -rf build dist ceed_cffi.egg-info
-	cd libceed && rm -rf build dist libceed.egg-info
+	rm -rf build dist libceed.egg-info ceed_cffi.egg-info
 
-.PHONY : cln clean
+.PHONY: cln clean

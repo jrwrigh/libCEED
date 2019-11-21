@@ -21,7 +21,7 @@ ffibuilder = FFI()
 # ------------------------------------------------------------------------------
 # Provide C definitions to CFFI
 # ------------------------------------------------------------------------------
-with open(os.path.abspath("../../../include/ceed.h")) as f:
+with open(os.path.abspath("../../include/ceed.h")) as f:
     lines = [line.strip() for line in f if
                not line.startswith("#") and
                not line.startswith("  static") and
@@ -41,10 +41,10 @@ ffibuilder.set_source("_ceed_cffi",
   """
   #include <ceed.h>   // the C header of the library
   """,
-  include_dirs=[os.path.abspath("../../../include")], # include path
+  include_dirs=[os.path.abspath("../../include")], # include path
   libraries=["ceed"],   # library name, for the linker
-  library_dirs=[os.path.abspath("../../../lib")], # library path, for the linker
-  runtime_library_dirs=[os.path.abspath("../../../lib")] # library path, at runtime
+  library_dirs=[os.path.abspath("../../lib")], # library path, for the linker
+  runtime_library_dirs=[os.path.abspath("../../lib")] # library path, at runtime
 )
 
 # ------------------------------------------------------------------------------
