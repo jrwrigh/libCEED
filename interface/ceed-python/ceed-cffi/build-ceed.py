@@ -37,7 +37,7 @@ ffibuilder.cdef(header)
 # ------------------------------------------------------------------------------
 # Set source of libCEED header file
 # ------------------------------------------------------------------------------
-ffibuilder.set_source("_ceed",
+ffibuilder.set_source("_ceed_cffi",
   """
   #include <ceed.h>   // the C header of the library
   """,
@@ -51,8 +51,6 @@ ffibuilder.set_source("_ceed",
 # Builder
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    print(cdef)
-    print("here")
     ffibuilder.compile(verbose=True)
 
 # ------------------------------------------------------------------------------

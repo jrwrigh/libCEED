@@ -14,7 +14,7 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
-from _ceed import ffi, lib
+from _ceed_cffi import ffi, lib
 import sys
 import io
 import ctypes
