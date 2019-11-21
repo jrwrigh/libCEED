@@ -4,6 +4,10 @@
 
 To install libCEED for Python, run
 
+    make python
+
+in the `libCEED` directory, or run
+
 ```
 python setup.py build
 python setup.py install
