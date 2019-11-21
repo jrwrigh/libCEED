@@ -220,6 +220,11 @@ quiet = $(if $(V),$($(1)),$(call output,$1,$@);$($(1)))
 lib: $(libceed) $(ceed.pc)
 # run 'lib' target in parallel
 par:;@$(MAKE) $(MFLAGS) V=$(V) lib
+
+python :  $(libceed)
+	$(MAKE) -C interface/ceed-python python
+
+
 backend_status = $(if $(filter $1,$(BACKENDS)), [backends: $1], [not found])
 info:
 	$(info ------------------------------------)
@@ -503,7 +508,7 @@ install : $(libceed) $(OBJDIR)/ceed.pc
 	$(INSTALL_DATA) $(OBJDIR)/ceed.pc "$(DESTDIR)$(pkgconfigdir)/"
 	$(if $(OCCA_ON),$(INSTALL_DATA) $(OKL_KERNELS) "$(DESTDIR)$(okldir)/")
 
-.PHONY : cln clean doc lib install all print test tst prove prv prove-all junit examples style tidy okl-cache okl-clear info info-backends
+.PHONY : cln clean doc lib install all print test tst prove prv prove-all junit examples style tidy okl-cache okl-clear info info-backends python
 
 cln clean :
 	$(RM) -r $(OBJDIR) $(LIBDIR)
