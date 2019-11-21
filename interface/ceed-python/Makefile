@@ -16,15 +16,15 @@
 
 PYFLAGS ?=
 
+all: ceed-cffi libceed-python
+
 ceed-cffi:
 	python setup-ceed-cffi.py build_ext install $(PYFLAGS)
 
-libceed-python:
+libceed-python: ceed-cffi
 	python setup-libceed.py build install $(PYFLAGS)
-
-all: ceed-cffi libceed-python
 
 clean:
 	rm -rf build dist libceed.egg-info ceed_cffi.egg-info
 
-.PHONY: cln clean
+.PHONY: libceed-python ceed-cffi cln clean

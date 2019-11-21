@@ -20,8 +20,8 @@ import sys
 import io
 import copy
 from abc import ABC
-from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, MEM_HOST, COPY_VALUES, TRANSPOSE, NOTRANSPOSE
-from ceed_vector import _VectorWrap
+from .ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, MEM_HOST, COPY_VALUES, TRANSPOSE, NOTRANSPOSE
+from .ceed_vector import _VectorWrap
 
 # ------------------------------------------------------------------------------
 class _ElemRestrictionBase(ABC):

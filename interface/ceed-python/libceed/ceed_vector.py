@@ -18,7 +18,7 @@ from _ceed_cffi import ffi, lib
 import sys
 import io
 import numpy as np
-from ceed_constants import MEM_HOST, COPY_VALUES
+from .ceed_constants import MEM_HOST, COPY_VALUES
 
 # ------------------------------------------------------------------------------
 class Vector():

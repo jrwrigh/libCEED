@@ -18,7 +18,7 @@ from _ceed_cffi import ffi, lib
 import sys
 import io
 from abc import ABC
-from ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, NOTRANSPOSE
+from .ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
 class _OperatorBase(ABC):

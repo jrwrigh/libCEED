@@ -18,7 +18,7 @@ from _ceed_cffi import ffi, lib
 import sys
 import numpy as np
 from abc import ABC
-from ceed_constants import TRANSPOSE, NOTRANSPOSE
+from .ceed_constants import TRANSPOSE, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
 class _BasisBase(ABC):

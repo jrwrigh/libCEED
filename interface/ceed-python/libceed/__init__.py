@@ -14,13 +14,13 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
-from ceed import Ceed
-from ceed_vector import Vector
-from ceed_basis import BasisTensorH1, BasisTensorH1Lagrange, BasisH1
-from ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
-from ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
-from ceed_operator import Operator, CompositeOperator
-from ceed_constants import *
+from .ceed import Ceed
+from .ceed_vector import Vector
+from .ceed_basis import BasisTensorH1, BasisTensorH1Lagrange, BasisH1
+from .ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
+from .ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
+from .ceed_operator import Operator, CompositeOperator
+from .ceed_constants import *
 
 # ------------------------------------------------------------------------------
 # All contents of module

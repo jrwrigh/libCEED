@@ -18,12 +18,12 @@ from _ceed_cffi import ffi, lib
 import sys
 import io
 from abc import ABC
-from ceed_vector import Vector
-from ceed_basis import BasisTensorH1, BasisTensorH1Lagrange, BasisH1
-from ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
-from ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
-from ceed_operator import Operator, CompositeOperator
-from ceed_constants import *
+from .ceed_vector import Vector
+from .ceed_basis import BasisTensorH1, BasisTensorH1Lagrange, BasisH1
+from .ceed_elemrestriction import ElemRestriction, IdentityElemRestriction, BlockedElemRestriction
+from .ceed_qfunction import QFunction, QFunctionByName, IdentityQFunction
+from .ceed_operator import Operator, CompositeOperator
+from .ceed_constants import *
 
 # ------------------------------------------------------------------------------
 class Ceed():
