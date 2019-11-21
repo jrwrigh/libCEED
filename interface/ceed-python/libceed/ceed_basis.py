@@ -302,7 +302,7 @@ class BasisH1(_BasisBase):
   """Ceed H1 Basis: fully discrete finite element-like objects with a H^1 descretization."""
 
   # Constructor
-  def __init__(self, topo, ncomp, nnodes, nqpts, interp, grad, qref, qweight):
+  def __init__(self, ceed, topo, ncomp, nnodes, nqpts, interp, grad, qref, qweight):
 
     # Setup arguments
     self._pointer = ffi.new("CeedBasis *")
