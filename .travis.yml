@@ -71,6 +71,7 @@ script:
   - make -j2
   - make -j2 prove-all PROVE_OPTS=-v
   - if [[ "$TRAVIS_OS_NAME" == "linux" &&  "$TRAVIS_COMPILER" == "gcc" ]]; then
+        pip install -r pytest;
         make pytest PYFLAGS=--user;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
