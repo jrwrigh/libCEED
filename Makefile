@@ -223,7 +223,7 @@ par:;@$(MAKE) $(MFLAGS) V=$(V) lib
 
 PYFLAGS ?=
 python :  $(libceed)
-	$(MAKE) -C interface/ceed-python PYFLAGS=$(PYFLAGS)
+	$(MAKE) -C interface/ceed-python PYFLAGS=$(PYFLAGS) PYTHON=$(PYTHON)
 
 
 backend_status = $(if $(filter $1,$(BACKENDS)), [backends: $1], [not found])
@@ -515,6 +515,7 @@ cln clean :
 	$(RM) -r $(OBJDIR) $(LIBDIR)
 	$(MAKE) -C examples clean NEK5K_DIR="$(abspath $(NEK5K_DIR))"
 	$(MAKE) -C interface/ceed-python clean
+	$(MAKE) -C tests/python-tests clean
 	$(RM) $(magma_tmp.c) $(magma_tmp.cu) backends/magma/*~ backends/magma/*.o
 	$(RM) benchmarks/*output.txt
 

@@ -14,18 +14,7 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
-PYFLAGS ?=
-PYTHON ?= python3
-
-all: ceed-cffi libceed-python
-
-ceed-cffi:
-	python setup-ceed-cffi.py build_ext install $(PYFLAGS)
-
-libceed-python: ceed-cffi
-	python setup-libceed.py build install $(PYFLAGS)
-
 clean:
-	rm -rf build dist libceed.egg-info ceed_cffi.egg-info libceed/__pycache__
+	rm -rf build __pycache__ .pytest_cache *.so
 
-.PHONY: libceed-python ceed-cffi cln clean
+.PHONY: cln clean

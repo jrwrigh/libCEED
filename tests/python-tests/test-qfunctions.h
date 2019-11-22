@@ -14,24 +14,40 @@
 // software, applications, hardware, advanced system engineering and early
 // testbed platforms, in support of the nation's exascale computing imperative.
 
-CEED_QFUNCTION(setup)(void *ctx, const CeedInt Q,
-                      const CeedScalar *const *in,
-                      CeedScalar *const *out) {
-  const CeedScalar *weight = in[0], *dxdX = in[1];
-  CeedScalar *rho = out[0];
+CEED_QFUNCTION(setup_mass)(void *ctx, const CeedInt Q,
+                           const CeedScalar *const *in,
+                           CeedScalar *const *out) {
+  // in[0] is quadrature weights, size (Q)
+  const CeedScalar *w = in[0];
+  // out[0] is quadrature data, size (Q)
+  CeedScalar *qdata = out[0];
+
+  // Quadrature point loop
+  CeedPragmaSIMD
   for (CeedInt i=0; i<Q; i++) {
-    rho[i] = weight[i] * dxdX[i];
+    qdata[i] = w[i];
   }
+
   return 0;
 }
 
-CEED_QFUNCTION(mass)(void *ctx, const CeedInt Q, const CeedScalar *const *in,
-                     CeedScalar *const *out) {
-  const CeedScalar *rho = in[0], *u = in[1];
+CEED_QFUNCTION(apply_mass)(void *ctx, const CeedInt Q,
+                           const CeedScalar *const *in,
+                           CeedScalar *const *out) {
+  // Get scaling factor, if set
+  const CeedScalar *scale_array = ctx ? (CeedScalar *)ctx : NULL;
+  const CeedScalar scale = ctx ? scale_array[4] : 1.;
+
+  // in[0] is quadrature data, size (Q)
+  // in[1] is u, size (Q)
+  const CeedScalar *qdata = in[0], *u = in[1];
   CeedScalar *v = out[0];
+
+  // Quadrature point loop
+  CeedPragmaSIMD
   for (CeedInt i=0; i<Q; i++) {
-    v[i]   = rho[i] * u[i];
-    v[Q+i] = rho[i] * u[Q+i];
+    v[i] = scale * qdata[i] * u[i];
   }
+
   return 0;
 }

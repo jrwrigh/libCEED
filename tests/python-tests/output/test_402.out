@@ -3,12 +3,12 @@ User CeedQFunction
     Input Field [0]:
       Name: "w"
       Size: 1
-      EvalMode: "none"
+      EvalMode: "quadrature weights"
   1 Output Field:
     Output Field [0]:
       Name: "qdata"
       Size: 1
-      EvalMode: "interpolation"
+      EvalMode: "none"
 
 User CeedQFunction 
   2 Input Fields:
