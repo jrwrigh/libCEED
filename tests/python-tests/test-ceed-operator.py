@@ -464,7 +464,7 @@ def test_504(ceed_resource, capsys):
   assert stdout == true_output
 
 #-------------------------------------------------------------------------------
-# Test creation creation, action, and destruction for mass matrix operator
+# Test creation, action, and destruction for mass matrix operator
 #-------------------------------------------------------------------------------
 def test_510(ceed_resource):
   ceed = libceed.Ceed(ceed_resource)
@@ -473,8 +473,7 @@ def test_510(ceed_resource):
   dim = 2
   p = 6
   q = 4
-  nx = 3
-  ny = 2
+  nx, ny = 3, 2
   ndofs = (nx*2+1)*(ny*2+1)
   nqpts = nelem*q
 
@@ -569,7 +568,7 @@ def test_510(ceed_resource):
   v.restore_array_read()
 
 #-------------------------------------------------------------------------------
-# Test creation creation, action, and destruction for mass matrix operator
+# Test creation, action, and destruction for mass matrix operator
 #-------------------------------------------------------------------------------
 def test_511(ceed_resource):
   ceed = libceed.Ceed(ceed_resource)
@@ -578,8 +577,7 @@ def test_511(ceed_resource):
   dim = 2
   p = 6
   q = 4
-  nx = 3
-  ny = 2
+  nx, ny = 3, 2
   ndofs = (nx*2+1)*(ny*2+1)
   nqpts = nelem*q
 
@@ -674,5 +672,508 @@ def test_511(ceed_resource):
   assert abs(total - 1.0) < 1E-10
 
   v.restore_array_read()
+
+#-------------------------------------------------------------------------------
+# Test creation, action, and destruction for mass matrix operator
+#-------------------------------------------------------------------------------
+def test_520(ceed_resource):
+  ceed = libceed.Ceed(ceed_resource)
+
+  nelem_tet, p_tet, q_tet = 6, 6, 4
+  nelem_hex, p_hex, q_hex = 6, 3, 4
+  nx, ny = 3, 3
+  dim = 2
+  nx_tet, ny_tet, nx_hex = 3, 1, 3
+  ndofs = (nx*2+1)*(ny*2+1)
+  nqpts_tet, nqpts_hex = nelem_tet*q_tet, nelem_hex*q_hex*q_hex
+
+  # Vectors
+  x = ceed.Vector(dim*ndofs)
+  x_array = np.zeros(dim*ndofs)
+  for i in range(ny*2+1):
+    for j in range(nx*2+1):
+      x_array[i+j*(ny*2+1)] = i/(2*ny)
+      x_array[i+j*(ny*2+1)+ndofs] = j/(2*nx)
+  x.set_array(x_array, cmode=libceed.USE_POINTER)
+
+  qdata_hex = ceed.Vector(nqpts_hex)
+  qdata_tet = ceed.Vector(nqpts_tet)
+  u = ceed.Vector(ndofs)
+  v = ceed.Vector(ndofs)
+
+  ## ------------------------- Tet Elements -------------------------
+
+  # Restrictions
+  indx_tet = np.zeros(nelem_tet*p_tet, dtype="int32")
+  for i in range(nelem_tet//2):
+    col = i % nx;
+    row = i // nx;
+    offset = col*2 + row*(nx*2+1)*2
+
+    indx_tet[i*2*p_tet+ 0] =  2 + offset
+    indx_tet[i*2*p_tet+ 1] =  9 + offset
+    indx_tet[i*2*p_tet+ 2] = 16 + offset
+    indx_tet[i*2*p_tet+ 3] =  1 + offset
+    indx_tet[i*2*p_tet+ 4] =  8 + offset
+    indx_tet[i*2*p_tet+ 5] =  0 + offset
+
+    indx_tet[i*2*p_tet+ 6] = 14 + offset
+    indx_tet[i*2*p_tet+ 7] =  7 + offset
+    indx_tet[i*2*p_tet+ 8] =  0 + offset
+    indx_tet[i*2*p_tet+ 9] = 15 + offset
+    indx_tet[i*2*p_tet+10] =  8 + offset
+    indx_tet[i*2*p_tet+11] = 16 + offset
+
+  rx_tet = ceed.ElemRestriction(nelem_tet, p_tet, ndofs, dim, indx_tet,
+                                cmode=libceed.USE_POINTER)
+  rxi_tet = ceed.IdentityElemRestriction(nelem_tet, p_tet, nelem_tet*p_tet, dim)
+
+  ru_tet = ceed.ElemRestriction(nelem_tet, p_tet, ndofs, 1, indx_tet,
+                                cmode=libceed.USE_POINTER)
+  rui_tet = ceed.IdentityElemRestriction(nelem_tet, q_tet, nqpts_tet, 1)
+
+  # Bases
+  qref = np.empty(dim*q_tet, dtype="float64")
+  qweight = np.empty(q_tet, dtype="float64")
+  interp, grad = bm.buildmats(qref, qweight)
+
+  bx_tet = ceed.BasisH1(libceed.TRIANGLE, dim, p_tet, q_hex, interp, grad, qref,
+                        qweight)
+  bu_tet = ceed.BasisH1(libceed.TRIANGLE, 1, p_tet, q_hex, interp, grad, qref,
+                        qweight)
+
+  # QFunctions
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  qfs = load_qfs_so()
+
+  qf_setup_tet = ceed.QFunction(1, qfs.setup_mass_2d,
+                                os.path.join(file_dir, "test-qfunctions.h:setup_mass_2d"))
+  qf_setup_tet.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup_tet.add_input("dx", dim*dim, libceed.EVAL_GRAD)
+  qf_setup_tet.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass_tet = ceed.QFunction(1, qfs.apply_mass,
+                               os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass_tet.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass_tet.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass_tet.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup_tet = ceed.Operator(qf_setup_tet)
+  op_setup_tet.set_field("weights", rxi_tet, bx_tet, libceed.VECTOR_NONE)
+  op_setup_tet.set_field("dx", rx_tet, bx_tet, libceed.VECTOR_ACTIVE)
+  op_setup_tet.set_field("rho", rui_tet, libceed.BASIS_COLLOCATED,
+                         qdata_tet)
+
+  op_mass_tet = ceed.Operator(qf_mass_tet)
+  op_mass_tet.set_field("rho", rui_tet, libceed.BASIS_COLLOCATED, qdata_tet)
+  op_mass_tet.set_field("u", ru_tet, bu_tet, libceed.VECTOR_ACTIVE)
+  op_mass_tet.set_field("v", ru_tet, bu_tet, libceed.VECTOR_ACTIVE)
+
+  ## ------------------------- Hex Elements -------------------------
+
+  # Restrictions
+  indx_hex = np.zeros(nelem_hex*p_hex*p_hex, dtype="int32")
+  for i in range(nelem_hex):
+    col = i % nx_hex;
+    row = i // nx_hex;
+    offset = (nx_tet*2+1)*(ny_tet*2)*(1+row)+col*2
+
+    for j in range(p_hex):
+      for k in range(p_hex):
+        indx_hex[p_hex*(p_hex*i+k)+j] = offset + k*(nx_hex*2+1) + j
+
+  rx_hex = ceed.ElemRestriction(nelem_hex, p_hex*p_hex, ndofs, dim, indx_hex,
+                            cmode=libceed.USE_POINTER)
+  rxi_hex = ceed.IdentityElemRestriction(nelem_hex, p_hex*p_hex,
+                                         nelem_hex*p_hex*p_hex, dim)
+
+  ru_hex = ceed.ElemRestriction(nelem_hex, p_hex*p_hex, ndofs, 1, indx_hex,
+                                cmode=libceed.USE_POINTER)
+  rui_hex = ceed.IdentityElemRestriction(nelem_hex, q_hex*q_hex, nqpts_hex, 1)
+
+  # Bases
+  bx_hex = ceed.BasisTensorH1Lagrange(dim, dim, p_hex, q_hex, libceed.GAUSS)
+  bu_hex = ceed.BasisTensorH1Lagrange(dim, 1, p_hex, q_hex, libceed.GAUSS)
+
+  # QFunctions
+  qf_setup_hex = ceed.QFunction(1, qfs.setup_mass_2d,
+                                os.path.join(file_dir, "test-qfunctions.h:setup_mass_2d"))
+  qf_setup_hex.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup_hex.add_input("dx", dim*dim, libceed.EVAL_GRAD)
+  qf_setup_hex.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass_hex = ceed.QFunction(1, qfs.apply_mass,
+                               os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass_hex.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass_hex.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass_hex.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup_hex = ceed.Operator(qf_setup_tet)
+  op_setup_hex.set_field("weights", rxi_hex, bx_hex, libceed.VECTOR_NONE)
+  op_setup_hex.set_field("dx", rx_hex, bx_hex, libceed.VECTOR_ACTIVE)
+  op_setup_hex.set_field("rho", rui_hex, libceed.BASIS_COLLOCATED,
+                         qdata_hex)
+
+  op_mass_hex = ceed.Operator(qf_mass_hex)
+  op_mass_hex.set_field("rho", rui_hex, libceed.BASIS_COLLOCATED, qdata_hex)
+  op_mass_hex.set_field("u", ru_hex, bu_hex, libceed.VECTOR_ACTIVE)
+  op_mass_hex.set_field("v", ru_hex, bu_hex, libceed.VECTOR_ACTIVE)
+
+  ## ------------------------- Composite Operators -------------------------
+
+  # Setup
+  op_setup = ceed.CompositeOperator()
+  op_setup.add_sub(op_setup_tet)
+  op_setup.add_sub(op_setup_hex)
+  op_setup.apply(x, libceed.VECTOR_NONE)
+
+  # Apply mass matrix
+  op_mass = ceed.CompositeOperator()
+  op_mass.add_sub(op_mass_tet)
+  op_mass.add_sub(op_mass_hex)
+
+  u.set_value(0.)
+  op_mass.apply(u, v)
+
+  # Check
+  v_array = v.get_array_read()
+  for i in range(ndofs):
+    assert abs(v_array[i]) < 1E-14
+
+  v.restore_array_read()
+
+#-------------------------------------------------------------------------------
+# Test creation creation, action, and destruction for mass matrix operator
+#-------------------------------------------------------------------------------
+def test_521(ceed_resource):
+  ceed = libceed.Ceed(ceed_resource)
+
+  nelem_tet, p_tet, q_tet = 6, 6, 4
+  nelem_hex, p_hex, q_hex = 6, 3, 4
+  nx, ny = 3, 3
+  dim = 2
+  nx_tet, ny_tet, nx_hex = 3, 1, 3
+  ndofs = (nx*2+1)*(ny*2+1)
+  nqpts_tet, nqpts_hex = nelem_tet*q_tet, nelem_hex*q_hex*q_hex
+
+  # Vectors
+  x = ceed.Vector(dim*ndofs)
+  x_array = np.zeros(dim*ndofs)
+  for i in range(ny*2+1):
+    for j in range(nx*2+1):
+      x_array[i+j*(ny*2+1)] = i/(2*ny)
+      x_array[i+j*(ny*2+1)+ndofs] = j/(2*nx)
+  x.set_array(x_array, cmode=libceed.USE_POINTER)
+
+  qdata_hex = ceed.Vector(nqpts_hex)
+  qdata_tet = ceed.Vector(nqpts_tet)
+  u = ceed.Vector(ndofs)
+  v = ceed.Vector(ndofs)
+
+  ## ------------------------- Tet Elements -------------------------
+
+  # Restrictions
+  indx_tet = np.zeros(nelem_tet*p_tet, dtype="int32")
+  for i in range(nelem_tet//2):
+    col = i % nx;
+    row = i // nx;
+    offset = col*2 + row*(nx*2+1)*2
+
+    indx_tet[i*2*p_tet+ 0] =  2 + offset
+    indx_tet[i*2*p_tet+ 1] =  9 + offset
+    indx_tet[i*2*p_tet+ 2] = 16 + offset
+    indx_tet[i*2*p_tet+ 3] =  1 + offset
+    indx_tet[i*2*p_tet+ 4] =  8 + offset
+    indx_tet[i*2*p_tet+ 5] =  0 + offset
+
+    indx_tet[i*2*p_tet+ 6] = 14 + offset
+    indx_tet[i*2*p_tet+ 7] =  7 + offset
+    indx_tet[i*2*p_tet+ 8] =  0 + offset
+    indx_tet[i*2*p_tet+ 9] = 15 + offset
+    indx_tet[i*2*p_tet+10] =  8 + offset
+    indx_tet[i*2*p_tet+11] = 16 + offset
+
+  rx_tet = ceed.ElemRestriction(nelem_tet, p_tet, ndofs, dim, indx_tet,
+                            cmode=libceed.USE_POINTER)
+  rxi_tet = ceed.IdentityElemRestriction(nelem_tet, p_tet, nelem_tet*p_tet, dim)
+
+  ru_tet = ceed.ElemRestriction(nelem_tet, p_tet, ndofs, 1, indx_tet,
+                                cmode=libceed.USE_POINTER)
+  rui_tet = ceed.IdentityElemRestriction(nelem_tet, q_tet, nqpts_tet, 1)
+
+  # Bases
+  qref = np.empty(dim*q_tet, dtype="float64")
+  qweight = np.empty(q_tet, dtype="float64")
+  interp, grad = bm.buildmats(qref, qweight)
+
+  bx_tet = ceed.BasisH1(libceed.TRIANGLE, dim, p_tet, q_hex, interp, grad, qref,
+                        qweight)
+  bu_tet = ceed.BasisH1(libceed.TRIANGLE, 1, p_tet, q_hex, interp, grad, qref,
+                        qweight)
+
+  # QFunctions
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  qfs = load_qfs_so()
+
+  qf_setup_tet = ceed.QFunction(1, qfs.setup_mass_2d,
+                                os.path.join(file_dir, "test-qfunctions.h:setup_mass_2d"))
+  qf_setup_tet.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup_tet.add_input("dx", dim*dim, libceed.EVAL_GRAD)
+  qf_setup_tet.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass_tet = ceed.QFunction(1, qfs.apply_mass,
+                               os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass_tet.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass_tet.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass_tet.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup_tet = ceed.Operator(qf_setup_tet)
+  op_setup_tet.set_field("weights", rxi_tet, bx_tet, libceed.VECTOR_NONE)
+  op_setup_tet.set_field("dx", rx_tet, bx_tet, libceed.VECTOR_ACTIVE)
+  op_setup_tet.set_field("rho", rui_tet, libceed.BASIS_COLLOCATED,
+                         qdata_tet)
+
+  op_mass_tet = ceed.Operator(qf_mass_tet)
+  op_mass_tet.set_field("rho", rui_tet, libceed.BASIS_COLLOCATED, qdata_tet)
+  op_mass_tet.set_field("u", ru_tet, bu_tet, libceed.VECTOR_ACTIVE)
+  op_mass_tet.set_field("v", ru_tet, bu_tet, libceed.VECTOR_ACTIVE)
+
+  ## ------------------------- Hex Elements -------------------------
+
+  # Restrictions
+  indx_hex = np.zeros(nelem_hex*p_hex*p_hex, dtype="int32")
+  for i in range(nelem_hex):
+    col = i % nx_hex;
+    row = i // nx_hex;
+    offset = (nx_tet*2+1)*(ny_tet*2)*(1+row)+col*2
+
+    for j in range(p_hex):
+      for k in range(p_hex):
+        indx_hex[p_hex*(p_hex*i+k)+j] = offset + k*(nx_hex*2+1) + j
+
+  rx_hex = ceed.ElemRestriction(nelem_hex, p_hex*p_hex, ndofs, dim, indx_hex,
+                                cmode=libceed.USE_POINTER)
+  rxi_hex = ceed.IdentityElemRestriction(nelem_hex, p_hex*p_hex,
+                                         nelem_hex*p_hex*p_hex, dim)
+
+  ru_hex = ceed.ElemRestriction(nelem_hex, p_hex*p_hex, ndofs, 1, indx_hex,
+                                cmode=libceed.USE_POINTER)
+  rui_hex = ceed.IdentityElemRestriction(nelem_hex, q_hex*q_hex, nqpts_hex, 1)
+
+  # Bases
+  bx_hex = ceed.BasisTensorH1Lagrange(dim, dim, p_hex, q_hex, libceed.GAUSS)
+  bu_hex = ceed.BasisTensorH1Lagrange(dim, 1, p_hex, q_hex, libceed.GAUSS)
+
+  # QFunctions
+  qf_setup_hex = ceed.QFunction(1, qfs.setup_mass_2d,
+                                os.path.join(file_dir, "test-qfunctions.h:setup_mass_2d"))
+  qf_setup_hex.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup_hex.add_input("dx", dim*dim, libceed.EVAL_GRAD)
+  qf_setup_hex.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass_hex = ceed.QFunction(1, qfs.apply_mass,
+                               os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass_hex.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass_hex.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass_hex.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup_hex = ceed.Operator(qf_setup_tet)
+  op_setup_hex.set_field("weights", rxi_hex, bx_hex, libceed.VECTOR_NONE)
+  op_setup_hex.set_field("dx", rx_hex, bx_hex, libceed.VECTOR_ACTIVE)
+  op_setup_hex.set_field("rho", rui_hex, libceed.BASIS_COLLOCATED,
+                         qdata_hex)
+
+  op_mass_hex = ceed.Operator(qf_mass_hex)
+  op_mass_hex.set_field("rho", rui_hex, libceed.BASIS_COLLOCATED, qdata_hex)
+  op_mass_hex.set_field("u", ru_hex, bu_hex, libceed.VECTOR_ACTIVE)
+  op_mass_hex.set_field("v", ru_hex, bu_hex, libceed.VECTOR_ACTIVE)
+
+  ## ------------------------- Composite Operators -------------------------
+
+  # Setup
+  op_setup = ceed.CompositeOperator()
+  op_setup.add_sub(op_setup_tet)
+  op_setup.add_sub(op_setup_hex)
+  op_setup.apply(x, libceed.VECTOR_NONE)
+
+  # Apply mass matrix
+  op_mass = ceed.CompositeOperator()
+  op_mass.add_sub(op_mass_tet)
+  op_mass.add_sub(op_mass_hex)
+  u.set_value(1.)
+  op_mass.apply(u, v)
+
+  # Check
+  v_array = v.get_array_read()
+  total = 0.0
+  for i in range(ndofs):
+    total = total + v_array[i]
+  assert abs(total - 1.0) < 1E-10
+
+  v.restore_array_read()
+
+#-------------------------------------------------------------------------------
+# Test viewing of composite mass matrix operator
+#-------------------------------------------------------------------------------
+def test_523(ceed_resource, capsys):
+  ceed = libceed.Ceed(ceed_resource)
+
+  nelem_tet, p_tet, q_tet = 6, 6, 4
+  nelem_hex, p_hex, q_hex = 6, 3, 4
+  nx, ny = 3, 3
+  dim = 2
+  nx_tet, ny_tet, nx_hex = 3, 1, 3
+  ndofs = (nx*2+1)*(ny*2+1)
+  nqpts_tet, nqpts_hex = nelem_tet*q_tet, nelem_hex*q_hex*q_hex
+
+  # Vectors
+  qdata_hex = ceed.Vector(nqpts_hex)
+  qdata_tet = ceed.Vector(nqpts_tet)
+
+  ## ------------------------- Tet Elements -------------------------
+
+  # Restrictions
+  indx_tet = np.zeros(nelem_tet*p_tet, dtype="int32")
+  for i in range(nelem_tet//2):
+    col = i % nx;
+    row = i // nx;
+    offset = col*2 + row*(nx*2+1)*2
+
+    indx_tet[i*2*p_tet+ 0] =  2 + offset
+    indx_tet[i*2*p_tet+ 1] =  9 + offset
+    indx_tet[i*2*p_tet+ 2] = 16 + offset
+    indx_tet[i*2*p_tet+ 3] =  1 + offset
+    indx_tet[i*2*p_tet+ 4] =  8 + offset
+    indx_tet[i*2*p_tet+ 5] =  0 + offset
+
+    indx_tet[i*2*p_tet+ 6] = 14 + offset
+    indx_tet[i*2*p_tet+ 7] =  7 + offset
+    indx_tet[i*2*p_tet+ 8] =  0 + offset
+    indx_tet[i*2*p_tet+ 9] = 15 + offset
+    indx_tet[i*2*p_tet+10] =  8 + offset
+    indx_tet[i*2*p_tet+11] = 16 + offset
+
+  rx_tet = ceed.ElemRestriction(nelem_tet, p_tet, ndofs, dim, indx_tet,
+                            cmode=libceed.USE_POINTER)
+  rxi_tet = ceed.IdentityElemRestriction(nelem_tet, p_tet, nelem_tet*p_tet, dim)
+
+  ru_tet = ceed.ElemRestriction(nelem_tet, p_tet, ndofs, 1, indx_tet,
+                                cmode=libceed.USE_POINTER)
+  rui_tet = ceed.IdentityElemRestriction(nelem_tet, q_tet, nqpts_tet, 1)
+
+  # Bases
+  qref = np.empty(dim*q_tet, dtype="float64")
+  qweight = np.empty(q_tet, dtype="float64")
+  interp, grad = bm.buildmats(qref, qweight)
+
+  bx_tet = ceed.BasisH1(libceed.TRIANGLE, dim, p_tet, q_hex, interp, grad, qref,
+                        qweight)
+  bu_tet = ceed.BasisH1(libceed.TRIANGLE, 1, p_tet, q_hex, interp, grad, qref,
+                        qweight)
+
+  # QFunctions
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  qfs = load_qfs_so()
+
+  qf_setup_tet = ceed.QFunction(1, qfs.setup_mass_2d,
+                                os.path.join(file_dir, "test-qfunctions.h:setup_mass_2d"))
+  qf_setup_tet.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup_tet.add_input("dx", dim*dim, libceed.EVAL_GRAD)
+  qf_setup_tet.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass_tet = ceed.QFunction(1, qfs.apply_mass,
+                               os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass_tet.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass_tet.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass_tet.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup_tet = ceed.Operator(qf_setup_tet)
+  op_setup_tet.set_field("weights", rxi_tet, bx_tet, libceed.VECTOR_NONE)
+  op_setup_tet.set_field("dx", rx_tet, bx_tet, libceed.VECTOR_ACTIVE)
+  op_setup_tet.set_field("rho", rui_tet, libceed.BASIS_COLLOCATED,
+                         qdata_tet)
+
+  op_mass_tet = ceed.Operator(qf_mass_tet)
+  op_mass_tet.set_field("rho", rui_tet, libceed.BASIS_COLLOCATED, qdata_tet)
+  op_mass_tet.set_field("u", ru_tet, bu_tet, libceed.VECTOR_ACTIVE)
+  op_mass_tet.set_field("v", ru_tet, bu_tet, libceed.VECTOR_ACTIVE)
+
+  ## ------------------------- Hex Elements -------------------------
+
+  # Restrictions
+  indx_hex = np.zeros(nelem_hex*p_hex*p_hex, dtype="int32")
+  for i in range(nelem_hex):
+    col = i % nx_hex;
+    row = i // nx_hex;
+    offset = (nx_tet*2+1)*(ny_tet*2)*(1+row)+col*2
+
+    for j in range(p_hex):
+      for k in range(p_hex):
+        indx_hex[p_hex*(p_hex*i+k)+j] = offset + k*(nx_hex*2+1) + j
+
+  rx_hex = ceed.ElemRestriction(nelem_hex, p_hex*p_hex, ndofs, dim, indx_hex,
+                                cmode=libceed.USE_POINTER)
+  rxi_hex = ceed.IdentityElemRestriction(nelem_hex, p_hex*p_hex,
+                                         nelem_hex*p_hex*p_hex, dim)
+
+  ru_hex = ceed.ElemRestriction(nelem_hex, p_hex*p_hex, ndofs, 1, indx_hex,
+                                cmode=libceed.USE_POINTER)
+  rui_hex = ceed.IdentityElemRestriction(nelem_hex, q_hex*q_hex, nqpts_hex, 1)
+
+  # Bases
+  bx_hex = ceed.BasisTensorH1Lagrange(dim, dim, p_hex, q_hex, libceed.GAUSS)
+  bu_hex = ceed.BasisTensorH1Lagrange(dim, 1, p_hex, q_hex, libceed.GAUSS)
+
+  # QFunctions
+  qf_setup_hex = ceed.QFunction(1, qfs.setup_mass_2d,
+                                os.path.join(file_dir, "test-qfunctions.h:setup_mass_2d"))
+  qf_setup_hex.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup_hex.add_input("dx", dim*dim, libceed.EVAL_GRAD)
+  qf_setup_hex.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass_hex = ceed.QFunction(1, qfs.apply_mass,
+                               os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass_hex.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass_hex.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass_hex.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup_hex = ceed.Operator(qf_setup_tet)
+  op_setup_hex.set_field("weights", rxi_hex, bx_hex, libceed.VECTOR_NONE)
+  op_setup_hex.set_field("dx", rx_hex, bx_hex, libceed.VECTOR_ACTIVE)
+  op_setup_hex.set_field("rho", rui_hex, libceed.BASIS_COLLOCATED,
+                         qdata_hex)
+
+  op_mass_hex = ceed.Operator(qf_mass_hex)
+  op_mass_hex.set_field("rho", rui_hex, libceed.BASIS_COLLOCATED, qdata_hex)
+  op_mass_hex.set_field("u", ru_hex, bu_hex, libceed.VECTOR_ACTIVE)
+  op_mass_hex.set_field("v", ru_hex, bu_hex, libceed.VECTOR_ACTIVE)
+
+  ## ------------------------- Composite Operators -------------------------
+
+  # Setup
+  op_setup = ceed.CompositeOperator()
+  op_setup.add_sub(op_setup_tet)
+  op_setup.add_sub(op_setup_hex)
+
+  # Apply mass matrix
+  op_mass = ceed.CompositeOperator()
+  op_mass.add_sub(op_mass_tet)
+  op_mass.add_sub(op_mass_hex)
+
+  # View
+  print(op_setup)
+  print(op_mass)
+
+  stdout, stderr = capsys.readouterr()
+  with open(os.path.abspath("./output/test_523.out")) as output_file:
+    true_output = output_file.read()
+
+  assert stdout == true_output
 
 #-------------------------------------------------------------------------------

@@ -118,11 +118,10 @@ class CompositeOperator(_OperatorBase):
   # Constructor
   def __init__(self, ceed):
     # CeedOperator object
-    self.pointer = ffi.new("CeedOperator *")
+    self._pointer = ffi.new("CeedOperator *")
 
     # Reference to Ceed
     self._ceed = ceed
-
     # libCEED call
     lib.CeedCompositeOperatorCreate(self._ceed._pointer[0], self._pointer)
 
@@ -134,6 +133,6 @@ class CompositeOperator(_OperatorBase):
          subop: sub-operator Operator"""
 
     # libCEED call
-    lib.CeedOperatorAddSup(self._pointer[0], subop._pointer[0])
+    lib.CeedCompositeOperatorAddSub(self._pointer[0], subop._pointer[0])
 
 # ------------------------------------------------------------------------------
