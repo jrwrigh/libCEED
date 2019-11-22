@@ -17,7 +17,6 @@ if __name__ == "__main__":
   xq = np.array([0.2, 0.6, 1./3., 0.2, 0.2, 0.2, 1./3., 0.6], dtype="float64")
   xr = np.array([0., 0.5, 1., 0., 0.5, 0., 0., 0., 0., 0.5, 0.5, 1.], dtype="float64")
   in_array = np.empty(P, dtype="float64")
-
   qref = np.empty(dim*Q, dtype="float64")
   qweight = np.empty(Q, dtype="float64")
 
