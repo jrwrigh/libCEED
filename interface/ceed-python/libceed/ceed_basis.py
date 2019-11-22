@@ -21,7 +21,7 @@ from abc import ABC
 from .ceed_constants import TRANSPOSE, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
-class _BasisBase(ABC):
+class Basis(ABC):
   """Ceed Basis: fully discrete finite element-like objects."""
 
   # Attributes
@@ -209,7 +209,7 @@ class _BasisBase(ABC):
 
     lbda = np.empty(n, dtype="float64")
     l_pointer = ffi.new("CeedScalar *")
-    l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
+    l_pointer = ffi.cast("CeedScalar *", lbda.__array_interface__['data'][0])
 
     # libCEED call
     lib.CeedSymmetricSchurDecomposition(ceed._pointer[0], mat_pointer, l_pointer, n)
@@ -242,7 +242,7 @@ class _BasisBase(ABC):
 
     lbda = np.empty(n, dtype="float64")
     l_pointer = ffi.new("CeedScalar *")
-    l_pointer = ffi.cast("CeedScalar *", l.__array_interface__['data'][0])
+    l_pointer = ffi.cast("CeedScalar *", lbda.__array_interface__['data'][0])
 
     x = np.empty(n*n, dtype="float64")
     x_pointer = ffi.new("CeedScalar *")
@@ -260,7 +260,7 @@ class _BasisBase(ABC):
     lib.CeedBasisDestroy(self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisTensorH1(_BasisBase):
+class BasisTensorH1(Basis):
   """Ceed Tensor H1 Basis: fully discrete finite element-like objects with a tensor product H^1 descretizations."""
 
   # Constructor
@@ -290,7 +290,7 @@ class BasisTensorH1(_BasisBase):
                                 qweight1d_pointer, self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisTensorH1Lagrange(_BasisBase):
+class BasisTensorH1Lagrange(Basis):
   """Ceed Tensor H1 Lagrange Basis: fully discrete finite element-like objects with a tensor product Lagrange basis."""
 
   # Constructor
@@ -306,7 +306,7 @@ class BasisTensorH1Lagrange(_BasisBase):
                                         Q, qmode, self._pointer)
 
 # ------------------------------------------------------------------------------
-class BasisH1(_BasisBase):
+class BasisH1(Basis):
   """Ceed H1 Basis: fully discrete finite element-like objects with a H^1 descretization."""
 
   # Constructor
