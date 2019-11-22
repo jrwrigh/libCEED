@@ -14,6 +14,9 @@
 // software, applications, hardware, advanced system engineering and early
 // testbed platforms, in support of the nation's exascale computing imperative.
 
+//------------------------------------------------------------------------------
+// Setup 1D mass matrix
+//------------------------------------------------------------------------------
 CEED_QFUNCTION(setup_mass)(void *ctx, const CeedInt Q,
                            const CeedScalar *const *in,
                            CeedScalar *const *out) {
@@ -33,6 +36,31 @@ CEED_QFUNCTION(setup_mass)(void *ctx, const CeedInt Q,
   return 0;
 }
 
+//------------------------------------------------------------------------------
+// Setup 2D mass matrix
+//------------------------------------------------------------------------------
+CEED_QFUNCTION(setup_mass_2d)(void *ctx, const CeedInt Q,
+                              const CeedScalar *const *in,
+                              CeedScalar *const *out) {
+  // in[0] is quadrature weights, size (Q)
+  // in[1] is Jacobians with shape [2, nc=2, Q]
+  const CeedScalar *w = in[0], *J = in[1];
+
+  // out[0] is quadrature data, size (Q)
+  CeedScalar *qdata = out[0];
+
+  // Quadrature point loop
+  CeedPragmaSIMD
+  for (CeedInt i=0; i<Q; i++) {
+    qdata[i] = w[i] * (J[i+Q*0]*J[i+Q*3] - J[i+Q*1]*J[i+Q*2]);
+  }
+
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// Apply mass matrix
+//------------------------------------------------------------------------------
 CEED_QFUNCTION(apply_mass)(void *ctx, const CeedInt Q,
                            const CeedScalar *const *in,
                            CeedScalar *const *out) {
@@ -56,6 +84,9 @@ CEED_QFUNCTION(apply_mass)(void *ctx, const CeedInt Q,
   return 0;
 }
 
+//------------------------------------------------------------------------------
+// Apply mass matrix to two components
+//------------------------------------------------------------------------------
 CEED_QFUNCTION(apply_mass_two)(void *ctx, const CeedInt Q,
                                const CeedScalar *const *in,
                                CeedScalar *const *out) {
@@ -75,3 +106,5 @@ CEED_QFUNCTION(apply_mass_two)(void *ctx, const CeedInt Q,
 
   return 0;
 }
+
+//------------------------------------------------------------------------------
