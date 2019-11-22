@@ -15,7 +15,7 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed_cffi import ffi, lib
-import sys
+import tempfile
 import numpy as np
 from abc import ABC
 from .ceed_constants import TRANSPOSE, NOTRANSPOSE
@@ -37,8 +37,16 @@ class _BasisBase(ABC):
     """View a Basis via print()."""
 
     # libCEED call
-    lib.CeedBasisView(self._pointer[0], sys.stdout)
-    return ""
+    with tempfile.NamedTemporaryFile() as key_file:
+      with open(key_file.name, 'r+') as stream_file:
+        stream = ffi.cast("FILE *", stream_file)
+
+        lib.CeedBasisView(self._pointer[0], stream)
+
+        stream_file.seek(0)
+        out_string = stream_file.read()
+
+    return out_string
 
   # Apply Basis
   def apply(self, nelem, emode, u, v, tmode=NOTRANSPOSE):

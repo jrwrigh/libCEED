@@ -15,8 +15,6 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed_cffi import ffi, lib
-import sys
-import io
 from abc import ABC
 from .ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, NOTRANSPOSE
 
@@ -42,8 +40,16 @@ class _OperatorBase(ABC):
     """View a Operator via print()."""
 
     # libCEED call
-    lib.CeedOperatorView(self._pointer[0], sys.stdout)
-    return ""
+    with tempfile.NamedTemporaryFile() as key_file:
+      with open(key_file.name, 'r+') as stream_file:
+        stream = ffi.cast("FILE *", stream_file)
+
+        lib.CeedOperatorView(self._pointer[0], stream)
+
+        stream_file.seek(0)
+        out_string = stream_file.read()
+
+    return out_string
 
   # Apply CeedOperator
   def apply(self, u, v, request=REQUEST_IMMEDIATE):

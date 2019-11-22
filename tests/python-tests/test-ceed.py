@@ -15,7 +15,7 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 # @file
-# Test basic Ceed functionality
+# Test Ceed functionality
 
 import libceed
 

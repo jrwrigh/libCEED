@@ -15,8 +15,7 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed_cffi import ffi, lib
-import sys
-import io
+import tempfile
 import numpy as np
 from .ceed_constants import MEM_HOST, COPY_VALUES
 
@@ -54,8 +53,16 @@ class Vector():
 
     # libCEED call
     fmt = ffi.new("char[]", "%f".encode('ascii'))
-    lib.CeedVectorView(self._pointer[0], fmt, sys.stdout)
-    return ""
+    with tempfile.NamedTemporaryFile() as key_file:
+      with open(key_file.name, 'r+') as stream_file:
+        stream = ffi.cast("FILE *", stream_file)
+
+        lib.CeedVectorView(self._pointer[0], fmt, stream)
+
+        stream_file.seek(0)
+        out_string = stream_file.read()
+
+    return out_string
 
   # Set Vector's data array
   def set_array(self, array, memtype=MEM_HOST, cmode=COPY_VALUES):

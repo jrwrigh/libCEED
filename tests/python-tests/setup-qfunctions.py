@@ -21,10 +21,10 @@ from distutils.core import setup, Extension
 # Setup
 # ------------------------------------------------------------------------------
 qf_module = Extension("libceed_qfunctions",
-                      include_dirs=[os.path.abspath("../../../include")],
+                      include_dirs=[os.path.abspath("../../include")],
                       libraries=["ceed"],
-                      library_dirs=[os.path.abspath("../../../lib")],
-                      runtime_library_dirs=[os.path.abspath("../../../lib")],
+                      library_dirs=[os.path.abspath("../../lib")],
+                      runtime_library_dirs=[os.path.abspath("../../lib")],
                       sources=["libceed-qfunctions.c"],
                       extra_compile_args=["-O3", "-std=c99",
                                           "-Wno-unused-variable",

@@ -15,9 +15,8 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed_cffi import ffi, lib
-import sys
-import io
 import ctypes
+import tempfile
 from abc import ABC
 
 # ------------------------------------------------------------------------------
@@ -42,8 +41,16 @@ class _QFunctionBase(ABC):
     """View a QFunction via print()."""
 
     # libCEED call
-    lib.CeedQFunctionView(self._pointer[0], sys.stdout)
-    return ""
+    with tempfile.NamedTemporaryFile() as key_file:
+      with open(key_file.name, 'r+') as stream_file:
+        stream = ffi.cast("FILE *", stream_file)
+
+        lib.CeedQFunctionView(self._pointer[0], stream)
+
+        stream_file.seek(0)
+        out_string = stream_file.read()
+
+    return out_string
 
   # Apply CeedQFunction
   def apply(self, q, inputs, outputs):
