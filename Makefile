@@ -470,7 +470,7 @@ junit-% : $(OBJDIR)/%
 junit : $(matched:$(OBJDIR)/%=junit-%)
 
 pytest : python
-	cd tests/python-tests && $(PYTHON) setup-qfunctions.py build && pytest test-ceed*.py --ceed /cpu/self/ref/serial
+	cd tests/python && $(PYTHON) setup-qfunctions.py build && pytest test-ceed*.py --ceed /cpu/self/ref/serial
 
 all : $(alltests)
 

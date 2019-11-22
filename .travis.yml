@@ -36,9 +36,8 @@ matrix:
     - language: python
       dist: xenial
       python: 3.8
-      before_install:
+      install:
         - pip install -U pytest
-      install: skip
       script:
         - make pytest -j4
 
