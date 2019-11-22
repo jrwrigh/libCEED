@@ -1,5 +1,5 @@
 # @file
-# Test interpolation with a 2D Simplex non-tensor H1 basis
+# Test grad with a 2D Simplex non-tensor H1 basis
 
 import sys, math
 import libceed
@@ -8,6 +8,9 @@ import buildmats as bm
 
 def feval(x1, x2):
   return x1*x1 + x2*x2 + x1*x2 + 1
+
+def dfeval(x1, x2):
+  return 2*x1 + x2
 
 if __name__ == "__main__":
   ceed = libceed.Ceed(sys.argv[1])
@@ -30,18 +33,23 @@ if __name__ == "__main__":
 
   in_vec = ceed.Vector(P)
   in_vec.set_array(in_array, cmode=libceed.USE_POINTER)
-  out_vec = ceed.Vector(Q)
+  out_vec = ceed.Vector(Q*dim)
   out_vec.set_value(0)
 
-  b.apply(1, libceed.EVAL_INTERP, in_vec, out_vec)
+  b.apply(1, libceed.EVAL_GRAD, in_vec, out_vec)
 
   # Check values at quadrature points
   out_array = out_vec.get_array_read()
   for i in range(Q):
-    value = feval(xq[0*Q+i], xq[1*Q+i])
-    if math.fabs(out_array[i] - value) > 1E-10:
+    value = dfeval(xq[0*Q+i], xq[1*Q+i])
+    if math.fabs(out_array[0*Q+i] - value) > 1E-10:
       # LCOV_EXCL_START
-      printf("[%d] %f != %f"%(i, out[i], value))
+      print("[%d] %f != %f"%(i, out[0*Q+i], value))
     # LCOV_EXCL_STOP
-  out_vec.restore_array_read()
+    value = dfeval(xq[1*Q+i], xq[0*Q+i])
+    if math.fabs(out_array[1*Q+i] - value) > 1E-10:
+      # LCOV_EXCL_START
+      print("[%d] %f != %f"%(i, out[1*Q+i], value))
+    # LCOV_EXCL_STOP
 
+  out_vec.restore_array_read()

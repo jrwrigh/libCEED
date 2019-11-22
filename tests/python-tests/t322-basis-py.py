@@ -1,5 +1,5 @@
 # @file
-# Test interpolation with a 2D Simplex non-tensor H1 basis
+# Test integration with a 2D Simplex non-tensor H1 basis
 
 import sys, math
 import libceed
@@ -14,7 +14,6 @@ if __name__ == "__main__":
 
   P, Q, dim = 6, 4, 2
 
-  xq = np.array([0.2, 0.6, 1./3., 0.2, 0.2, 0.2, 1./3., 0.6], dtype="float64")
   xr = np.array([0., 0.5, 1., 0., 0.5, 0., 0., 0., 0., 0.5, 0.5, 1.], dtype="float64")
   in_array = np.empty(P, dtype="float64")
   qref = np.empty(dim*Q, dtype="float64")
@@ -32,16 +31,20 @@ if __name__ == "__main__":
   in_vec.set_array(in_array, cmode=libceed.USE_POINTER)
   out_vec = ceed.Vector(Q)
   out_vec.set_value(0)
+  weights_vec = ceed.Vector(Q)
+  weights_vec.set_value(0)
 
   b.apply(1, libceed.EVAL_INTERP, in_vec, out_vec)
+  b.apply(1, libceed.EVAL_WEIGHT, libceed.VECTOR_NONE, weights_vec)
 
   # Check values at quadrature points
   out_array = out_vec.get_array_read()
+  weights_array = weights_vec.get_array_read()
+  sum = 0
   for i in range(Q):
-    value = feval(xq[0*Q+i], xq[1*Q+i])
-    if math.fabs(out_array[i] - value) > 1E-10:
-      # LCOV_EXCL_START
-      printf("[%d] %f != %f"%(i, out[i], value))
-    # LCOV_EXCL_STOP
-  out_vec.restore_array_read()
+    sum += out_array[i]*weights_array[i]
+  if math.fabs(sum - 17./24.) > 1E-10:
+    print("%f != %f"%(sum, 17./24.))
 
+  out_vec.restore_array_read()
+  weights_vec.restore_array_read()
