@@ -1,3 +1,5 @@
+import numpy as np
+
 def buildmats(qref, qweight):
   P, Q, dim = 6, 4, 2
   interp = np.empty(P*Q, dtype="float64")

@@ -4,7 +4,7 @@
 import sys
 import libceed
 import numpy as np
-import t320buildmats
+import buildmats as bm
 
 if __name__ == "__main__":
   ceed = libceed.Ceed(sys.argv[1])
@@ -14,7 +14,7 @@ if __name__ == "__main__":
   qref = np.empty(dim*Q, dtype="float64")
   qweight = np.empty(Q, dtype="float64")
 
-  interp, grad = buildmats(qref, qweight)
+  interp, grad = bm.buildmats(qref, qweight)
 
-  b = ceed.BasisH1(libceed.TRIANGLE, 1, 1, P, Q, interp, grad, qref, qweight)
+  b = ceed.BasisH1(libceed.TRIANGLE, 1, P, Q, interp, grad, qref, qweight)
   print(b)
