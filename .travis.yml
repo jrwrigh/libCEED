@@ -34,6 +34,8 @@ env:
 matrix:
   include:
     - language: python
+      dist: xenial
+      python: 3.8
       install:
         - pip install -r pytest
       script:
