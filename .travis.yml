@@ -70,6 +70,9 @@ script:
     fi
   - make -j2
   - make -j2 prove-all PROVE_OPTS=-v
+  - if [[ "$TRAVIS_OS_NAME" == "linux" &&  "$TRAVIS_COMPILER" == "gcc" ]]; then
+        make pytest PYFLAGS=--user;
+    fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         clang-tidy --version && make -j2 tidy;
     fi
