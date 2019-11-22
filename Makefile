@@ -469,7 +469,10 @@ junit-% : $(OBJDIR)/%
 
 junit : $(matched:$(OBJDIR)/%=junit-%)
 
-all: $(alltests)
+pytest : python
+	cd tests/python-tests && $(PYTHON) setup-qfunctions.py build && pytest test-ceed*.py --ceed /cpu/self/ref/serial
+
+all : $(alltests)
 
 examples : $(allexamples)
 ceedexamples : $(examples)
@@ -509,7 +512,7 @@ install : $(libceed) $(OBJDIR)/ceed.pc
 	$(INSTALL_DATA) $(OBJDIR)/ceed.pc "$(DESTDIR)$(pkgconfigdir)/"
 	$(if $(OCCA_ON),$(INSTALL_DATA) $(OKL_KERNELS) "$(DESTDIR)$(okldir)/")
 
-.PHONY : cln clean doc lib install all print test tst prove prv prove-all junit examples style tidy okl-cache okl-clear info info-backends python
+.PHONY : cln clean doc lib install all print test tst prove prv prove-all pytest junit examples style tidy okl-cache okl-clear info info-backends python
 
 cln clean :
 	$(RM) -r $(OBJDIR) $(LIBDIR)

@@ -15,6 +15,7 @@
 # testbed platforms, in support of the nation's exascale computing imperative.
 
 from _ceed_cffi import ffi, lib
+import tempfile
 from abc import ABC
 from .ceed_constants import REQUEST_IMMEDIATE, REQUEST_ORDERED, NOTRANSPOSE
 

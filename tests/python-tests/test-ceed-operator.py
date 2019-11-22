@@ -127,7 +127,7 @@ def test_500(ceed_resource):
 #-------------------------------------------------------------------------------
 # Test creation creation, action, and destruction for mass matrix operator
 #-------------------------------------------------------------------------------
-def test_401(ceed_resource):
+def test_501(ceed_resource):
   ceed = libceed.Ceed(ceed_resource)
 
   nelem = 15
@@ -167,8 +167,8 @@ def test_401(ceed_resource):
   bu = ceed.BasisTensorH1Lagrange(1, 1, p, q, libceed.GAUSS)
 
   # QFunctions
-  qfs = ctypes.cdll.LoadLibrary("./qfs.so")
-  file_dir = os.path.abspath(__file__)
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  qfs = load_qfs_so()
 
   qf_setup = ceed.QFunction(1, qfs.setup_mass,
                             os.path.join(file_dir, "test-qfunctions.h:setup_mass"))
@@ -209,5 +209,257 @@ def test_401(ceed_resource):
   assert abs(total - 1.0) < 1E-14
 
   v.restore_array_read()
+
+#-------------------------------------------------------------------------------
+# Test creation creation, action, and destruction for mass matrix operator
+#-------------------------------------------------------------------------------
+def test_502(ceed_resource):
+  ceed = libceed.Ceed(ceed_resource)
+
+  nelem = 15
+  p = 5
+  q = 8
+  nx = nelem + 1
+  nu = nelem*(p-1) + 1
+
+  # Vectors
+  x = ceed.Vector(nx)
+  x_array = np.zeros(nx)
+  for i in range(nx):
+    x_array[i] = i / (nx - 1.0)
+  x.set_array(x_array, cmode=libceed.USE_POINTER)
+
+  qdata = ceed.Vector(nelem*q)
+  u = ceed.Vector(2*nu)
+  v = ceed.Vector(2*nu)
+
+  # Restrictions
+  indx = np.zeros(nx*2, dtype="int32")
+  for i in range(nx):
+    indx[2*i+0] = i
+    indx[2*i+1] = i+1
+  rx = ceed.ElemRestriction(nelem, 2, nx, 1, indx, cmode=libceed.USE_POINTER)
+  rxi = ceed.IdentityElemRestriction(nelem, 2, nelem*2, 1)
+
+  indu = np.zeros(nelem*p, dtype="int32")
+  for i in range(nelem):
+    for j in range(p):
+      indu[p*i+j] = i*(p-1) + j
+  ru = ceed.ElemRestriction(nelem, p, nu, 2, indu, cmode=libceed.USE_POINTER)
+  rui = ceed.IdentityElemRestriction(nelem, q, q*nelem, 1)
+
+  # Bases
+  bx = ceed.BasisTensorH1Lagrange(1, 1, 2, q, libceed.GAUSS)
+  bu = ceed.BasisTensorH1Lagrange(1, 2, p, q, libceed.GAUSS)
+
+  # QFunctions
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  qfs = load_qfs_so()
+
+  qf_setup = ceed.QFunction(1, qfs.setup_mass,
+                            os.path.join(file_dir, "test-qfunctions.h:setup_mass"))
+  qf_setup.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup.add_input("dx", 1, libceed.EVAL_GRAD)
+  qf_setup.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass = ceed.QFunction(1, qfs.apply_mass_two,
+                           os.path.join(file_dir, "test-qfunctions.h:apply_mass_two"))
+  qf_mass.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass.add_input("u", 2, libceed.EVAL_INTERP)
+  qf_mass.add_output("v", 2, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup = ceed.Operator(qf_setup)
+  op_setup.set_field("weights", rxi, bx, libceed.VECTOR_NONE)
+  op_setup.set_field("dx", rx, bx, libceed.VECTOR_ACTIVE)
+  op_setup.set_field("rho", rui, libceed.BASIS_COLLOCATED,
+                     libceed.VECTOR_ACTIVE)
+
+  op_mass = ceed.Operator(qf_mass)
+  op_mass.set_field("rho", rui, libceed.BASIS_COLLOCATED, qdata)
+  op_mass.set_field("u", ru, bu, libceed.VECTOR_ACTIVE, lmode=libceed.TRANSPOSE)
+  op_mass.set_field("v", ru, bu, libceed.VECTOR_ACTIVE, lmode=libceed.TRANSPOSE)
+
+  # Setup
+  op_setup.apply(x, qdata)
+
+  # Apply mass matrix
+  u_array = u.get_array()
+  for i in range(nu):
+    u_array[2*i] = 1.
+    u_array[2*i+1] = 2.
+  u.restore_array()
+  op_mass.apply(u, v)
+
+  # Check
+  v_array = v.get_array_read()
+  total_1 = 0.0
+  total_2 = 0.0
+  for i in range(nu):
+    total_1 = total_1 + v_array[2*i]
+    total_2 = total_2 + v_array[2*i+1]
+  assert abs(total_1 - 1.0) < 1E-13
+  assert abs(total_2 - 2.0) < 1E-13
+
+  v.restore_array_read()
+
+#-------------------------------------------------------------------------------
+# Test creation, action, and destruction for mass matrix operator with passive
+#   inputs and outputs
+#-------------------------------------------------------------------------------
+def test_503(ceed_resource):
+  ceed = libceed.Ceed(ceed_resource)
+
+  nelem = 15
+  p = 5
+  q = 8
+  nx = nelem + 1
+  nu = nelem*(p-1) + 1
+
+  # Vectors
+  x = ceed.Vector(nx)
+  x_array = np.zeros(nx)
+  for i in range(nx):
+    x_array[i] = i / (nx - 1.0)
+  x.set_array(x_array, cmode=libceed.USE_POINTER)
+
+  qdata = ceed.Vector(nelem*q)
+  u = ceed.Vector(nu)
+  v = ceed.Vector(nu)
+
+  # Restrictions
+  indx = np.zeros(nx*2, dtype="int32")
+  for i in range(nx):
+    indx[2*i+0] = i
+    indx[2*i+1] = i+1
+  rx = ceed.ElemRestriction(nelem, 2, nx, 1, indx, cmode=libceed.USE_POINTER)
+  rxi = ceed.IdentityElemRestriction(nelem, 2, nelem*2, 1)
+
+  indu = np.zeros(nelem*p, dtype="int32")
+  for i in range(nelem):
+    for j in range(p):
+      indu[p*i+j] = i*(p-1) + j
+  ru = ceed.ElemRestriction(nelem, p, nu, 1, indu, cmode=libceed.USE_POINTER)
+  rui = ceed.IdentityElemRestriction(nelem, q, q*nelem, 1)
+
+  # Bases
+  bx = ceed.BasisTensorH1Lagrange(1, 1, 2, q, libceed.GAUSS)
+  bu = ceed.BasisTensorH1Lagrange(1, 1, p, q, libceed.GAUSS)
+
+  # QFunctions
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  qfs = load_qfs_so()
+
+  qf_setup = ceed.QFunction(1, qfs.setup_mass,
+                            os.path.join(file_dir, "test-qfunctions.h:setup_mass"))
+  qf_setup.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup.add_input("dx", 1, libceed.EVAL_GRAD)
+  qf_setup.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass = ceed.QFunction(1, qfs.apply_mass,
+                           os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup = ceed.Operator(qf_setup)
+  op_setup.set_field("weights", rxi, bx, libceed.VECTOR_NONE)
+  op_setup.set_field("dx", rx, bx, libceed.VECTOR_ACTIVE)
+  op_setup.set_field("rho", rui, libceed.BASIS_COLLOCATED,
+                     libceed.VECTOR_ACTIVE)
+
+  op_mass = ceed.Operator(qf_mass)
+  op_mass.set_field("rho", rui, libceed.BASIS_COLLOCATED, qdata)
+  op_mass.set_field("u", ru, bu, u, lmode=libceed.TRANSPOSE)
+  op_mass.set_field("v", ru, bu, v, lmode=libceed.TRANSPOSE)
+
+  # Setup
+  op_setup.apply(x, qdata)
+
+  # Apply mass matrix
+  u.set_value(1)
+  op_mass.apply(libceed.VECTOR_NONE, libceed.VECTOR_NONE)
+
+  # Check
+  v_array = v.get_array_read()
+  total = 0.0
+  for i in range(nu):
+    total = total + v_array[i]
+  assert abs(total - 1.0) < 1E-13
+
+  v.restore_array_read()
+
+#-------------------------------------------------------------------------------
+# Test viewing of mass matrix operator
+#-------------------------------------------------------------------------------
+def test_504(ceed_resource, capsys):
+  ceed = libceed.Ceed(ceed_resource)
+
+  nelem = 15
+  p = 5
+  q = 8
+  nx = nelem + 1
+  nu = nelem*(p-1) + 1
+
+  # Vectors
+  qdata = ceed.Vector(nelem*q)
+
+  # Restrictions
+  indx = np.zeros(nx*2, dtype="int32")
+  for i in range(nx):
+    indx[2*i+0] = i
+    indx[2*i+1] = i+1
+  rx = ceed.ElemRestriction(nelem, 2, nx, 1, indx, cmode=libceed.USE_POINTER)
+  rxi = ceed.IdentityElemRestriction(nelem, 2, nelem*2, 1)
+
+  indu = np.zeros(nelem*p, dtype="int32")
+  for i in range(nelem):
+    for j in range(p):
+      indu[p*i+j] = i*(p-1) + j
+  ru = ceed.ElemRestriction(nelem, p, nu, 1, indu, cmode=libceed.USE_POINTER)
+  rui = ceed.IdentityElemRestriction(nelem, q, q*nelem, 1)
+
+  # Bases
+  bx = ceed.BasisTensorH1Lagrange(1, 1, 2, q, libceed.GAUSS)
+  bu = ceed.BasisTensorH1Lagrange(1, 1, p, q, libceed.GAUSS)
+
+  # QFunctions
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  qfs = load_qfs_so()
+
+  qf_setup = ceed.QFunction(1, qfs.setup_mass,
+                            os.path.join(file_dir, "test-qfunctions.h:setup_mass"))
+  qf_setup.add_input("weights", 1, libceed.EVAL_WEIGHT)
+  qf_setup.add_input("dx", 1, libceed.EVAL_GRAD)
+  qf_setup.add_output("rho", 1, libceed.EVAL_NONE)
+
+  qf_mass = ceed.QFunction(1, qfs.apply_mass,
+                           os.path.join(file_dir, "test-qfunctions.h:apply_mass"))
+  qf_mass.add_input("rho", 1, libceed.EVAL_NONE)
+  qf_mass.add_input("u", 1, libceed.EVAL_INTERP)
+  qf_mass.add_output("v", 1, libceed.EVAL_INTERP)
+
+  # Operators
+  op_setup = ceed.Operator(qf_setup)
+  op_setup.set_field("weights", rxi, bx, libceed.VECTOR_NONE)
+  op_setup.set_field("dx", rx, bx, libceed.VECTOR_ACTIVE)
+  op_setup.set_field("rho", rui, libceed.BASIS_COLLOCATED,
+                     libceed.VECTOR_ACTIVE)
+
+  op_mass = ceed.Operator(qf_mass)
+  op_mass.set_field("rho", rui, libceed.BASIS_COLLOCATED, qdata)
+  op_mass.set_field("u", ru, bu, libceed.VECTOR_ACTIVE)
+  op_mass.set_field("v", ru, bu, libceed.VECTOR_ACTIVE)
+
+  # View
+  print(op_setup)
+  print(op_mass)
+
+  stdout, stderr = capsys.readouterr()
+  with open(os.path.abspath("./output/test_504.out")) as output_file:
+    true_output = output_file.read()
+
+  assert stdout == true_output
 
 #-------------------------------------------------------------------------------
