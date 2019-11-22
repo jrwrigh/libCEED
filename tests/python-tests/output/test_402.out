@@ -1,9 +1,13 @@
 User CeedQFunction 
-  1 Input Field:
+  2 Input Fields:
     Input Field [0]:
       Name: "w"
       Size: 1
       EvalMode: "quadrature weights"
+    Input Field [1]:
+      Name: "dx"
+      Size: 1
+      EvalMode: "gradient"
   1 Output Field:
     Output Field [0]:
       Name: "qdata"

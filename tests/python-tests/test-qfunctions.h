@@ -18,14 +18,16 @@ CEED_QFUNCTION(setup_mass)(void *ctx, const CeedInt Q,
                            const CeedScalar *const *in,
                            CeedScalar *const *out) {
   // in[0] is quadrature weights, size (Q)
-  const CeedScalar *w = in[0];
+  // in[1] is Jacobians, size (Q)
+  const CeedScalar *w = in[0], *J = in[1];
+
   // out[0] is quadrature data, size (Q)
   CeedScalar *qdata = out[0];
 
   // Quadrature point loop
   CeedPragmaSIMD
   for (CeedInt i=0; i<Q; i++) {
-    qdata[i] = w[i];
+    qdata[i] = J[i] * w[i];
   }
 
   return 0;
@@ -41,6 +43,8 @@ CEED_QFUNCTION(apply_mass)(void *ctx, const CeedInt Q,
   // in[0] is quadrature data, size (Q)
   // in[1] is u, size (Q)
   const CeedScalar *qdata = in[0], *u = in[1];
+
+  // out[0] is v, size (Q)
   CeedScalar *v = out[0];
 
   // Quadrature point loop

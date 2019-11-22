@@ -52,6 +52,7 @@ def test_400(ceed_resource):
   qf_setup = ceed.QFunction(1, qfs.setup_mass,
                             os.path.join(file_dir, "test-qfunctions.h:setup_mass"))
   qf_setup.add_input("w", 1, libceed.EVAL_WEIGHT)
+  qf_setup.add_input("dx", 1, libceed.EVAL_GRAD)
   qf_setup.add_output("qdata", 1, libceed.EVAL_NONE)
 
   qf_mass = ceed.QFunction(1, qfs.apply_mass,
@@ -71,6 +72,8 @@ def test_400(ceed_resource):
     u_array[i] = 2 + 3*x + 5*x*x
     v_true[i]  = w_array[i] * u_array[i]
 
+  dx = ceed.Vector(q)
+  dx.set_value(1)
   w = ceed.Vector(q)
   w.set_array(w_array, cmode=libceed.USE_POINTER)
   u = ceed.Vector(q)
@@ -80,7 +83,7 @@ def test_400(ceed_resource):
   qdata = ceed.Vector(q)
   qdata.set_value(0)
 
-  inputs = [ w ]
+  inputs = [ dx, w ]
   outputs = [ qdata ]
   qf_setup.apply(q, inputs, outputs)
 
@@ -106,6 +109,7 @@ def test_401(ceed_resource):
   qf_setup = ceed.QFunction(1, qfs.setup_mass,
                             os.path.join(file_dir, "test-qfunctions.h:setup_mass"))
   qf_setup.add_input("w", 1, libceed.EVAL_WEIGHT)
+  qf_setup.add_input("dx", 1, libceed.EVAL_GRAD)
   qf_setup.add_output("qdata", 1, libceed.EVAL_NONE)
 
   qf_mass = ceed.QFunction(1, qfs.apply_mass,
@@ -128,6 +132,8 @@ def test_401(ceed_resource):
     u_array[i] = 2 + 3*x + 5*x*x
     v_true[i]  = 5* w_array[i] * u_array[i]
 
+  dx = ceed.Vector(q)
+  dx.set_value(1)
   w = ceed.Vector(q)
   w.set_array(w_array, cmode=libceed.USE_POINTER)
   u = ceed.Vector(q)
@@ -137,7 +143,7 @@ def test_401(ceed_resource):
   qdata = ceed.Vector(q)
   qdata.set_value(0)
 
-  inputs = [ w ]
+  inputs = [ dx, w ]
   outputs = [ qdata ]
   qf_setup.apply(q, inputs, outputs)
 
@@ -163,6 +169,7 @@ def test_402(ceed_resource, capsys):
   qf_setup = ceed.QFunction(1, qfs.setup_mass,
                             os.path.join(file_dir, "test-qfunctions.h:setup_mass"))
   qf_setup.add_input("w", 1, libceed.EVAL_WEIGHT)
+  qf_setup.add_input("dx", 1, libceed.EVAL_GRAD)
   qf_setup.add_output("qdata", 1, libceed.EVAL_NONE)
 
   qf_mass = ceed.QFunction(1, qfs.apply_mass,
