@@ -20,10 +20,10 @@ PYTHON ?= python3
 all: ceed-cffi libceed-python
 
 ceed-cffi:
-	python setup-ceed-cffi.py build_ext install $(PYFLAGS)
+	$(PYTHON) setup-ceed-cffi.py build_ext install $(PYFLAGS)
 
 libceed-python: ceed-cffi
-	python setup-libceed.py build install $(PYFLAGS)
+	$(PYTHON) setup-libceed.py build install $(PYFLAGS)
 
 clean:
 	rm -rf build dist libceed.egg-info ceed_cffi.egg-info libceed/__pycache__
