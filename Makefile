@@ -518,7 +518,7 @@ cln clean :
 	$(RM) -r $(OBJDIR) $(LIBDIR)
 	$(MAKE) -C examples clean NEK5K_DIR="$(abspath $(NEK5K_DIR))"
 	$(MAKE) -C interface/ceed-python clean
-	$(MAKE) -C tests/python-tests clean
+	$(MAKE) -C tests/python clean
 	$(RM) $(magma_tmp.c) $(magma_tmp.cu) backends/magma/*~ backends/magma/*.o
 	$(RM) benchmarks/*output.txt
 
