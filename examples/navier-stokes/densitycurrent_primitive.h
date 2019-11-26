@@ -348,13 +348,14 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
         dqdx[k+1][j] = dudx[k][j];
     }
     // StrongConv = dF/dq * dq/dx    (Strong convection)
-    CeedScalar StrongConv[5];
+    CeedScalar StrongConv[5] = {0};
     for (int j=0; j<3; j++)
       for (int k=0; k<5; k++)
         for (int l=0; l<5; l++)
           StrongConv[k] += dFconvdq[j][k][l] * dqdx[l][j];
     // Body force
     const CeedScalar BodyForce[5] = {0, 0, 0, rho*g, rho*g*u[2]};
+
     // d(conservative variables)/d(primitive variables) * 
     // d(primitive variables)/dt
     CeedScalar dConsVardt[5] = {0};
@@ -368,7 +369,8 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
     // Strong residual
     CeedScalar StrongResid[5];
     for (int j=0; j<5; j++)
-      StrongResid[j] = dConsVardt[j] + StrongConv[j] + BodyForce[j];       
+      StrongResid[j] = dConsVardt[j] + StrongConv[j] + BodyForce[j];  
+
     // The Physics
     //-----mass matrix 
     for (int j=0; j<5; j++)
@@ -422,7 +424,7 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
     CeedScalar stab[5][3];               
     Advection2dContext context = ctx;
     switch (context->stabilization) {
-    case 0:        // Galerkin (actually HV)
+    case 0:        // Galerkin
       break;
     case 1:        // SU
       f1   = rho * sqrt(uiujgij);
@@ -438,9 +440,9 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
 
       for (int j=0; j<5; j++)
         for (int k=0; k<3; k++)
-          dv[k][j][i] += wJ*(stab[j][k] * dXdx[k][0] + 
-                             stab[j][k] * dXdx[k][1] +
-                             stab[j][k] * dXdx[k][2]);
+          dv[k][j][i] += wJ*(stab[j][0] * dXdx[k][0] + 
+                             stab[j][1] * dXdx[k][1] +
+                             stab[j][2] * dXdx[k][2]);
       break;
     case 2:        // SUPG
       f1   = rho * sqrt(2./(C1*dt) + uiujgij);
@@ -456,9 +458,9 @@ CEED_QFUNCTION(IFunction_DCPrim)(void *ctx, CeedInt Q,
 
       for (int j=0; j<5; j++)
         for (int k=0; k<3; k++)
-          dv[k][j][i] += wJ*(stab[j][k] * dXdx[k][0] + 
-                             stab[j][k] * dXdx[k][1] +
-                             stab[j][k] * dXdx[k][2]);
+          dv[k][j][i] += wJ*(stab[j][0] * dXdx[k][0] + 
+                             stab[j][1] * dXdx[k][1] +
+                             stab[j][2] * dXdx[k][2]);
       break;              
     } 
  
