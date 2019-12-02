@@ -67,6 +67,21 @@ class _OperatorBase(ABC):
     lib.CeedOperatorApply(self._pointer[0], u._pointer[0], v._pointer[0],
                           request)
 
+  # Apply CeedOperator
+  def apply_add(self, u, v, request=REQUEST_IMMEDIATE):
+    """Apply Operator to a vector and add result to output vector.
+
+       Args:
+         u: Vector containing input state or CEED_VECTOR_NONE if there are no
+              active inputs
+         v: Vector to sum in result of applying operator (must be distinct from u)
+              or CEED_VECTOR_NONE if there are no active outputs
+         **request: Ceed request, default CEED_REQUEST_IMMEDIATE"""
+
+    # libCEED call
+    lib.CeedOperatorApplyAdd(self._pointer[0], u._pointer[0], v._pointer[0],
+                             request)
+
 # ------------------------------------------------------------------------------
 class Operator(_OperatorBase):
   """Ceed Operator: composed FE-type operations on vectors."""
