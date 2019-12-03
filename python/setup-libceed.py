@@ -20,16 +20,65 @@ from setuptools import setup, find_packages
 # ------------------------------------------------------------------------------
 # Setup
 # ------------------------------------------------------------------------------
-with open(os.path.abspath("../ceed.pc.template")) as t:
-  ceed_version = [line.split("Version:", 1)[1].strip() for line in t if
+def version():
+  with open(os.path.abspath("../ceed.pc.template")) as template:
+    ceed_version = [line.split("Version:", 1)[1].strip() for line in template if
                     line.startswith("Version: ")]
+  return ceed_version[0]
+
+description = """
+libCEED: the Code for Efficient Extensible Discretization API Library
+=====================================================================
+
+This low-level API library provides the efficient high-order discretization
+methods developed by the ECP co-design Center for Efficient Exascale
+Discretizations (CEED). While our focus is on high-order finite elements, the
+approach is mostly algebraic and thus applicable to other discretizations in
+factored form, as explained in the API documentation.
+
+One of the challenges with high-order methods is that a global sparse matrix is
+no longer a good representation of a high-order linear operator, both with
+respect to the FLOPs needed for its evaluation, as well as the memory transfer
+needed for a matvec.  Thus, high-order methods require a new "format" that still
+represents a linear (or more generally non-linear) operator, but not through a
+sparse matrix.
+
+libCEED is to provides such a format, as well as supporting implementations and
+data structures, that enable efficient operator evaluation on a variety of
+computational device types (CPUs, GPUs, etc.). This new operator description is
+algebraic and easy to incorporate in a wide variety of applications, without
+significant refactoring of their own discretization infrastructure.
+"""
+
+classifiers = """
+Intended Audience :: Developers
+Intended Audience :: Science/Research
+License :: OSI Approved :: BSD License
+Operating System :: POSIX
+Programming Language :: C
+Programming Language :: C++
+Programming Language :: CUDA
+Programming Language :: Fortran
+Programming Language :: Python
+Topic :: Scientific/Engineering
+Topic :: Software Development :: Libraries
+"""
 
 setup(name="libceed",
-      version=ceed_version[0],
-      license="BSD 2",
-      url="https://github.com/CEED/libCEED",
+      version=version(),
       description="libceed python bindings",
-      requires=["ceed", "numpy"],
+      long_description='\n'.join(description),
+      classifiers= classifiers.split('\n')[1:-1],
+      keywords=["libCEED"],
+      platforms=["POSIX"],
+      license="BSD 2",
+
+      url="https://github.com/CEED/libCEED",
+
+      author="libCEED Team",
+      author_email='ceed-users@llnl.gov',
+
+      requires=["ceed_cffi", "numpy"],
       packages=["libceed"],
 )
 
