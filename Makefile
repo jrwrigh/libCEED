@@ -71,8 +71,8 @@ endif
 
 # Warning: SANTIZ options still don't run with /gpu/occa
 # export LSAN_OPTIONS=suppressions=.asanignore
-AFLAGS = -fsanitize=address #-fsanitize=undefined -fno-omit-frame-pointer
 
+AFLAGS = -fsanitize=address #-fsanitize=undefined -fno-omit-frame-pointer
 OPT    = -O -g -march=native -ffp-contract=fast -fopenmp-simd
 CFLAGS = -std=c99 $(OPT) -Wall -Wextra -Wno-unused-parameter -fPIC -MMD -MP
 CXXFLAGS = $(OPT) -Wall -Wextra -Wno-unused-parameter -fPIC -MMD -MP
@@ -221,7 +221,10 @@ lib: $(libceed) $(ceed.pc)
 # run 'lib' target in parallel
 par:;@$(MAKE) $(MFLAGS) V=$(V) lib
 
-PYFLAGS ?=
+ifneq ($(prefix), /usr/local)
+  pyprefix = $(prefix)
+endif
+PYFLAGS += --prefix=$(pyprefix)
 python :  $(libceed)
 	$(MAKE) -C python PYFLAGS=$(PYFLAGS) PYTHON=$(PYTHON)
 
