@@ -63,7 +63,9 @@
 #endif
 
 #ifndef CeedPragmaSIMD
-#  if defined(__GNUC__) && __GNUC__ >= 5
+#  if defined(__INTEL_COMPILER) &&__INTEL_COMPILER >= 900
+#    define CeedPragmaSIMD _Pragma("simd")
+#  elif defined(__GNUC__) && __GNUC__ >= 5
 #    define CeedPragmaSIMD _Pragma("GCC ivdep")
 #  elif defined(_OPENMP) && _OPENMP >= 201307 // OpenMP-4.0 (July, 2013)
 #    define CeedPragmaSIMD _Pragma("omp simd")
@@ -404,6 +406,8 @@ CEED_EXTERN int CeedOperatorAssembleLinearQFunction(CeedOperator op,
 CEED_EXTERN int CeedOperatorAssembleLinearDiagonal(CeedOperator op,
     CeedVector *assembled, CeedRequest *request);
 CEED_EXTERN int CeedOperatorView(CeedOperator op, FILE *stream);
+CEED_EXTERN int CeedOperatorCreateFDMElementInverse(CeedOperator op,
+    CeedOperator *fdminv, CeedRequest *request);
 CEED_EXTERN int CeedOperatorApply(CeedOperator op, CeedVector in,
                                   CeedVector out, CeedRequest *request);
 CEED_EXTERN int CeedOperatorApplyAdd(CeedOperator op, CeedVector in,
