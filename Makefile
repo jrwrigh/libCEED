@@ -222,9 +222,8 @@ lib: $(libceed) $(ceed.pc)
 par:;@$(MAKE) $(MFLAGS) V=$(V) lib
 
 ifneq ($(prefix), /usr/local)
-  pyprefix = $(prefix)
+  PYFLAGS += --prefix=$(prefix)
 endif
-PYFLAGS += --prefix=$(pyprefix)
 python :  $(libceed)
 	$(MAKE) -C python PYFLAGS=$(PYFLAGS) PYTHON=$(PYTHON)
 
