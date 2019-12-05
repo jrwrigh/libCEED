@@ -22,7 +22,7 @@ from .ceed_constants import TRANSPOSE, NOTRANSPOSE
 
 # ------------------------------------------------------------------------------
 class Basis(ABC):
-  """Ceed Basis: fully discrete finite element-like objects."""
+  """Ceed Basis: finite element basis objects."""
 
   # Attributes
   _ceed = ffi.NULL
@@ -50,18 +50,18 @@ class Basis(ABC):
 
   # Apply Basis
   def apply(self, nelem, emode, u, v, tmode=NOTRANSPOSE):
-    """Apply basis evaluation from nodes to quadrature points or vice-versa.
+    """Apply basis evaluation from nodes to quadrature points or vice versa.
 
        Args:
          nelem: the number of elements to apply the basis evaluation to;
                   the backend will specify the ordering in a
-                  Blocked ElemRestriction
+                  BlockedElemRestriction
          emode: basis evaluation mode
          u: input vector
          v: output vector
          **tmode: CEED_NOTRANSPOSE to evaluate from nodes to quadrature
                     points, CEED_TRANSPOSE to apply the transpose, mapping
-                    from quadrature points to nodes, default CEED_NOTRANSPOSE"""
+                    from quadrature points to nodes; default CEED_NOTRANSPOSE"""
 
     # libCEED call
     lib.CeedBasisApply(self._pointer[0], nelem, tmode, emode,
@@ -169,12 +169,12 @@ class Basis(ABC):
   # QR factorization
   @staticmethod
   def qr_factorization(ceed, mat, tau, m, n):
-    """Return QR Factorization of matrix.
+    """Return QR Factorization of a matrix.
 
        Args:
          ceed: Ceed context currently in use
-         *mat: Numpy array holding row-major matrix to be factorized in place
-         *tau: Numpy array to hold vector of lengt m of scaling factors
+         *mat: Numpy array holding the row-major matrix to be factorized in place
+         *tau: Numpy array to hold the vector of lengt m of scaling factors
          m: number of rows
          n: numbef of columns"""
 
@@ -193,11 +193,12 @@ class Basis(ABC):
   # Symmetric Schur decomposition
   @staticmethod
   def symmetric_schur_decomposition(ceed, mat, n):
-    """Return symmetric Schur decomposition of a symmetric matrix mat.
+    """Return symmetric Schur decomposition of a symmetric matrix
+         via symmetric QR factorization.
 
        Args:
          ceed: Ceed context currently in use
-         *mat: Numpy array holding row-major matrix to be factorized in place
+         *mat: Numpy array holding the row-major matrix to be factorized in place
          n: number of rows/columns
 
        Returns:
@@ -223,14 +224,14 @@ class Basis(ABC):
 
        Args:
          ceed: Ceed context currently in use
-         *matA: Numpy array holding row-major matrix to be factorized with
+         *matA: Numpy array holding the row-major matrix to be factorized with
                   eigenvalues
-         *matB: Numpy array holding row-major matrix to be factorized to identity
+         *matB: Numpy array holding the row-major matrix to be factorized to identity
          n: number of rows/columns
 
        Returns:
-         (x, lbda): Numpy array holding row-major orthogonal matrix and
-                      Numpy array holding vector of length n of generalized
+         (x, lbda): Numpy array holding the row-major orthogonal matrix and
+                      Numpy array holding the vector of length n of generalized
                       eigenvalues"""
 
     # Setup arguments
@@ -261,7 +262,8 @@ class Basis(ABC):
 
 # ------------------------------------------------------------------------------
 class BasisTensorH1(Basis):
-  """Ceed Tensor H1 Basis: fully discrete finite element-like objects with a tensor product H^1 descretizations."""
+  """Ceed Tensor H1 Basis: finite element tensor-product basis objects for
+       H^1 discretizations."""
 
   # Constructor
   def __init__(self, ceed, dim, ncomp, P1d, Q1d, interp1d, grad1d,
@@ -291,7 +293,8 @@ class BasisTensorH1(Basis):
 
 # ------------------------------------------------------------------------------
 class BasisTensorH1Lagrange(Basis):
-  """Ceed Tensor H1 Lagrange Basis: fully discrete finite element-like objects with a tensor product Lagrange basis."""
+  """Ceed Tensor H1 Lagrange Basis: finite element tensor-product Lagrange basis
+       objects for H^1 discretizations."""
 
   # Constructor
   def __init__(self, ceed, dim, ncomp, P, Q, qmode):
@@ -307,7 +310,7 @@ class BasisTensorH1Lagrange(Basis):
 
 # ------------------------------------------------------------------------------
 class BasisH1(Basis):
-  """Ceed H1 Basis: fully discrete finite element-like objects with a H^1 descretization."""
+  """Ceed H1 Basis: finite element non tensor-product basis for H^1 discretizations."""
 
   # Constructor
   def __init__(self, ceed, topo, ncomp, nnodes, nqpts, interp, grad, qref, qweight):
@@ -336,7 +339,7 @@ class BasisH1(Basis):
 
 # ------------------------------------------------------------------------------
 class TransposeBasis():
-  """Transpose Ceed Basis: fully discrete finite element-like objects."""
+  """Transpose Ceed Basis: transpose of finite element tensor-product basis objects."""
 
   # Attributes
   _basis = None
@@ -359,7 +362,7 @@ class TransposeBasis():
          nelem: the number of elements to apply the basis evaluation to;
                   the backend will specify the ordering in a
                   Blocked ElemRestriction
-         emode: basis evaluation mode
+         **emode: basis evaluation mode
          u: input vector
          v: output vector"""
 
