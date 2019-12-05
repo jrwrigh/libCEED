@@ -199,14 +199,14 @@ class BlockedElemRestriction(_ElemRestrictionBase):
   # Transpose a Blocked ElemRestriction
   @property
   def T(self):
-    """Transpose an ElemRestriction."""
+    """Transpose a BlockedElemRestriction."""
 
     return TransposeBlockedElemRestriction(self)
 
   # Transpose a Blocked ElemRestriction
   @property
   def transpose(self):
-    """Transpose an ElemRestriction."""
+    """Transpose a BlockedElemRestriction."""
 
     return TransposeBlockedElemRestriction(self)
 
@@ -227,7 +227,7 @@ class BlockedElemRestriction(_ElemRestrictionBase):
                     by this CeedElemRestriction. CEED_NOTRANSPOSE indicates
                     the component is the outermost index and CEED_TRANSPOSE
                     indicates the component is the innermost index in
-                    ordering of the local vector tmode=CEED_NOTRANSPOSE),
+                    ordering of the local vector tmode=CEED_NOTRANSPOSE;
                     default CEED_NOTRANSPOSE
          **request: Ceed request, default CEED_REQUEST_IMMEDIATE"""
 
@@ -238,7 +238,7 @@ class BlockedElemRestriction(_ElemRestrictionBase):
 
 # ------------------------------------------------------------------------------
 class TransposeElemRestriction():
-  """Ceed ElemRestriction: restriction from local vectors to elements."""
+  """Ceed ElemRestriction: transpose restriction from elements to local vectors."""
 
   # Attributes
   _elemrestriction = None
@@ -275,7 +275,8 @@ class TransposeElemRestriction():
 
 # ------------------------------------------------------------------------------
 class TransposeBlockedElemRestriction(TransposeElemRestriction):
-  """Transpose Ceed Blocked ElemRestriction: blocked restriction from elements to local vectors."""
+  """Transpose Ceed Blocked ElemRestriction: blocked transpose restriction from elements
+       to local vectors."""
 
   # Apply Transpose CeedElemRestriction
   def apply_block(self, block, u, v, request=REQUEST_IMMEDIATE,
