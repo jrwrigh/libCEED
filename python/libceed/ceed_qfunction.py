@@ -21,7 +21,8 @@ from abc import ABC
 
 # ------------------------------------------------------------------------------
 class _QFunctionBase(ABC):
-  """Ceed QFunction: independent operations at quadrature points."""
+  """Ceed QFunction: point-wise operation at quadrature points for evaluating
+       volumetric terms."""
 
   # Attributes
   _ceed = ffi.NULL
@@ -79,7 +80,8 @@ class _QFunctionBase(ABC):
 
 # ------------------------------------------------------------------------------
 class QFunction(_QFunctionBase):
-  """Ceed QFunction: independent operations at quadrature points."""
+  """Ceed QFunction: point-wise operation at quadrature points for evaluating
+       volumetric terms."""
 
   # Constructor
   def __init__(self, ceed, vlength, f, source):
@@ -117,9 +119,9 @@ class QFunction(_QFunctionBase):
 
        Args:
          fieldname: name of QFunction field
-         size: size of QFunction field, ncomp * (dim for CEED_EVAL_GRAD or
-                 1 for CEED_EVAL_NONE and CEED_EVAL_INTERP)
-         emode: CEED_EVAL_NONE to use values directly,
+         size: size of QFunction field, (ncomp * dim) for CEED_EVAL_GRAD or
+                 (ncomp * 1) for CEED_EVAL_NONE and CEED_EVAL_INTERP
+         **emode: CEED_EVAL_NONE to use values directly,
                   CEED_EVAL_INTERP to use interpolated values,
                   CEED_EVAL_GRAD to use gradients."""
 
@@ -132,9 +134,9 @@ class QFunction(_QFunctionBase):
 
        Args:
          fieldname: name of QFunction field
-         size: size of QFunction field, ncomp * (dim for CEED_EVAL_GRAD or
-                 1 for CEED_EVAL_NONE and CEED_EVAL_INTERP)
-         emode: CEED_EVAL_NONE to use values directly,
+         size: size of QFunction field, (ncomp * dim) for CEED_EVAL_GRAD or
+                 (ncomp * 1) for CEED_EVAL_NONE and CEED_EVAL_INTERP
+         **emode: CEED_EVAL_NONE to use values directly,
                   CEED_EVAL_INTERP to use interpolated values,
                   CEED_EVAL_GRAD to use gradients."""
 
@@ -144,7 +146,8 @@ class QFunction(_QFunctionBase):
 
 # ------------------------------------------------------------------------------
 class QFunctionByName(_QFunctionBase):
-  """Ceed QFunction By Name: independent operations at quadrature points from gallery."""
+  """Ceed QFunction By Name: point-wise operation at quadrature points
+       from a given gallery, for evaluating volumetric terms."""
 
   # Constructor
   def __init__(self, ceed, name):

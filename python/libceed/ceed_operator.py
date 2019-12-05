@@ -38,7 +38,7 @@ class _OperatorBase(ABC):
 
   # String conversion for print() to stdout
   def __str__(self):
-    """View a Operator via print()."""
+    """View an Operator via print()."""
 
     # libCEED call
     with tempfile.NamedTemporaryFile() as key_file:
@@ -102,11 +102,11 @@ class Operator(_OperatorBase):
 
   # Add field to CeedOperator
   def set_field(self, fieldname, restriction, basis, vector, lmode=NOTRANSPOSE):
-    """Provide a field to a Operator for use by its QFunction.
+    """Provide a field to an Operator for use by its QFunction.
 
        Args:
          fieldname: name of the field (to be matched with the same name used
-                      by QFunction
+                      by QFunction)
          restriction: ElemRestriction
          basis: Basis in which the field resides or CEED_BASIS_COLLOCATED
                   if collocated with quadrature points
