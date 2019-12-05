@@ -147,7 +147,10 @@ class Ceed():
                       ordered list of the indices (into the input Ceed Vector)
                       for the unknowns corresponding to element i, where
                       0 <= i < nelem. All indices must be in the range
-                      [0, nnodes - 1].
+                      [0, nnodes - 1]. The backend will permute and pad this
+                      array to the desired ordering for the blocksize, which is
+                      typically given by the backend. The default reordering is
+                      to interlace elements.
          **memtype: memory type of the indices array, default CEED_MEM_HOST
          **cmode: copy mode for the indices array, default CEED_COPY_VALUES
 
