@@ -96,7 +96,7 @@ class Ceed():
                    used by other Ceed ElemRestriction objects describing
                    different types of elements.
          ncomp: number of field components per interpolation node (1 for scalar fields)
-         indices: Numpy array of shape [nelem, elemsize]. Row i holds the
+         *indices: Numpy array of shape [nelem, elemsize]. Row i holds the
                       ordered list of the indices (into the input Ceed Vector)
                       for the unknowns corresponding to element i, where
                       0 <= i < nelem. All indices must be in the range
@@ -143,7 +143,7 @@ class Ceed():
                    used by other Ceed ElemRestriction objects describing
                    different types of elements.
          ncomp: number of field components per interpolation node (1 for scalar fields)
-         indices: Numpy array of shape [nelem, elemsize]. Row i holds the
+         *indices: Numpy array of shape [nelem, elemsize]. Row i holds the
                       ordered list of the indices (into the input Ceed Vector)
                       for the unknowns corresponding to element i, where
                       0 <= i < nelem. All indices must be in the range
@@ -172,13 +172,13 @@ class Ceed():
          ncomp: number of field components (1 for scalar fields)
          P1d: number of nodes in one dimension
          Q1d: number of quadrature points in one dimension
-         interp1d: Numpy array holding row-major (Q1d * P1d) matrix expressing the
+         *interp1d: Numpy array holding the row-major (Q1d * P1d) matrix expressing the
                      values of nodal basis functions at quadrature points
-         grad1d: Numpy array holding row-major (Q1d * P1d) matrix expressing the
+         *grad1d: Numpy array holding the row-major (Q1d * P1d) matrix expressing the
                    derivatives of nodal basis functions at quadrature points
-         qref1d: Array of length Q1d holding the locations of quadrature points
+         *qref1d: Numpy array of length Q1d holding the locations of quadrature points
                    on the 1D reference element [-1, 1]
-         qweight1d: Array of length Q1d holding the quadrature weights on the
+         *qweight1d: Numpy array of length Q1d holding the quadrature weights on the
                       reference element
 
        Returns:
@@ -212,15 +212,15 @@ class Ceed():
          topo: topology of the element, e.g. hypercube, simplex, etc
          ncomp: number of field components (1 for scalar fields)
          nnodes: total number of nodes
-         nquts: total number of quadrature points
-         interp: Numpy array holding row-major (nqpts * nnodes) matrix expressing
+         nqpts: total number of quadrature points
+         *interp: Numpy array holding the row-major (nqpts * nnodes) matrix expressing
                    the values of nodal basis functions at quadrature points
-         grad: Numpy array holding row-major (nqpts * dim * nnodes) matrix
+         *grad: Numpy array holding the row-major (nqpts * dim * nnodes) matrix
                  expressing the derivatives of nodal basis functions at
                  quadrature points
-         qref: Array of length (nqpts * dim) holding the locations of quadrature
+         *qref: Numpy array of length (nqpts * dim) holding the locations of quadrature
                  points on the reference element [-1, 1]
-         qweight: Array of length nnodes holding the quadrature weights on the
+         *qweight: Numpy array of length nnodes holding the quadrature weights on the
                     reference element
 
        Returns:
@@ -262,8 +262,8 @@ class Ceed():
 
        Args:
          size: size of the qfunction fields
-         inmode: CeedEvalMode for input to Ceed QFunction
-         outmode: CeedEvalMode for output to Ceed QFunction
+         **inmode: CeedEvalMode for input to Ceed QFunction
+         **outmode: CeedEvalMode for output to Ceed QFunction
 
        Returns:
          qfunction: Ceed Identity QFunction"""
