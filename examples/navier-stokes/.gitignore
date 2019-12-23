@@ -1,4 +1,6 @@
 navierstokes
+nsplex
 *.vtr
 *.vts
 *.bin*
+*.vtu

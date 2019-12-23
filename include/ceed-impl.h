@@ -23,12 +23,7 @@
 #include <ceed-backend.h>
 #include <stdbool.h>
 
-#define CEED_INTERN CEED_EXTERN __attribute__((visibility ("hidden")))
-
-#define CEED_MAX_RESOURCE_LEN 1024
-#define CEED_ALIGN 64
-
-#define CEED_COMPOSITE_MAX 16
+#define CEED_EPSILON 1E-16
 
 // Lookup table field for backend functions
 typedef struct {
@@ -48,6 +43,8 @@ struct Ceed_private {
   Ceed parent;
   objdelegate *objdelegates;
   int objdelegatecount;
+  Ceed opfallbackceed, opfallbackparent;
+  const char *opfallbackresource;
   int (*Error)(Ceed, const char *, int, const char *, int, const char *,
                va_list);
   int (*GetPreferredMemType)(CeedMemType *);
@@ -202,11 +199,16 @@ struct CeedOperatorField_private {
 
 struct CeedOperator_private {
   Ceed ceed;
+  CeedOperator opfallback;
+  CeedQFunction qffallback;
   int refcount;
   int (*AssembleLinearQFunction)(CeedOperator, CeedVector *,
                                  CeedElemRestriction *, CeedRequest *);
   int (*AssembleLinearDiagonal)(CeedOperator, CeedVector *, CeedRequest *);
   int (*Apply)(CeedOperator, CeedVector, CeedVector, CeedRequest *);
+  int (*ApplyComposite)(CeedOperator, CeedVector, CeedVector, CeedRequest *);
+  int (*ApplyAdd)(CeedOperator, CeedVector, CeedVector, CeedRequest *);
+  int (*ApplyAddComposite)(CeedOperator, CeedVector, CeedVector, CeedRequest *);
   int (*ApplyJacobian)(CeedOperator, CeedVector, CeedVector, CeedVector,
                        CeedVector, CeedRequest *);
   int (*Destroy)(CeedOperator);
@@ -236,5 +238,9 @@ CEED_INTERN int CeedSetErrorHandler(Ceed ceed,
                                     int (eh)(Ceed, const char *, int,
                                         const char *, int, const char *,
                                         va_list));
+
+CEED_INTERN int CeedMatrixMultiply(Ceed ceed, CeedScalar *matA,
+                                   CeedScalar *matB, CeedScalar *matC,
+                                   CeedInt m, CeedInt n, CeedInt kk);
 
 #endif

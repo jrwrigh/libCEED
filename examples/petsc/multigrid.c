@@ -44,8 +44,8 @@ const char help[] = "Solve CEED BPs using p-multigrid with PETSc and DMPlex\n";
 int main(int argc, char **argv) {
   PetscInt ierr;
   MPI_Comm comm;
-  char ceedresource[PETSC_MAX_PATH_LEN] = "/cpu/self",
-       filename[PETSC_MAX_PATH_LEN];
+  char filename[PETSC_MAX_PATH_LEN],
+       ceedresource[PETSC_MAX_PATH_LEN] = "/cpu/self";
   double my_rt_start, my_rt, rt_min, rt_max;
   PetscInt degree = 3, qextra, *lsize, *xlsize, *gsize, dim = 3,
            melem[3] = {3, 3, 3}, ncompu = 1, numlevels = degree, *leveldegrees;
@@ -108,6 +108,7 @@ int main(int argc, char **argv) {
                           "Coarsening strategy to use", NULL,
                           coarsenTypes, (PetscEnum)coarsen,
                           (PetscEnum *)&coarsen, NULL); CHKERRQ(ierr);
+  read_mesh = PETSC_FALSE;
   ierr = PetscOptionsString("-mesh", "Read mesh from file", NULL,
                             filename, filename, sizeof(filename), &read_mesh);
   CHKERRQ(ierr);
@@ -145,7 +146,7 @@ int main(int argc, char **argv) {
   case COARSEN_UNIFORM:
     numlevels = degree;
     break;
-  case COARSEN_LOGRITHMIC:
+  case COARSEN_LOGARITHMIC:
     numlevels = ceil(log(degree)/log(2)) + 1;
     break;
   }
@@ -154,7 +155,7 @@ int main(int argc, char **argv) {
   case COARSEN_UNIFORM:
     for (int i=0; i<numlevels; i++) leveldegrees[i] = i + 1;
     break;
-  case COARSEN_LOGRITHMIC:
+  case COARSEN_LOGARITHMIC:
     for (int i=0; i<numlevels-1; i++) leveldegrees[i] = pow(2,i);
     leveldegrees[numlevels-1] = degree;
     break;
@@ -278,14 +279,10 @@ int main(int argc, char **argv) {
   CeedVectorDestroy(&rhsceed);
 
   // Create the restriction/interpolation Q-function
-  CeedQFunctionCreateInterior(ceed, 1, bpOptions[bpChoice].ident,
-                              bpOptions[bpChoice].identfname, &qf_restrict);
-  CeedQFunctionAddInput(qf_restrict, "uin", ncompu, CEED_EVAL_NONE);
-  CeedQFunctionAddOutput(qf_restrict, "uout", ncompu, CEED_EVAL_INTERP);
-  CeedQFunctionCreateInterior(ceed, 1, bpOptions[bpChoice].ident,
-                              bpOptions[bpChoice].identfname, &qf_prolong);
-  CeedQFunctionAddInput(qf_prolong, "uin", ncompu, CEED_EVAL_INTERP);
-  CeedQFunctionAddOutput(qf_prolong, "uout", ncompu, CEED_EVAL_NONE);
+  CeedQFunctionCreateIdentity(ceed, ncompu, CEED_EVAL_NONE, CEED_EVAL_INTERP,
+                              &qf_restrict);
+  CeedQFunctionCreateIdentity(ceed, ncompu, CEED_EVAL_INTERP, CEED_EVAL_NONE,
+                              &qf_prolong);
 
   // Set up libCEED level transfer operators
   ierr = CeedLevelTransferSetup(ceed, numlevels, ncompu, bpChoice, ceeddata,
@@ -300,7 +297,8 @@ int main(int argc, char **argv) {
   CeedQFunctionAddOutput(qf_error, "error", ncompu, CEED_EVAL_NONE);
 
   // Create the error operator
-  CeedOperatorCreate(ceed, qf_error, NULL, NULL, &op_error);
+  CeedOperatorCreate(ceed, qf_error, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE,
+                     &op_error);
   CeedOperatorSetField(op_error, "u", ceeddata[numlevels-1]->Erestrictu,
                        CEED_TRANSPOSE, ceeddata[numlevels-1]->basisu,
                        CEED_VECTOR_ACTIVE);

@@ -131,9 +131,9 @@ CEED_QFUNCTION(Advection2d)(void *ctx, CeedInt Q,
   // Outputs
   CeedScalar (*v)[Q] = (CeedScalar(*)[Q])out[0],
              (*dv)[5][Q] = (CeedScalar(*)[5][Q])out[1];
-  const CeedScalar *context = (const CeedScalar *)ctx;
-  const CeedScalar CtauS = context[0];
-  const CeedScalar strong_form = context[1];
+  Advection2dContext context = ctx;
+  const CeedScalar CtauS = context->CtauS;
+  const CeedScalar strong_form = context->strong_form;
 
   CeedPragmaSIMD
   // Quadrature Point Loop
@@ -212,7 +212,7 @@ CEED_QFUNCTION(Advection2d)(void *ctx, CeedInt Q,
 
   return 0;
 }
-
+// *****************************************************************************
 CEED_QFUNCTION(IFunction_Advection2d)(void *ctx, CeedInt Q,
     const CeedScalar *const *in, CeedScalar *const *out) {
   // Inputs

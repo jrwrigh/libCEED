@@ -29,9 +29,10 @@
 // Sample runs:
 //
 //     navierstokes
-//     navierstokes -ceed -problem density_current /cpu/self
-//     navierstokes -ceed -problem advection /gpu/occa
+//     navierstokes -ceed /cpu/self -problem density_current
+//     navierstokes -ceed /gpu/occa -problem advection
 //
+//TESTARGS -ceed {ceed_resource} -test
 
 /// @file
 /// Navier-Stokes example using PETSc
@@ -343,7 +344,7 @@ int main(int argc, char **argv) {
   char ceedresource[4096] = "/cpu/self";
   PetscInt localNelem, lsize, steps, melem[3], mnode[3], p[3], irank[3],
            lnode[3];
-  PetscBool periodic[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE};
+  PetscBool periodic[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE}, test;
   PetscMPIInt size, rank;
   PetscScalar ftime;
   PetscScalar *q0, *m, *mult, *x;
@@ -363,7 +364,7 @@ int main(int argc, char **argv) {
   CeedScalar Rd;
   PetscScalar WpermK, Pascal, JperkgK, mpersquareds, kgpercubicm,
               kgpersquaredms, Joulepercubicm;
-  problemType problemChoice;
+  problemType problemChoice = NS_DENSITY_CURRENT;
 
   // Create the libCEED contexts
   PetscScalar meter     = 1e-2;     // 1 meter in scaled length units
@@ -407,7 +408,13 @@ int main(int argc, char **argv) {
   ierr = PetscOptionsString("-ceed", "CEED resource specifier",
                             NULL, ceedresource, ceedresource,
                             sizeof(ceedresource), NULL); CHKERRQ(ierr);
-  problemChoice = NS_DENSITY_CURRENT;
+  ierr = PetscOptionsBool("-test", "Run in test mode",
+                          NULL, test=PETSC_FALSE, &test, NULL); CHKERRQ(ierr);
+  if (test) {
+    resx *= 2;
+    resy *= 2;
+    resz *= 2;
+  }
   ierr = PetscOptionsEnum("-problem", "Problem to solve", NULL,
                           problemTypes, (PetscEnum)problemChoice,
                           (PetscEnum *)&problemChoice, NULL); CHKERRQ(ierr);
@@ -536,7 +543,7 @@ int main(int argc, char **argv) {
   // Find my location in the process grid
   ierr = MPI_Comm_rank(comm, &rank); CHKERRQ(ierr);
   for (int d=0,rankleft=rank; d<dim; d++) {
-    const int pstride[3] = {p[1]*p[2], p[2], 1};
+    const int pstride[3] = {p[1]*p[2], p[2], 1}; // *NOPAD*
     irank[d] = rankleft / pstride[d];
     rankleft -= irank[d] * pstride[d];
   }
@@ -806,7 +813,8 @@ int main(int argc, char **argv) {
   CeedQFunctionAddOutput(qf, "dv", ncompq*dim, CEED_EVAL_GRAD);
 
   // Create the operator that builds the quadrature data for the NS operator
-  CeedOperatorCreate(ceed, qf_setup, NULL, NULL, &op_setup);
+  CeedOperatorCreate(ceed, qf_setup, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE,
+                     &op_setup);
   CeedOperatorSetField(op_setup, "dx", restrictx, CEED_NOTRANSPOSE,
                        basisx, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_setup, "weight", restrictxi, CEED_NOTRANSPOSE,
@@ -815,7 +823,8 @@ int main(int argc, char **argv) {
                        CEED_BASIS_COLLOCATED, CEED_VECTOR_ACTIVE);
 
   // Create the mass operator
-  CeedOperatorCreate(ceed, qf_mass, NULL, NULL, &op_mass);
+  CeedOperatorCreate(ceed, qf_mass, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE,
+                     &op_mass);
   CeedOperatorSetField(op_mass, "q", restrictq, CEED_TRANSPOSE,
                        basisq, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_mass, "qdata", restrictqdi, CEED_NOTRANSPOSE,
@@ -824,7 +833,8 @@ int main(int argc, char **argv) {
                        basisq, CEED_VECTOR_ACTIVE);
 
   // Create the operator that sets the ICs
-  CeedOperatorCreate(ceed, qf_ics, NULL, NULL, &op_ics);
+  CeedOperatorCreate(ceed, qf_ics, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE,
+                     &op_ics);
   CeedOperatorSetField(op_ics, "x", restrictx, CEED_NOTRANSPOSE,
                        basisxc, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op_ics, "q0", restrictq, CEED_TRANSPOSE,
@@ -833,7 +843,7 @@ int main(int argc, char **argv) {
                        CEED_BASIS_COLLOCATED, xceed);
 
   // Create the physics operator
-  CeedOperatorCreate(ceed, qf, NULL, NULL, &op);
+  CeedOperatorCreate(ceed, qf, CEED_QFUNCTION_NONE, CEED_QFUNCTION_NONE, &op);
   CeedOperatorSetField(op, "q", restrictq, CEED_TRANSPOSE,
                        basisq, CEED_VECTOR_ACTIVE);
   CeedOperatorSetField(op, "dq", restrictq, CEED_TRANSPOSE,
@@ -852,7 +862,7 @@ int main(int argc, char **argv) {
                              lx, ly, lz, periodic[0], periodic[1], periodic[2]
                             };
   CeedQFunctionSetContext(qf_ics, &ctxSetup, sizeof ctxSetup);
-  CeedScalar ctxNS[6] = {lambda, mu, k, cv, cp, g};
+  CeedScalar ctxNS[7] = {lambda, mu, k, cv, cp, g, Rd};
   CeedQFunctionSetContext(qf, &ctxNS, sizeof ctxNS);
 
   // Set up PETSc context
@@ -994,13 +1004,16 @@ int main(int argc, char **argv) {
   ierr = TSSetMaxTime(ts, 500. * units->second); CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts, TS_EXACTFINALTIME_STEPOVER); CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts, 1.e-5 * units->second); CHKERRQ(ierr);
+  if (test) {ierr = TSSetMaxSteps(ts, 1); CHKERRQ(ierr);}
   ierr = TSGetAdapt(ts, &adapt); CHKERRQ(ierr);
   ierr = TSAdaptSetStepLimits(adapt,
                               1.e-12 * units->second,
                               1.e-2 * units->second); CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
   if (!contsteps) { // print initial condition
-    ierr = TSMonitor_NS(ts, 0, 0., Q, user); CHKERRQ(ierr);
+    if (!test) {
+      ierr = TSMonitor_NS(ts, 0, 0., Q, user); CHKERRQ(ierr);
+    }
   } else { // continue from time of last output
     PetscReal time;
     PetscInt count;
@@ -1015,7 +1028,9 @@ int main(int argc, char **argv) {
     ierr = PetscViewerDestroy(&viewer); CHKERRQ(ierr);
     ierr = TSSetTime(ts, time * user->units->second); CHKERRQ(ierr);
   }
-  ierr = TSMonitorSet(ts, TSMonitor_NS, user, NULL); CHKERRQ(ierr);
+  if (!test) {
+    ierr = TSMonitorSet(ts, TSMonitor_NS, user, NULL); CHKERRQ(ierr);
+  }
 
   // Solve
   ierr = TSSolve(ts, Q); CHKERRQ(ierr);

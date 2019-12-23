@@ -29,9 +29,10 @@
 // Sample runs:
 //
 //     nsplex
-//     nsplex -ceed -problem density_current /cpu/self
-//     nsplex -ceed -problem advection /gpu/occa
+//     nsplex -ceed /cpu/self -problem density_current
+//     nsplex -ceed /gpu/occa -problem advection
 //
+//TESTARGS -ceed {ceed_resource} -test -petscspace_degree 1
 
 /// @file
 /// Navier-Stokes example using PETSc
@@ -47,17 +48,20 @@ const char help[] = "Solve Navier-Stokes using PETSc and libCEED\n";
 #include "advection.h"
 #include "advection2d.h"
 #include "densitycurrent.h"
+#include "densitycurrent_primitive.h"
 
 // Problem Options
 typedef enum {
   NS_DENSITY_CURRENT = 0,
   NS_ADVECTION = 1,
   NS_ADVECTION2D = 2,
+  NS_DENSITY_CURRENT_PRIMITIVE = 3
 } problemType;
 static const char *const problemTypes[] = {
   "density_current",
   "advection",
   "advection2d",
+  "density_current_primitive",
   "problemType","NS_",0
 };
 
@@ -85,25 +89,29 @@ typedef struct {
 problemData problemOptions[] = {
   [NS_DENSITY_CURRENT] = {
     .dim = 3,
-    .qdatasize = 16,
+    .qdatasize = 10,
     .setup = Setup,
     .setup_loc = Setup_loc,
     .ics = ICsDC,
     .apply_rhs = DC,
-    .bc = NULL,
     .ics_loc = ICsDC_loc,
-    .apply_rhs_loc = DC_loc
+    .apply_rhs_loc = DC_loc,
+    .apply_ifunction = IFunction_DC,
+    .apply_ifunction_loc = IFunction_DC_loc,
+    .bc = NULL,
   },
   [NS_ADVECTION] = {
     .dim = 3,
-    .qdatasize = 16,
+    .qdatasize = 10,
     .setup = Setup,
     .setup_loc = Setup_loc,
     .ics = ICsAdvection,
     .apply_rhs = Advection,
-    .bc = NULL,
     .ics_loc = ICsAdvection_loc,
     .apply_rhs_loc = Advection_loc,
+    .apply_ifunction = IFunction_Advection,
+    .apply_ifunction_loc = IFunction_Advection_loc,
+    .bc = NULL,
   },
   [NS_ADVECTION2D] = {
     .dim = 2,
@@ -117,6 +125,19 @@ problemData problemOptions[] = {
     .apply_ifunction = IFunction_Advection2d,
     .apply_ifunction_loc = IFunction_Advection2d_loc,
     .bc = NULL,
+  },
+  [NS_DENSITY_CURRENT_PRIMITIVE] = {
+    .dim = 3,
+    .qdatasize = 10,
+    .setup = Setup,
+    .setup_loc = Setup_loc,
+    .ics = ICsDCPrim,
+    .ics_loc = ICsDCPrim_loc,
+    .apply_ifunction = IFunction_DCPrim,
+    .apply_ifunction_loc = IFunction_DCPrim_loc,
+    .bc = NULL,
+    .apply_rhs = DC,
+    .apply_rhs_loc = DC_loc,
   },
 };
 
@@ -218,6 +239,7 @@ struct User_ {
   Vec M;
   char outputfolder[PETSC_MAX_PATH_LEN];
   PetscInt contsteps;
+  PetscReal dt;
 };
 
 struct Units_ {
@@ -461,6 +483,7 @@ int main(int argc, char **argv) {
   MPI_Comm comm;
   DM dm, dmcoord;
   TS ts;
+  PetscReal dt;
   TSAdapt adapt;
   User user;
   Units units;
@@ -487,7 +510,7 @@ int main(int argc, char **argv) {
   problemType problemChoice;
   problemData *problem;
   StabilizationType stab;
-  PetscBool   implicit;
+  PetscBool   test, implicit, naturalz;
 
   // Create the libCEED contexts
   PetscScalar meter     = 1e-2;     // 1 meter in scaled length units
@@ -524,7 +547,7 @@ int main(int argc, char **argv) {
   if (ierr) return ierr;
 
   // Allocate PETSc context
-  ierr = PetscMalloc1(1, &user); CHKERRQ(ierr);
+  ierr = PetscCalloc1(1, &user); CHKERRQ(ierr);
   ierr = PetscMalloc1(1, &units); CHKERRQ(ierr);
 
   // Parse command line options
@@ -534,6 +557,8 @@ int main(int argc, char **argv) {
   ierr = PetscOptionsString("-ceed", "CEED resource specifier",
                             NULL, ceedresource, ceedresource,
                             sizeof(ceedresource), NULL); CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-test", "Run in test mode",
+                          NULL, test=PETSC_FALSE, &test, NULL); CHKERRQ(ierr);
   problemChoice = NS_DENSITY_CURRENT;
   ierr = PetscOptionsEnum("-problem", "Problem to solve", NULL,
                           problemTypes, (PetscEnum)problemChoice,
@@ -544,6 +569,8 @@ int main(int argc, char **argv) {
                           (PetscEnum *)&stab, NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-implicit", "Use implicit (IFunction) formulation",
                           NULL, implicit=PETSC_FALSE, &implicit, NULL); CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-naturalz", "Use natural boundary conditions in the z direction",
+                          NULL, naturalz=PETSC_FALSE, &naturalz, NULL); CHKERRQ(ierr);
   ierr = PetscOptionsScalar("-units_meter", "1 meter in scaled length units",
                             NULL, meter, &meter, NULL); CHKERRQ(ierr);
   meter = fabs(meter);
@@ -671,10 +698,15 @@ int main(int argc, char **argv) {
     ierr = DMAddField(dm,NULL,(PetscObject)fe);CHKERRQ(ierr);
 
     ierr = DMCreateDS(dm);CHKERRQ(ierr);
-    ierr = DMAddBoundary(dm,DM_BC_ESSENTIAL,"wall","marker",0,0,NULL,(void(*)(void))problem->bc,1,(PetscInt[]){1},ctxSetup);CHKERRQ(ierr);
+    if (naturalz) {
+      ierr = DMAddBoundary(dm,DM_BC_ESSENTIAL,"wall","Face Sets",0,0,NULL,(void(*)(void))problem->bc,4,(PetscInt[]){3,4,5,6},ctxSetup);CHKERRQ(ierr);
+    } else {
+      ierr = DMAddBoundary(dm,DM_BC_ESSENTIAL,"wall","marker",0,0,NULL,(void(*)(void))problem->bc,1,(PetscInt[]){1},ctxSetup);CHKERRQ(ierr);
+    }
     ierr = DMPlexSetClosurePermutationTensor(dm,PETSC_DETERMINE,NULL);CHKERRQ(ierr);
     ierr = PetscFEGetBasisSpace(fe, &fespace);CHKERRQ(ierr);
     ierr = PetscSpaceGetDegree(fespace, &degree, NULL);CHKERRQ(ierr);
+    if (degree < 1) SETERRQ1(comm, PETSC_ERR_ARG_OUTOFRANGE, "Degree %D; must specify -petscspace_degree 1 (or greater)", degree);
     ierr = PetscFEDestroy(&fe);CHKERRQ(ierr);
   }
   { // Empty name for conserved field
@@ -757,25 +789,29 @@ int main(int argc, char **argv) {
   CeedQFunctionAddOutput(qf_ics, "q0", ncompq, CEED_EVAL_NONE);
   CeedQFunctionAddOutput(qf_ics, "coords", ncompx, CEED_EVAL_NONE);
 
-  // Create the Q-function that defines the action of the RHS operator
-  CeedQFunctionCreateInterior(ceed, 1, problem->apply_rhs,
-                              problem->apply_rhs_loc, &qf_rhs);
-  CeedQFunctionAddInput(qf_rhs, "q", ncompq, CEED_EVAL_INTERP);
-  CeedQFunctionAddInput(qf_rhs, "dq", ncompq*dim, CEED_EVAL_GRAD);
-  CeedQFunctionAddInput(qf_rhs, "qdata", qdatasize, CEED_EVAL_NONE);
-  CeedQFunctionAddInput(qf_rhs, "x", ncompx, CEED_EVAL_INTERP);
-  CeedQFunctionAddOutput(qf_rhs, "v", ncompq, CEED_EVAL_INTERP);
-  CeedQFunctionAddOutput(qf_rhs, "dv", ncompq*dim, CEED_EVAL_GRAD);
+  qf_rhs = NULL;
+  if (problem->apply_rhs) { // Create the Q-function that defines the action of the RHS operator
+    CeedQFunctionCreateInterior(ceed, 1, problem->apply_rhs,
+                                problem->apply_rhs_loc, &qf_rhs);
+    CeedQFunctionAddInput(qf_rhs, "q", ncompq, CEED_EVAL_INTERP);
+    CeedQFunctionAddInput(qf_rhs, "dq", ncompq*dim, CEED_EVAL_GRAD);
+    CeedQFunctionAddInput(qf_rhs, "qdata", qdatasize, CEED_EVAL_NONE);
+    CeedQFunctionAddInput(qf_rhs, "x", ncompx, CEED_EVAL_INTERP);
+    CeedQFunctionAddOutput(qf_rhs, "v", ncompq, CEED_EVAL_INTERP);
+    CeedQFunctionAddOutput(qf_rhs, "dv", ncompq*dim, CEED_EVAL_GRAD);
+  }
 
-  // Create the Q-function that defines the action of the IFunction
-  CeedQFunctionCreateInterior(ceed, 1, problem->apply_ifunction,
-                              problem->apply_ifunction_loc, &qf_ifunction);
-  CeedQFunctionAddInput(qf_ifunction, "q", ncompq, CEED_EVAL_INTERP);
-  CeedQFunctionAddInput(qf_ifunction, "dq", ncompq*dim, CEED_EVAL_GRAD);
-  CeedQFunctionAddInput(qf_ifunction, "qdot", ncompq, CEED_EVAL_INTERP);
-  CeedQFunctionAddInput(qf_ifunction, "qdata", qdatasize, CEED_EVAL_NONE);
-  CeedQFunctionAddOutput(qf_ifunction, "v", ncompq, CEED_EVAL_INTERP);
-  CeedQFunctionAddOutput(qf_ifunction, "dv", ncompq*dim, CEED_EVAL_GRAD);
+  qf_ifunction = NULL;
+  if (problem->apply_ifunction) { // Create the Q-function that defines the action of the IFunction
+    CeedQFunctionCreateInterior(ceed, 1, problem->apply_ifunction,
+                                problem->apply_ifunction_loc, &qf_ifunction);
+    CeedQFunctionAddInput(qf_ifunction, "q", ncompq, CEED_EVAL_INTERP);
+    CeedQFunctionAddInput(qf_ifunction, "dq", ncompq*dim, CEED_EVAL_GRAD);
+    CeedQFunctionAddInput(qf_ifunction, "qdot", ncompq, CEED_EVAL_INTERP);
+    CeedQFunctionAddInput(qf_ifunction, "qdata", qdatasize, CEED_EVAL_NONE);
+    CeedQFunctionAddOutput(qf_ifunction, "v", ncompq, CEED_EVAL_INTERP);
+    CeedQFunctionAddOutput(qf_ifunction, "dv", ncompq*dim, CEED_EVAL_GRAD);
+  }
 
   // Create the operator that builds the quadrature data for the NS operator
   CeedOperatorCreate(ceed, qf_setup, NULL, NULL, &op_setup);
@@ -799,7 +835,7 @@ int main(int argc, char **argv) {
   CeedElemRestrictionCreateVector(restrictq, &user->qdotceed, NULL);
   CeedElemRestrictionCreateVector(restrictq, &user->gceed, NULL);
 
-  { // Create the RHS physics operator
+  if (qf_rhs) { // Create the RHS physics operator
     CeedOperator op;
     CeedOperatorCreate(ceed, qf_rhs, NULL, NULL, &op);
     CeedOperatorSetField(op, "q", restrictq, CEED_TRANSPOSE,
@@ -817,7 +853,7 @@ int main(int argc, char **argv) {
     user->op_rhs = op;
   }
 
-  { // Create the IFunction operator
+  if (qf_ifunction) { // Create the IFunction operator
     CeedOperator op;
     CeedOperatorCreate(ceed, qf_ifunction, NULL, NULL, &op);
     CeedOperatorSetField(op, "q", restrictq, CEED_TRANSPOSE,
@@ -836,7 +872,7 @@ int main(int argc, char **argv) {
   }
 
   CeedQFunctionSetContext(qf_ics, &ctxSetup, sizeof ctxSetup);
-  CeedScalar ctxNS[6] = {lambda, mu, k, cv, cp, g};
+  CeedScalar ctxNS[8] = {lambda, mu, k, cv, cp, g, Rd, dt=1e-7}; // this dt needs to be updated each time step
   struct Advection2dContext_ ctxAdvection2d = {
     .CtauS = CtauS,
     .strong_form = strong_form,
@@ -844,13 +880,16 @@ int main(int argc, char **argv) {
   };
   switch (problemChoice) {
   case NS_DENSITY_CURRENT:
-    CeedQFunctionSetContext(qf_rhs, &ctxNS, sizeof ctxNS);
+    if (qf_rhs) CeedQFunctionSetContext(qf_rhs, &ctxNS, sizeof ctxNS);
+    if (qf_ifunction) CeedQFunctionSetContext(qf_ifunction, &ctxNS, sizeof ctxNS);
+    break;
+  case NS_DENSITY_CURRENT_PRIMITIVE: // Formulation requires implicit integrator
     CeedQFunctionSetContext(qf_ifunction, &ctxNS, sizeof ctxNS);
     break;
   case NS_ADVECTION:
   case NS_ADVECTION2D:
-    CeedQFunctionSetContext(qf_rhs, &ctxAdvection2d, sizeof ctxAdvection2d);
-    CeedQFunctionSetContext(qf_ifunction, &ctxAdvection2d, sizeof ctxAdvection2d);
+    if (qf_rhs) CeedQFunctionSetContext(qf_rhs, &ctxAdvection2d, sizeof ctxAdvection2d);
+    if (qf_ifunction) CeedQFunctionSetContext(qf_ifunction, &ctxAdvection2d, sizeof ctxAdvection2d);
   }
 
   // Set up PETSc context
@@ -937,27 +976,36 @@ int main(int argc, char **argv) {
     //ierr = DMLocalToGlobal(dm, Qloc, INSERT_VALUES, Q);CHKERRQ(ierr);
   }
   ierr = DMRestoreLocalVector(dm, &Qloc);CHKERRQ(ierr);
-
+  
   // Create and setup TS
   ierr = TSCreate(comm, &ts); CHKERRQ(ierr);
   if (implicit) {
     ierr = TSSetType(ts, TSBDF); CHKERRQ(ierr);
-    ierr = TSSetIFunction(ts, NULL, IFunction_NS, &user);CHKERRQ(ierr);
+    if (user->op_ifunction) {
+      ierr = TSSetIFunction(ts, NULL, IFunction_NS, &user);CHKERRQ(ierr);
+    } else {                    // Implicit integrators can fall back to using an RHSFunction
+      ierr = TSSetRHSFunction(ts, NULL, RHS_NS, &user); CHKERRQ(ierr);
+    }
   } else {
+    if (!user->op_rhs) SETERRQ(comm,PETSC_ERR_ARG_NULL,"Problem does not provide RHSFunction");
     ierr = TSSetType(ts, TSRK); CHKERRQ(ierr);
     ierr = TSRKSetType(ts, TSRK5F); CHKERRQ(ierr);
     ierr = TSSetRHSFunction(ts, NULL, RHS_NS, &user); CHKERRQ(ierr);
   }
   ierr = TSSetMaxTime(ts, 500. * units->second); CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts, TS_EXACTFINALTIME_STEPOVER); CHKERRQ(ierr);
-  ierr = TSSetTimeStep(ts, 1.e-5 * units->second); CHKERRQ(ierr);
+  ierr = TSSetTimeStep(ts, 1.e-2 * units->second); CHKERRQ(ierr);
+  if (test) {ierr = TSSetMaxSteps(ts, 1); CHKERRQ(ierr);}
   ierr = TSGetAdapt(ts, &adapt); CHKERRQ(ierr);
   ierr = TSAdaptSetStepLimits(adapt,
                               1.e-12 * units->second,
-                              1.e-2 * units->second); CHKERRQ(ierr);
+                              1.e2 * units->second); CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts); CHKERRQ(ierr);
+  ierr = TSGetTimeStep (ts, &dt); CHKERRQ(ierr);
   if (!contsteps) { // print initial condition
-    ierr = TSMonitor_NS(ts, 0, 0., Q, user); CHKERRQ(ierr);
+    if (!test) {
+      ierr = TSMonitor_NS(ts, 0, 0., Q, user); CHKERRQ(ierr);
+    }
   } else { // continue from time of last output
     PetscReal time;
     PetscInt count;
@@ -972,7 +1020,12 @@ int main(int argc, char **argv) {
     ierr = PetscViewerDestroy(&viewer); CHKERRQ(ierr);
     ierr = TSSetTime(ts, time * user->units->second); CHKERRQ(ierr);
   }
-  ierr = TSMonitorSet(ts, TSMonitor_NS, user, NULL); CHKERRQ(ierr);
+  if (!test) {
+    ierr = TSMonitorSet(ts, TSMonitor_NS, user, NULL); CHKERRQ(ierr);
+  }
+
+  // Pass dt to the user
+  user->dt = dt;
 
   // Solve
   ierr = TSSolve(ts, Q); CHKERRQ(ierr);

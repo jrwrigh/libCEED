@@ -188,7 +188,7 @@ int CeedBasisCreateTensorH1Lagrange(Ceed ceed, CeedInt dim, CeedInt ncomp,
   @param ceed       A Ceed object where the CeedBasis will be created
   @param topo       Topology of element, e.g. hypercube, simplex, ect
   @param ncomp      Number of field components (1 for scalar fields)
-  @param nnodes       Total number of nodes
+  @param nnodes     Total number of nodes
   @param nqpts      Total number of quadrature points
   @param interp     Row-major nqpts × nnodes matrix expressing the values of
                       nodal basis functions at quadrature points
@@ -284,7 +284,7 @@ int CeedGaussQuadrature(CeedInt Q, CeedScalar *qref1d, CeedScalar *qweight1d) {
     dP2 = (xi*P2 - P0)*(CeedScalar)Q/(xi*xi-1.0);
     xi = xi-P2/dP2;
     // Newton to convergence
-    for (int k=0; k<100 && fabs(P2)>1e-15; k++) {
+    for (int k=0; k<100 && fabs(P2)>10*CEED_EPSILON; k++) {
       P0 = 1.0;
       P1 = xi;
       for (int j = 2; j <= Q; j++) {
@@ -323,6 +323,8 @@ int CeedLobattoQuadrature(CeedInt Q, CeedScalar *qref1d,
   CeedScalar P0, P1, P2, dP2, d2P2, xi, wi, PI = 4.0*atan(1.0);
   // Build qref1d, qweight1d
   // Set endpoints
+  if (Q < 2)
+    return CeedError(NULL, 1, "Cannot create Lobatto quadrature with Q=%d < 2 points", Q);
   wi = 2.0/((CeedScalar)(Q*(Q-1)));
   if (qweight1d) {
     qweight1d[0] = wi;
@@ -348,7 +350,7 @@ int CeedLobattoQuadrature(CeedInt Q, CeedScalar *qref1d,
     d2P2 = (2*xi*dP2 - (CeedScalar)(Q*(Q-1))*P2)/(1.0-xi*xi);
     xi = xi-dP2/d2P2;
     // Newton to convergence
-    for (int k=0; k<100 && fabs(dP2)>1e-15; k++) {
+    for (int k=0; k<100 && fabs(dP2)>10*CEED_EPSILON; k++) {
       P0 = 1.0;
       P1 = xi;
       for (int j = 2; j < Q; j++) {
@@ -500,7 +502,7 @@ static int CeedHouseholderApplyQ(CeedScalar *A, const CeedScalar *Q,
     CeedInt i = tmode == CEED_TRANSPOSE ? ii : k-1-ii;
     for (CeedInt j=i+1; j<m; j++)
       v[j] = Q[j*k+i];
-    // Apply Householder reflector (I - tau v v^T) colograd1d^T
+    // Apply Householder reflector (I - tau v v^T) collograd1d^T
     CeedHouseholderReflect(&A[i*row], &v[i], tau[i], m-i, n, row, col);
   }
   return 0;
@@ -580,6 +582,7 @@ int CeedQRFactorization(Ceed ceed, CeedScalar *mat, CeedScalar *tau,
     //   norm = sqrt(v[i]*v[i] + sigma) / v[i];
     //   tau = 2 / (norm*norm)
     tau[i] = 2 * v[i]*v[i] / (v[i]*v[i] + sigma);
+
     for (CeedInt j=i+1; j<m; j++)
       v[j] /= v[i];
 
@@ -598,8 +601,9 @@ int CeedQRFactorization(Ceed ceed, CeedScalar *mat, CeedScalar *tau,
   @brief Return symmetric Schur decomposition of the symmetric matrix mat via
            symmetric QR factorization
 
+  @param ceed         A Ceed object for error handling
   @param[in,out] mat  Row-major matrix to be factorized in place
-  @param[out] lambda  Vector of length m of eigenvalues
+  @param[out] lambda  Vector of length n of eigenvalues
   @param n            Number of rows/columns
 
   @return An error code: 0 - success, otherwise - failure
@@ -638,8 +642,13 @@ int CeedSymmetricSchurDecomposition(Ceed ceed, CeedScalar *mat,
     // norm of v[i:m] after modification above and scaling below
     //   norm = sqrt(v[i]*v[i] + sigma) / v[i];
     //   tau = 2 / (norm*norm)
-    tau[i] = 2 * v[i]*v[i] / (v[i]*v[i] + sigma);
-    for (CeedInt j=i+1; j<n-1; j++) v[j] /= v[i];
+    if (sigma > 10*CEED_EPSILON)
+      tau[i] = 2 * v[i]*v[i] / (v[i]*v[i] + sigma);
+    else
+      tau[i] = 0;
+
+    for (CeedInt j=i+1; j<n-1; j++)
+      v[j] /= v[i];
 
     // Update sub and super diagonal
     matT[i+n*(i+1)] = Rii;
@@ -670,7 +679,7 @@ int CeedSymmetricSchurDecomposition(Ceed ceed, CeedScalar *mat,
 
   // Reduce sub and super diagonal
   CeedInt p = 0, q = 0, itr = 0, maxitr = n*n*n;
-  CeedScalar tol = 1e-15;
+  CeedScalar tol = 10*CEED_EPSILON;
 
   while (q < n && itr < maxitr) {
     // Update p, q, size of reduced portions of diagonal
@@ -752,9 +761,8 @@ int CeedSymmetricSchurDecomposition(Ceed ceed, CeedScalar *mat,
 
   @ref Utility
 **/
-static int CeedMatrixMultiply(Ceed ceed, CeedScalar *matA, CeedScalar *matB,
-                              CeedScalar *matC, CeedInt m, CeedInt n,
-                              CeedInt kk) {
+int CeedMatrixMultiply(Ceed ceed, CeedScalar *matA, CeedScalar *matB,
+                       CeedScalar *matC, CeedInt m, CeedInt n, CeedInt kk) {
   for (CeedInt i=0; i<m; i++)
     for (CeedInt j=0; j<n; j++) {
       CeedScalar sum = 0;
@@ -772,10 +780,11 @@ static int CeedMatrixMultiply(Ceed ceed, CeedScalar *matA, CeedScalar *matB,
            and vector Lambda such that X^T A X = Lambda and X^T B X = I. This
            is equivalent to the LAPACK routine 'sygv' with TYPE = 1.
 
+  @param ceed         A Ceed object for error handling
   @param[in] matA     Row-major matrix to be factorized with eigenvalues
   @param[in] matB     Row-major matrix to be factorized to identity
   @param[out] x       Row-major orthogonal matrix
-  @param[out] lambda  Vector of length m of generalized eigenvalues
+  @param[out] lambda  Vector of length n of generalized eigenvalues
   @param n            Number of rows/columns
 
   @return An error code: 0 - success, otherwise - failure
@@ -791,24 +800,25 @@ int CeedSimultaneousDiagonalization(Ceed ceed, CeedScalar *matA,
   // Compute B = G D G^T
   memcpy(matG, matB, n*n*sizeof(matB[0]));
   ierr = CeedSymmetricSchurDecomposition(ceed, matG, vecD, n); CeedChk(ierr);
-  for (CeedInt i=0; i<n; i++) vecD[i] = sqrt(vecD[i]);
+  for (CeedInt i=0; i<n; i++)
+    vecD[i] = sqrt(vecD[i]);
 
-  // Compute C = (G D^-1/2)^-1 A (G D^-1/2)^-T
-  //           = D^1/2 G^T A D^1/2 G
+  // Compute C = (G D^1/2)^-1 A (G D^1/2)^-T
+  //           = D^-1/2 G^T A G D^-1/2
   for (CeedInt i=0; i<n; i++)
     for (CeedInt j=0; j<n; j++)
-      matC[j+i*n] = vecD[i] * matG[i+j*n];
+      matC[j+i*n] = matG[i+j*n] / vecD[i];
   CeedMatrixMultiply(ceed, matC, matA, x, n, n, n);
   for (CeedInt i=0; i<n; i++)
     for (CeedInt j=0; j<n; j++)
-      matG[j+i*n] = vecD[i] * matG[j+i*n];
+      matG[j+i*n] = matG[j+i*n] / vecD[j];
   CeedMatrixMultiply(ceed, x, matG, matC, n, n, n);
 
   // Compute Q^T C Q = lambda
   ierr = CeedSymmetricSchurDecomposition(ceed, matC, lambda, n); CeedChk(ierr);
 
-  // Set x = (G D^-1/2)^-T Q
-  //       = D^1/2 G Q
+  // Set x = (G D^1/2)^-T Q
+  //       = G D^-1/2 Q
   CeedMatrixMultiply(ceed, matG, matC, x, n, n, n);
 
   return 0;
@@ -818,14 +828,14 @@ int CeedSimultaneousDiagonalization(Ceed ceed, CeedScalar *matA,
   @brief Return collocated grad matrix
 
   @param basis           CeedBasis
-  @param[out] colograd1d Row-major Q1d × Q1d matrix expressing derivatives of
+  @param[out] collograd1d Row-major Q1d × Q1d matrix expressing derivatives of
                            basis functions at quadrature points
 
   @return An error code: 0 - success, otherwise - failure
 
   @ref Advanced
 **/
-int CeedBasisGetCollocatedGrad(CeedBasis basis, CeedScalar *colograd1d) {
+int CeedBasisGetCollocatedGrad(CeedBasis basis, CeedScalar *collograd1d) {
   int i, j, k;
   Ceed ceed;
   CeedInt ierr, P1d=(basis)->P1d, Q1d=(basis)->Q1d;
@@ -840,21 +850,21 @@ int CeedBasisGetCollocatedGrad(CeedBasis basis, CeedScalar *colograd1d) {
   ierr = CeedBasisGetCeed(basis, &ceed); CeedChk(ierr);
   ierr = CeedQRFactorization(ceed, interp1d, tau, Q1d, P1d); CeedChk(ierr);
 
-  // Apply Rinv, colograd1d = grad1d Rinv
+  // Apply Rinv, collograd1d = grad1d Rinv
   for (i=0; i<Q1d; i++) { // Row i
-    colograd1d[Q1d*i] = grad1d[P1d*i]/interp1d[0];
+    collograd1d[Q1d*i] = grad1d[P1d*i]/interp1d[0];
     for (j=1; j<P1d; j++) { // Column j
-      colograd1d[j+Q1d*i] = grad1d[j+P1d*i];
+      collograd1d[j+Q1d*i] = grad1d[j+P1d*i];
       for (k=0; k<j; k++)
-        colograd1d[j+Q1d*i] -= interp1d[j+P1d*k]*colograd1d[k+Q1d*i];
-      colograd1d[j+Q1d*i] /= interp1d[j+P1d*j];
+        collograd1d[j+Q1d*i] -= interp1d[j+P1d*k]*collograd1d[k+Q1d*i];
+      collograd1d[j+Q1d*i] /= interp1d[j+P1d*j];
     }
     for (j=P1d; j<Q1d; j++)
-      colograd1d[j+Q1d*i] = 0;
+      collograd1d[j+Q1d*i] = 0;
   }
 
-  // Apply Qtranspose, colograd = colograd Qtranspose
-  CeedHouseholderApplyQ(colograd1d, interp1d, tau, CEED_NOTRANSPOSE,
+  // Apply Qtranspose, collograd = collograd Qtranspose
+  CeedHouseholderApplyQ(collograd1d, interp1d, tau, CEED_NOTRANSPOSE,
                         Q1d, Q1d, P1d, 1, Q1d);
 
   ierr = CeedFree(&interp1d); CeedChk(ierr);
@@ -873,10 +883,12 @@ int CeedBasisGetCollocatedGrad(CeedBasis basis, CeedScalar *colograd1d) {
   @param tmode  \ref CEED_NOTRANSPOSE to evaluate from nodes to quadrature
                   points, \ref CEED_TRANSPOSE to apply the transpose, mapping
                   from quadrature points to nodes
-  @param emode  \ref CEED_EVAL_INTERP to obtain interpolated values,
-                  \ref CEED_EVAL_GRAD to obtain gradients.
-  @param[in] u  Input array
-  @param[out] v Output array
+  @param emode  \ref CEED_EVAL_NONE to use values directly,
+                  \ref CEED_EVAL_INTERP to use interpolated values,
+                  \ref CEED_EVAL_GRAD to use gradients,
+                  \ref CEED_EVAL_WEIGHT to use quadrature weights.
+  @param[in] u  Input CeedVector
+  @param[out] v Output CeedVector
 
   @return An error code: 0 - success, otherwise - failure
 
@@ -1104,7 +1116,8 @@ int CeedBasisGetGrad(CeedBasis basis, CeedScalar **grad) {
 /**
   @brief Get value in CeedEvalMode matrix of a CeedBasis
 
-  @param basis       CeedBasis  @param[in] emode   CeedEvalMode to retrieve value
+  @param basis       CeedBasis
+  @param[in] emode   CeedEvalMode to retrieve value
   @param[in] node    Node (column) to retrieve value
   @param[in] qpt     Quadrature point (row) to retrieve value
   @param[in] dim     Dimension to retrieve value for, for CEED_EVAL_GRAD
